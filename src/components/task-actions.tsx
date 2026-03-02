@@ -6,6 +6,7 @@ import type { TaskWithCourse } from "@/types/task";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import { Button } from "@/components/ui/button";
 import type { TaskPriority } from "@/types/task";
+import { ExternalLink } from "lucide-react";
 
 interface TaskActionsProps {
   task: TaskWithCourse;
@@ -68,6 +69,15 @@ export function TaskActions({ task }: TaskActionsProps) {
         >
           Reset
         </Button>
+
+        {task.url && (
+          <Button type="button" size="sm" variant="outline" asChild>
+            <a href={task.url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="size-4" />
+              Open in {task.source === "gclassroom" ? "Classroom" : "UVEC"}
+            </a>
+          </Button>
+        )}
       </div>
 
       <div className="space-y-2">

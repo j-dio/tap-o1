@@ -6,7 +6,6 @@ import { CourseBadge } from "@/components/course-badge";
 import { SourceIcon } from "@/components/source-icon";
 import { TaskActions } from "@/components/task-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { ExternalLink, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface TaskDetailModalProps {
   task: TaskWithCourse;
@@ -42,7 +41,7 @@ export function TaskDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <div className="text-muted-foreground mb-1 flex items-center gap-2">
             <SourceIcon source={task.source} />
             <span className="text-xs capitalize">
               {task.source === "gclassroom" ? "Google Classroom" : "UVEC"}
@@ -57,16 +56,18 @@ export function TaskDetailModal({
             {task.type}
           </Badge>
           <Badge
-            variant={task.status === "pending" ? "outline" : "secondary"}
+            variant={
+              task.displayStatus === "overdue" ? "destructive" : "secondary"
+            }
             className="text-xs"
           >
-            {task.status}
+            {task.displayStatus ?? task.status}
           </Badge>
         </div>
 
         {task.dueDate && (
           <div className="flex items-center gap-2 text-sm">
-            <Clock className="size-4 text-muted-foreground" />
+            <Clock className="text-muted-foreground size-4" />
             <span>
               {new Date(task.dueDate).toLocaleDateString(undefined, {
                 weekday: "short",
@@ -92,7 +93,7 @@ export function TaskDetailModal({
         {task.description && (
           <>
             <Separator />
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+            <p className="text-muted-foreground text-sm whitespace-pre-wrap">
               {task.description}
             </p>
           </>
@@ -100,19 +101,6 @@ export function TaskDetailModal({
 
         <Separator />
         <TaskActions task={task} />
-
-        {task.url && (
-          <>
-            <Separator />
-            <Button variant="outline" size="sm" asChild>
-              <a href={task.url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4" />
-                Open in{" "}
-                {task.source === "gclassroom" ? "Classroom" : "UVEC"}
-              </a>
-            </Button>
-          </>
-        )}
       </DialogContent>
     </Dialog>
   );

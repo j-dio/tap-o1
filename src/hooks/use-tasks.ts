@@ -15,7 +15,7 @@ export interface TaskFilters {
   source?: TaskSource;
   type?: TaskType;
   courseId?: string;
-  status?: string;
+  status?: TaskDisplayStatus;
 }
 
 function mapRow(row: Record<string, unknown>): TaskWithCourse {
@@ -83,13 +83,20 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   if (filters.courseId) {
     query = query.eq("course_id", filters.courseId);
   }
-  if (filters.status) {
+  if (filters.status && filters.status !== "overdue") {
     query = query.eq("status", filters.status);
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map(mapRow);
+
+  const mapped = (data ?? []).map(mapRow);
+
+  if (filters.status) {
+    return mapped.filter((task) => task.displayStatus === filters.status);
+  }
+
+  return mapped;
 }
 
 export function useTasks(filters: TaskFilters = {}) {
