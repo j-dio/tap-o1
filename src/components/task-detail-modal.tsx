@@ -4,6 +4,7 @@ import type { TaskWithCourse } from "@/types/task";
 import { formatRelativeDate, getTaskUrgency } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
 import { SourceIcon } from "@/components/source-icon";
+import { TaskActions } from "@/components/task-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -96,6 +97,9 @@ export function TaskDetailModal({
             </p>
           </>
         )}
+
+        <Separator />
+        <TaskActions task={task} />
 
         {task.url && (
           <>
