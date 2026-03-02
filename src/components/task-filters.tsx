@@ -22,6 +22,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
   const currentSource = searchParams.get("source") ?? "all";
   const currentType = searchParams.get("type") ?? "all";
   const currentCourse = searchParams.get("course") ?? "all";
+  const currentStatus = searchParams.get("status") ?? "all";
 
   const setFilter = useCallback(
     (key: string, value: string) => {
@@ -39,7 +40,10 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select value={currentSource} onValueChange={(v) => setFilter("source", v)}>
+      <Select
+        value={currentSource}
+        onValueChange={(v) => setFilter("source", v)}
+      >
         <SelectTrigger className="h-8 w-32.5 text-xs">
           <SelectValue placeholder="Source" />
         </SelectTrigger>
@@ -81,6 +85,22 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           </SelectContent>
         </Select>
       )}
+
+      <Select
+        value={currentStatus}
+        onValueChange={(v) => setFilter("status", v)}
+      >
+        <SelectTrigger className="h-8 w-32.5 text-xs">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All status</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="overdue">Overdue</SelectItem>
+          <SelectItem value="done">Done</SelectItem>
+          <SelectItem value="dismissed">Dismissed</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }

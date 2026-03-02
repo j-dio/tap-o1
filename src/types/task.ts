@@ -7,10 +7,9 @@ export type TaskType =
   | "event"
   | "announcement";
 
-export type TaskStatus =
-  | "pending"
-  | "done"
-  | "dismissed";
+export type TaskStatus = "pending" | "done" | "dismissed";
+
+export type TaskDisplayStatus = TaskStatus | "overdue";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
@@ -65,6 +64,9 @@ export interface ParsedTask {
  */
 export interface TaskWithCourse extends Task {
   course: Course | null;
+  priority?: TaskPriority | null;
+  notes?: string | null;
+  displayStatus?: TaskDisplayStatus;
 }
 
 export type TaskUrgency =

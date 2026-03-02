@@ -7,17 +7,30 @@ import type {
   TaskSource,
   TaskType,
   TaskStatus,
+  TaskPriority,
+  TaskDisplayStatus,
 } from "@/types/task";
 
 export interface TaskFilters {
   source?: TaskSource;
   type?: TaskType;
   courseId?: string;
-  status?: string;
+  status?: TaskDisplayStatus;
 }
 
 function mapRow(row: Record<string, unknown>): TaskWithCourse {
   const course = row.courses as Record<string, unknown> | null;
+  const overrides = row.task_overrides as Record<string, unknown>[] | null;
+  const override = overrides?.[0] ?? null;
+  const baseStatus = ((row.status as string) ?? "pending") as TaskStatus;
+  const customStatus = (override?.custom_status as TaskStatus | null) ?? null;
+  const effectiveStatus = customStatus ?? baseStatus;
+  const dueDate = (row.due_date as string) ?? null;
+  const displayStatus: TaskDisplayStatus =
+    effectiveStatus === "pending" && dueDate && new Date(dueDate) < new Date()
+      ? "overdue"
+      : effectiveStatus;
+
   return {
     id: row.id as string,
     userId: row.user_id as string,
@@ -27,13 +40,16 @@ function mapRow(row: Record<string, unknown>): TaskWithCourse {
     title: row.title as string,
     description: (row.description as string) ?? null,
     type: (row.type as TaskType) ?? "assignment",
-    status: ((row.status as string) ?? "pending") as TaskStatus,
-    dueDate: (row.due_date as string) ?? null,
+    status: effectiveStatus,
+    dueDate,
     url: (row.url as string) ?? null,
     metadata: {},
     fetchedAt: (row.updated_at as string) ?? "",
     createdAt: (row.created_at as string) ?? "",
     updatedAt: (row.updated_at as string) ?? "",
+    priority: (override?.priority as TaskPriority | null) ?? null,
+    notes: (override?.notes as string | null) ?? null,
+    displayStatus,
     course: course
       ? {
           id: course.id as string,
@@ -55,7 +71,7 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   const supabase = createClient();
   let query = supabase
     .from("tasks")
-    .select("*, courses(*)")
+    .select("*, courses(*), task_overrides(*)")
     .order("due_date", { ascending: true, nullsFirst: false });
 
   if (filters.source) {
@@ -67,13 +83,20 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   if (filters.courseId) {
     query = query.eq("course_id", filters.courseId);
   }
-  if (filters.status) {
+  if (filters.status && filters.status !== "overdue") {
     query = query.eq("status", filters.status);
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map(mapRow);
+
+  const mapped = (data ?? []).map(mapRow);
+
+  if (filters.status) {
+    return mapped.filter((task) => task.displayStatus === filters.status);
+  }
+
+  return mapped;
 }
 
 export function useTasks(filters: TaskFilters = {}) {
