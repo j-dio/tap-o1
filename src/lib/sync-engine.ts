@@ -22,6 +22,10 @@ export async function syncTasks(config?: SyncConfig): Promise<SyncResult> {
   let uvecTasks: ParsedTask[] = [];
   let gclassroomTasks: ParsedTask[] = [];
 
+  if (!config?.uvecIcalUrl && !config?.gclassroomToken) {
+    return { tasks: [], errors: [] };
+  }
+
   // Fetch UVEC tasks
   if (config?.uvecIcalUrl && config?.userId) {
     try {

@@ -10,7 +10,9 @@ interface SyncButtonProps {
 }
 
 export function SyncButton({ className }: SyncButtonProps) {
-  const { mutate: sync, isPending } = useSync();
+  const { mutate: sync, isPending, error } = useSync();
+
+  const title = error?.message ? `Sync failed: ${error.message}` : "Sync tasks";
 
   return (
     <Button
@@ -19,11 +21,10 @@ export function SyncButton({ className }: SyncButtonProps) {
       onClick={() => sync()}
       disabled={isPending}
       className={className}
-      aria-label="Sync tasks"
+      aria-label={title}
+      title={title}
     >
-      <RefreshCw
-        className={cn("size-4", isPending && "animate-spin")}
-      />
+      <RefreshCw className={cn("size-4", isPending && "animate-spin")} />
     </Button>
   );
 }
