@@ -141,12 +141,14 @@ src/lib/actions/sync.ts
 
 ### Phase 5: Task Management (Size: M — ~3 hours)
 
-- [ ] Mark task as done / dismiss
-- [ ] Set priority (low/medium/high/urgent)
-- [ ] Add personal notes to tasks
-- [ ] Task overrides table migration
-- [ ] Auto-detect overdue tasks (due_date < now && status = pending)
-- [ ] "Open in UVEC/GClassroom" deep link button
+- [x] Mark task as done / dismiss
+- [x] Set priority (low/medium/high/urgent)
+- [x] Add personal notes to tasks
+- [x] Task overrides table migration
+- [x] Auto-detect overdue tasks (due_date < now && status = pending)
+- [x] "Open in UVEC/GClassroom" deep link button
+
+**Status:** Complete. Task overrides now persist per-user task management state (status, priority, notes) without mutating source data. Overdue is derived client-side from pending + due_date in the past.
 
 **Files:**
 
@@ -154,6 +156,9 @@ src/lib/actions/sync.ts
 src/components/task-actions.tsx
 supabase/migrations/003_task_overrides.sql
 src/hooks/use-task-actions.ts
+src/hooks/use-tasks.ts
+src/components/task-filters.tsx
+src/components/task-detail-modal.tsx
 ```
 
 ### Phase 6: Notifications & Reminders (Size: M — ~4 hours)

@@ -49,16 +49,18 @@ async function upsertTaskOverride(payload: TaskOverridePayload) {
 export function useTaskActions() {
   const queryClient = useQueryClient();
 
-  const setStatus = useMutation<void, Error, { taskId: string; status: TaskStatus }>(
-    {
-      mutationFn: async ({ taskId, status }) => {
-        await upsertTaskOverride({ taskId, customStatus: status });
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      },
+  const setStatus = useMutation<
+    void,
+    Error,
+    { taskId: string; status: TaskStatus }
+  >({
+    mutationFn: async ({ taskId, status }) => {
+      await upsertTaskOverride({ taskId, customStatus: status });
     },
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
 
   const setPriority = useMutation<
     void,
@@ -73,16 +75,18 @@ export function useTaskActions() {
     },
   });
 
-  const setNotes = useMutation<void, Error, { taskId: string; notes: string | null }>(
-    {
-      mutationFn: async ({ taskId, notes }) => {
-        await upsertTaskOverride({ taskId, notes });
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      },
+  const setNotes = useMutation<
+    void,
+    Error,
+    { taskId: string; notes: string | null }
+  >({
+    mutationFn: async ({ taskId, notes }) => {
+      await upsertTaskOverride({ taskId, notes });
     },
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
 
   return {
     setStatus,
