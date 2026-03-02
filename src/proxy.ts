@@ -16,8 +16,27 @@ export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  // Skip auth checks for public assets and API routes
-  if (pathname.startsWith("/api/") || pathname.startsWith("/auth/")) {
+  // Server actions expect an RSC payload; redirecting these requests can
+  // return HTML and crash the client with syntax errors.
+  if (request.headers.has("next-action")) {
+    return response;
+  }
+
+  // Skip auth checks for APIs, auth callbacks, and framework/static assets.
+  // This prevents redirects from breaking CSS/JS/image loading.
+  const isFrameworkAsset =
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/icons/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js" ||
+    /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml)$/i.test(pathname);
+
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/auth/") ||
+    isFrameworkAsset
+  ) {
     return response;
   }
 
