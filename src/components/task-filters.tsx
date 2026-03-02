@@ -40,7 +40,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select value={currentSource} onValueChange={(v) => setFilter("source", v)}>
-        <SelectTrigger className="h-8 w-[130px] text-xs">
+        <SelectTrigger className="h-8 w-32.5 text-xs">
           <SelectValue placeholder="Source" />
         </SelectTrigger>
         <SelectContent>
@@ -51,7 +51,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
       </Select>
 
       <Select value={currentType} onValueChange={(v) => setFilter("type", v)}>
-        <SelectTrigger className="h-8 w-[130px] text-xs">
+        <SelectTrigger className="h-8 w-32.5 text-xs">
           <SelectValue placeholder="Type" />
         </SelectTrigger>
         <SelectContent>
@@ -68,7 +68,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           value={currentCourse}
           onValueChange={(v) => setFilter("course", v)}
         >
-          <SelectTrigger className="h-8 w-[160px] text-xs">
+          <SelectTrigger className="h-8 w-40 text-xs">
             <SelectValue placeholder="Course" />
           </SelectTrigger>
           <SelectContent>

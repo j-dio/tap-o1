@@ -49,14 +49,14 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
   const buckets = groupTasksByUrgency(tasks);
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 lg:-mx-0 lg:px-0">
+    <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 lg:mx-0 lg:px-0">
       {columns.map((col) => {
         const items =
           buckets[col.key as keyof typeof buckets] ?? [];
         return (
           <div
             key={col.key}
-            className="flex w-[280px] shrink-0 flex-col lg:flex-1 lg:min-w-[240px]"
+            className="flex w-70 shrink-0 flex-col lg:flex-1 lg:min-w-60"
           >
             {/* Column header */}
             <div className="mb-3 flex items-center gap-2">
