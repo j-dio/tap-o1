@@ -1,7 +1,6 @@
 // UVEC service: fetch, parse, normalize, upsert tasks
 
 import { parseICal } from "../lib/parsers/ical-parser";
-import { createClient } from "../lib/supabase/client";
 import type { ParsedTask } from "../types/task";
 import { z } from "zod";
 
@@ -32,28 +31,6 @@ export async function ingestUvecTasks({
       throw new Error(`UVEC parse failed: ${errors[0]}`);
     }
     return [];
-  }
-
-  // Upsert tasks to database
-  const supabase = createClient();
-  const taskRows = tasks.map((t) => ({
-    user_id: userId,
-    external_id: t.externalId,
-    title: t.title,
-    description: t.description,
-    due_date: t.dueDate,
-    type: t.type,
-    source: t.source,
-    status: "pending",
-  }));
-
-  const { error } = await supabase.from("tasks").upsert(taskRows, {
-    onConflict: "user_id,external_id,source",
-    ignoreDuplicates: false,
-  });
-
-  if (error) {
-    throw new Error(`Failed to upsert UVEC tasks: ${error.message}`);
   }
 
   return tasks;

@@ -26,7 +26,7 @@ export async function syncAllTasks(): Promise<SyncResponse> {
   // Get profile for UVEC URL
   const { data: profile } = await supabase
     .from("profiles")
-    .select("uvec_ical_url")
+    .select("uvec_ical_url, google_connected")
     .eq("id", user.id)
     .single();
 
@@ -43,6 +43,12 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     userId: user.id,
     gclassroomToken,
   });
+
+  if (profile?.google_connected && !gclassroomToken) {
+    result.errors.push(
+      "Google Classroom token unavailable. Please sign out and sign in again to re-authorize Google access.",
+    );
+  }
 
   if (result.tasks.length === 0) {
     return { synced: 0, errors: result.errors };
