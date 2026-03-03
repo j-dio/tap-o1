@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, CalendarRange } from "lucide-react";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
 import { useSync } from "@/hooks/use-sync";
+import { useAutoSync } from "@/hooks/use-auto-sync";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { TaskList } from "@/components/task-list";
 import { TaskFilters as FilterBar } from "@/components/task-filters";
@@ -21,6 +22,8 @@ import {
   formatDayLabel,
   isSameDay,
   cn,
+  getTaskComparator,
+  type SortOption,
 } from "@/lib/utils";
 import type { TaskWithCourse } from "@/types/task";
 
@@ -40,9 +43,11 @@ function WeekViewContent() {
   if (course && course !== "all") filters.courseId = course;
   if (status && status !== "all")
     filters.status = status as TaskFilters["status"];
+  const sort = (searchParams.get("sort") as SortOption) ?? "due-date";
 
   const { data: tasks, isLoading } = useTasks(filters);
   const { data: courses } = useCourses();
+  useAutoSync();
   const { bind, pullDistance, isReady } = usePullToRefresh({
     onRefresh: async () => {
       sync();
@@ -61,11 +66,21 @@ function WeekViewContent() {
     day: Date,
     allTasks: TaskWithCourse[],
   ): TaskWithCourse[] {
-    return allTasks.filter((t) => {
-      if (!t.dueDate) return false;
-      return isSameDay(new Date(t.dueDate), day);
-    });
+    const comparator = getTaskComparator(sort);
+    return allTasks
+      .filter((t) => {
+        if (!t.dueDate) return false;
+        return isSameDay(new Date(t.dueDate), day);
+      })
+      .sort(comparator);
   }
+
+  // Count tasks that fall within the current week
+  const weekTaskCount = (tasks ?? []).filter((t) => {
+    if (!t.dueDate) return false;
+    const d = new Date(t.dueDate);
+    return d >= days[0] && d < new Date(days[6].getTime() + 86_400_000);
+  }).length;
 
   const weekLabel = `${days[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} — ${days[6].toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 
@@ -183,11 +198,11 @@ function WeekViewContent() {
         </ScrollArea>
       )}
 
-      {!isLoading && (!tasks || tasks.length === 0) && (
+      {!isLoading && weekTaskCount === 0 && (
         <EmptyState
           icon={CalendarRange}
           title="No tasks this week"
-          description="Tasks will show up here once you sync from your sources."
+          description="Try navigating to another week, or sync to pull in new tasks."
         />
       )}
     </div>
