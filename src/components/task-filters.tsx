@@ -23,11 +23,12 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
   const currentType = searchParams.get("type") ?? "all";
   const currentCourse = searchParams.get("course") ?? "all";
   const currentStatus = searchParams.get("status") ?? "all";
+  const currentSort = searchParams.get("sort") ?? "due-date";
 
   const setFilter = useCallback(
     (key: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value === "all") {
+      if (value === "all" || (key === "sort" && value === "due-date")) {
         params.delete(key);
       } else {
         params.set(key, value);
@@ -64,6 +65,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           <SelectItem value="quiz">Quiz</SelectItem>
           <SelectItem value="exam">Exam</SelectItem>
           <SelectItem value="event">Event</SelectItem>
+          <SelectItem value="announcement">Announcement</SelectItem>
         </SelectContent>
       </Select>
 
@@ -99,6 +101,18 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           <SelectItem value="overdue">Overdue</SelectItem>
           <SelectItem value="done">Done</SelectItem>
           <SelectItem value="dismissed">Dismissed</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={currentSort} onValueChange={(v) => setFilter("sort", v)}>
+        <SelectTrigger className="h-8 w-32.5 text-xs">
+          <SelectValue placeholder="Sort" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="due-date">Due date</SelectItem>
+          <SelectItem value="priority">Priority</SelectItem>
+          <SelectItem value="type">Type</SelectItem>
+          <SelectItem value="title">Title</SelectItem>
         </SelectContent>
       </Select>
     </div>
