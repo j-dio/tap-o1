@@ -100,10 +100,14 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     if (task.courseExternalId) {
       const key = `${task.courseExternalId}:${task.source}`;
       if (!uniqueCourses.has(key)) {
+        // Use real course name from the API if available, fall back to externalId
+        const displayName =
+          result.courseNames.get(task.courseExternalId) ??
+          task.courseExternalId;
         uniqueCourses.set(key, {
           externalId: task.courseExternalId,
           source: task.source,
-          name: task.courseExternalId, // Will be overridden by actual name if available
+          name: displayName,
         });
       }
     }
