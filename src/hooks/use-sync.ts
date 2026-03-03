@@ -9,12 +9,19 @@ export function useSync() {
   return useMutation<SyncResponse, Error>({
     mutationFn: async () => {
       const result = await syncAllTasks();
+      // Only throw if there are errors AND zero tasks were synced
+      // (i.e. complete failure, not partial success)
       if (result.synced === 0 && result.errors.length > 0) {
-        throw new Error(result.errors.join(" "));
+        const msg =
+          result.errors.length === 1
+            ? result.errors[0]
+            : `${result.errors[0]} (+${result.errors.length - 1} more)`;
+        throw new Error(msg);
       }
       return result;
     },
-    onSuccess: () => {
+    onSettled: () => {
+      // Always invalidate caches — even on failure, the DB state may have changed
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["courses"] });
     },

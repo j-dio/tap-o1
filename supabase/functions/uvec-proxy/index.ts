@@ -3,22 +3,19 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGIN =
-  Deno.env.get("ALLOWED_ORIGIN") ?? "http://localhost:3000";
 const MAX_RESPONSE_SIZE = 5 * 1024 * 1024; // 5MB
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, x-client-info, apikey",
+};
 
 function jsonResponse(body: object, status: number) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders(), "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -30,8 +27,8 @@ function isAllowedUrl(targetUrl: string): boolean {
   try {
     const parsed = new URL(targetUrl);
 
-    // Must be HTTPS
-    if (parsed.protocol !== "https:") return false;
+    // Must be HTTP or HTTPS (some Moodle instances don't support HTTPS)
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
 
     // Reject common private/internal hostnames
     const hostname = parsed.hostname.toLowerCase();
@@ -64,7 +61,7 @@ function isAllowedUrl(targetUrl: string): boolean {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders() });
+    return new Response(null, { headers: corsHeaders });
   }
 
   // Verify the user is authenticated
@@ -103,9 +100,20 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const resp = await fetch(target);
+    const resp = await fetch(target, {
+      headers: {
+        "User-Agent": "TaskAggregator/1.0",
+        Accept: "text/calendar, text/plain, */*",
+      },
+    });
     if (!resp.ok) {
-      return jsonResponse({ error: `Failed to fetch: ${resp.status}` }, 502);
+      return jsonResponse(
+        {
+          error: `UVEC returned ${resp.status}`,
+          hint: "Your iCal URL may have expired. Try re-exporting from UVEC.",
+        },
+        502,
+      );
     }
 
     // Enforce size limit
@@ -119,11 +127,29 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Response too large" }, 413);
     }
 
+    if (!ics.includes("BEGIN:VCALENDAR")) {
+      return jsonResponse(
+        {
+          error: "Response is not a valid iCal feed",
+          hint: "The URL may have changed. Please re-export from UVEC.",
+        },
+        502,
+      );
+    }
+
     return new Response(ics, {
       status: 200,
-      headers: { ...corsHeaders(), "Content-Type": "text/calendar" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/calendar; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
     });
-  } catch {
-    return jsonResponse({ error: "Failed to fetch iCal data" }, 502);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return jsonResponse(
+      { error: `Failed to fetch from UVEC: ${message}` },
+      502,
+    );
   }
 });

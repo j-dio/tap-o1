@@ -2,21 +2,18 @@
 
 import { syncTasks } from "../sync-engine";
 
-describe("syncTasks", () => {
-  it("should return empty tasks and no errors when called without config", async () => {
-    const result = await syncTasks();
-    expect(result.tasks).toEqual([]);
-    expect(result.errors).toEqual([]);
-  });
+const BASE_CONFIG = { supabaseAccessToken: "test-token" };
 
-  it("should return empty tasks when config has no sources", async () => {
-    const result = await syncTasks({});
+describe("syncTasks", () => {
+  it("should return empty tasks with helpful error when no sources configured", async () => {
+    const result = await syncTasks(BASE_CONFIG);
     expect(result.tasks).toEqual([]);
-    expect(result.errors).toEqual([]);
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.errors[0]).toContain("No data sources configured");
   });
 
   it("should return SyncResult shape", async () => {
-    const result = await syncTasks();
+    const result = await syncTasks(BASE_CONFIG);
     expect(result).toHaveProperty("tasks");
     expect(result).toHaveProperty("errors");
     expect(Array.isArray(result.tasks)).toBe(true);

@@ -5,7 +5,9 @@ import {
   GClassroomCourseSchema,
   GClassroomCourseWorkSchema,
   GClassroomAnnouncementSchema,
+  parseGClassroomResponse,
 } from "../lib/parsers/gclassroom-parser";
+import type { ParsedTask } from "../types/task";
 
 type GClassroomCourse = z.infer<typeof GClassroomCourseSchema>;
 type GClassroomCourseWork = z.infer<typeof GClassroomCourseWorkSchema>;
@@ -16,6 +18,41 @@ interface GClassroomApiConfig {
 }
 
 const BASE_URL = "https://classroom.googleapis.com/v1";
+
+/**
+ * Refresh the Google access token using a stored refresh token.
+ * Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET env vars on the server.
+ */
+export async function refreshGoogleAccessToken(
+  refreshToken: string,
+): Promise<{ access_token: string; expires_in: number }> {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set for token refresh",
+    );
+  }
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "Unknown error");
+    throw new Error(`Google token refresh failed (${res.status}): ${body}`);
+  }
+
+  return res.json();
+}
 
 export class GClassroomService {
   private accessToken: string;

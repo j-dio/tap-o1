@@ -69,9 +69,12 @@ function mapRow(row: Record<string, unknown>): TaskWithCourse {
 
 async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   const supabase = createClient();
+
+  // Try with task_overrides join first; fall back without if the table/FK is missing
+  let selectStr = "*, courses(*), task_overrides(*)";
   let query = supabase
     .from("tasks")
-    .select("*, courses(*), task_overrides(*)")
+    .select(selectStr)
     .order("due_date", { ascending: true, nullsFirst: false });
 
   if (filters.source) {
@@ -87,10 +90,30 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
     query = query.eq("status", filters.status);
   }
 
-  const { data, error } = await query;
-  if (error) throw error;
+  let result = await query;
 
-  const mapped = (data ?? []).map(mapRow);
+  // PGRST200: relationship not found — retry without task_overrides
+  if (result.error && result.error.code === "PGRST200") {
+    selectStr = "*, courses(*)";
+    let fallbackQuery = supabase
+      .from("tasks")
+      .select(selectStr)
+      .order("due_date", { ascending: true, nullsFirst: false });
+
+    if (filters.source) fallbackQuery = fallbackQuery.eq("source", filters.source);
+    if (filters.type) fallbackQuery = fallbackQuery.eq("type", filters.type);
+    if (filters.courseId) fallbackQuery = fallbackQuery.eq("course_id", filters.courseId);
+    if (filters.status && filters.status !== "overdue") {
+      fallbackQuery = fallbackQuery.eq("status", filters.status);
+    }
+
+    result = await fallbackQuery;
+  }
+
+  if (result.error) throw result.error;
+
+  const rows = (result.data ?? []) as unknown as Record<string, unknown>[];
+  const mapped = rows.map(mapRow);
 
   if (filters.status) {
     return mapped.filter((task) => task.displayStatus === filters.status);

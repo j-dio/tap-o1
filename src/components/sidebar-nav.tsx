@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarRange, LogOut } from "lucide-react";
+import { CalendarDays, CalendarRange, LogOut, Settings } from "lucide-react";
 import { useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ interface SidebarNavProps {
 const navItems = [
   { href: "/dashboard", label: "Today", icon: CalendarDays },
   { href: "/dashboard/week", label: "Week", icon: CalendarRange },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
@@ -35,8 +36,8 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-          <span className="text-xs font-bold text-primary-foreground">TA</span>
+        <div className="bg-primary flex size-8 items-center justify-center rounded-lg">
+          <span className="text-primary-foreground text-xs font-bold">TA</span>
         </div>
         <span className="text-sm font-semibold">Task Aggregator</span>
       </div>
@@ -73,7 +74,7 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
         <div className="px-3 pb-2">
           <Link
             href="/onboarding"
-            className="block rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:border-primary hover:text-foreground block rounded-md border border-dashed px-3 py-2 text-xs transition-colors"
           >
             Connect UVEC to sync tasks
           </Link>
@@ -85,12 +86,12 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
       {/* User info + actions */}
       <div className="px-3 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+          <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium">
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{displayName}</p>
-            <p className="truncate text-xs text-muted-foreground">{email}</p>
+            <p className="text-muted-foreground truncate text-xs">{email}</p>
           </div>
           <div className="flex items-center gap-0.5">
             <SyncButton />

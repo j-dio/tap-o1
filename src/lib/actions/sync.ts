@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { syncTasks } from "@/lib/sync-engine";
+import { syncTasks, type SyncResult } from "@/lib/sync-engine";
 
 export interface SyncResponse {
   synced: number;
@@ -23,31 +23,66 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     return { synced: 0, errors: ["Not authenticated"] };
   }
 
-  // Get profile for UVEC URL
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("uvec_ical_url, google_connected")
-    .eq("id", user.id)
-    .single();
-
-  // Get Google token from session
+  // Get session for access token and provider tokens
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const gclassroomToken = session?.provider_token ?? undefined;
+  if (!session) {
+    return { synced: 0, errors: ["No active session. Please sign in again."] };
+  }
 
-  // Run sync engine
-  const result = await syncTasks({
-    uvecIcalUrl: profile?.uvec_ical_url ?? undefined,
-    userId: user.id,
-    gclassroomToken,
-  });
+  // Get profile for UVEC URL and stored Google refresh token
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("uvec_ical_url, google_refresh_token")
+    .eq("id", user.id)
+    .single();
 
-  if (profile?.google_connected && !gclassroomToken) {
-    result.errors.push(
-      "Google Classroom token unavailable. Please sign out and sign in again to re-authorize Google access.",
-    );
+  if (profileError) {
+    return {
+      synced: 0,
+      errors: [`Failed to load profile: ${profileError.message}`],
+    };
+  }
+
+  // provider_token is only available immediately after OAuth sign-in
+  // (not persisted in Supabase SSR cookies), so we primarily rely on
+  // the stored refresh token for Google Classroom sync.
+  const googleAccessToken = session.provider_token ?? undefined;
+  const googleRefreshToken =
+    session.provider_refresh_token ??
+    profile?.google_refresh_token ??
+    undefined;
+
+  // Build config and surface helpful messages when sources are missing
+  const hasUvec = !!profile?.uvec_ical_url;
+  const hasGoogle = !!(googleAccessToken || googleRefreshToken);
+
+  if (!hasUvec && !hasGoogle) {
+    return {
+      synced: 0,
+      errors: [
+        "No data sources configured. Add your UVEC URL or connect Google Classroom in Settings.",
+      ],
+    };
+  }
+
+  // Run sync engine with all tokens
+  let result: SyncResult;
+  try {
+    result = await syncTasks({
+      uvecIcalUrl: profile?.uvec_ical_url ?? undefined,
+      gclassroomToken: googleAccessToken,
+      gclassroomRefreshToken: googleRefreshToken,
+    });
+  } catch (err) {
+    return {
+      synced: 0,
+      errors: [
+        `Sync engine error: ${err instanceof Error ? err.message : "Unknown error"}`,
+      ],
+    };
   }
 
   if (result.tasks.length === 0) {
@@ -116,7 +151,7 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     const courseKey = t.courseExternalId
       ? `${t.courseExternalId}:${t.source}`
       : null;
-    return {
+    const row: Record<string, unknown> = {
       user_id: user.id,
       external_id: t.externalId,
       source: t.source,
@@ -124,9 +159,13 @@ export async function syncAllTasks(): Promise<SyncResponse> {
       description: t.description,
       due_date: t.dueDate,
       type: t.type,
-      url: t.url,
       course_id: courseKey ? (courseMap.get(courseKey) ?? null) : null,
     };
+    // Only include url if present (column may not exist yet in older schemas)
+    if (t.url) {
+      row.url = t.url;
+    }
+    return row;
   });
 
   const { error: taskError } = await supabase.from("tasks").upsert(taskRows, {
