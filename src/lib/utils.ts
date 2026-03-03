@@ -1,6 +1,19 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { TaskUrgency, TaskWithCourse } from "@/types/task";
+import type {
+  TaskUrgency,
+  TaskWithCourse,
+  TaskDisplayStatus,
+} from "@/types/task";
+
+export type SortOption = "due-date" | "priority" | "type" | "title";
+
+const PRIORITY_ORDER: Record<string, number> = {
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -63,9 +76,56 @@ export function getTaskUrgency(dueDate: string | null): TaskUrgency {
 }
 
 /**
- * Group tasks into urgency buckets for the board view.
+ * Build a comparator function based on the active sort option.
  */
-export function groupTasksByUrgency(tasks: TaskWithCourse[]) {
+export function getTaskComparator(
+  sort: SortOption = "due-date",
+): (a: TaskWithCourse, b: TaskWithCourse) => number {
+  return (a, b) => {
+    switch (sort) {
+      case "priority": {
+        const pa = PRIORITY_ORDER[a.priority ?? ""] ?? 99;
+        const pb = PRIORITY_ORDER[b.priority ?? ""] ?? 99;
+        if (pa !== pb) return pa - pb;
+        // Fall back to due date
+        break;
+      }
+      case "type": {
+        const cmp = (a.type ?? "").localeCompare(b.type ?? "");
+        if (cmp !== 0) return cmp;
+        break;
+      }
+      case "title":
+        return (a.title ?? "").localeCompare(b.title ?? "");
+      default:
+        break;
+    }
+    // Default / fallback: due date ascending
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  };
+}
+
+interface GroupOptions {
+  /** Active status filter — when set to done/dismissed, include those tasks */
+  statusFilter?: TaskDisplayStatus;
+  /** Sort applied within each bucket */
+  sort?: SortOption;
+}
+
+/**
+ * Group tasks into urgency buckets for the board view.
+ * When statusFilter is "done" or "dismissed", those tasks are shown in the
+ * "later" bucket instead of being hidden.
+ */
+export function groupTasksByUrgency(
+  tasks: TaskWithCourse[],
+  options: GroupOptions = {},
+) {
+  const { statusFilter, sort = "due-date" } = options;
+  const showCompleted = statusFilter === "done" || statusFilter === "dismissed";
+
   const buckets = {
     overdue: [] as TaskWithCourse[],
     today: [] as TaskWithCourse[],
@@ -74,7 +134,22 @@ export function groupTasksByUrgency(tasks: TaskWithCourse[]) {
   };
 
   for (const task of tasks) {
-    if (task.status === "done" || task.status === "dismissed") continue;
+    // Only skip done/dismissed when no explicit status filter is active
+    if (
+      !showCompleted &&
+      (task.status === "done" || task.status === "dismissed")
+    )
+      continue;
+
+    // Done/dismissed tasks go to "later" bucket for display
+    if (
+      showCompleted &&
+      (task.status === "done" || task.status === "dismissed")
+    ) {
+      buckets.later.push(task);
+      continue;
+    }
+
     const urgency = getTaskUrgency(task.dueDate);
     switch (urgency) {
       case "overdue":
@@ -93,17 +168,11 @@ export function groupTasksByUrgency(tasks: TaskWithCourse[]) {
     }
   }
 
-  // Sort each bucket by due date ascending
-  const sortByDue = (a: TaskWithCourse, b: TaskWithCourse) => {
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-  };
-
-  buckets.overdue.sort(sortByDue);
-  buckets.today.sort(sortByDue);
-  buckets.thisWeek.sort(sortByDue);
-  buckets.later.sort(sortByDue);
+  const comparator = getTaskComparator(sort);
+  buckets.overdue.sort(comparator);
+  buckets.today.sort(comparator);
+  buckets.thisWeek.sort(comparator);
+  buckets.later.sort(comparator);
 
   return buckets;
 }

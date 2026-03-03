@@ -1,14 +1,21 @@
 "use client";
 
-import type { TaskWithCourse } from "@/types/task";
-import { groupTasksByUrgency, cn } from "@/lib/utils";
+import type { TaskWithCourse, TaskDisplayStatus } from "@/types/task";
+import { groupTasksByUrgency, cn, type SortOption } from "@/lib/utils";
 import { TaskCard } from "@/components/task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, Clock, CalendarDays, CalendarRange } from "lucide-react";
+import {
+  AlertTriangle,
+  Clock,
+  CalendarDays,
+  CalendarRange,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface TaskBoardProps {
   tasks: TaskWithCourse[];
+  statusFilter?: TaskDisplayStatus;
+  sort?: SortOption;
 }
 
 interface ColumnDef {
@@ -45,24 +52,23 @@ const columns: ColumnDef[] = [
   },
 ];
 
-export function TaskBoard({ tasks }: TaskBoardProps) {
-  const buckets = groupTasksByUrgency(tasks);
+export function TaskBoard({ tasks, statusFilter, sort }: TaskBoardProps) {
+  const buckets = groupTasksByUrgency(tasks, { statusFilter, sort });
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 lg:mx-0 lg:px-0">
+    <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 lg:mx-0 lg:px-0">
       {columns.map((col) => {
-        const items =
-          buckets[col.key as keyof typeof buckets] ?? [];
+        const items = buckets[col.key as keyof typeof buckets] ?? [];
         return (
           <div
             key={col.key}
-            className="flex w-70 shrink-0 flex-col lg:flex-1 lg:min-w-60"
+            className="flex w-70 shrink-0 flex-col lg:min-w-60 lg:flex-1"
           >
             {/* Column header */}
             <div className="mb-3 flex items-center gap-2">
               <col.icon className={cn("size-4", col.accentClass)} />
               <span className="text-sm font-semibold">{col.label}</span>
-              <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="bg-muted text-muted-foreground ml-auto rounded-full px-2 py-0.5 text-xs font-medium">
                 {items.length}
               </span>
             </div>
@@ -74,7 +80,7 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                   <TaskCard key={task.id} task={task} />
                 ))}
                 {items.length === 0 && (
-                  <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+                  <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
                     No tasks
                   </div>
                 )}
