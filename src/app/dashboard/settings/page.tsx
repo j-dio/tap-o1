@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { uvecIcalUrlSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,19 +81,18 @@ export default function SettingsPage() {
 
     const trimmed = uvecUrl.trim();
 
-    if (trimmed && !trimmed.includes("upcebu.edu.ph")) {
-      setSaveMessage({ ok: false, text: "URL must be from upcebu.edu.ph" });
-      setSaving(false);
-      return;
-    }
-
-    if (trimmed && !trimmed.includes("export_execute")) {
-      setSaveMessage({
-        ok: false,
-        text: 'URL must be a calendar export link containing "export_execute"',
-      });
-      setSaving(false);
-      return;
+    // Allow clearing the URL
+    if (trimmed) {
+      const validation = uvecIcalUrlSchema.safeParse(trimmed);
+      if (!validation.success) {
+        const firstIssue = validation.error.issues[0];
+        setSaveMessage({
+          ok: false,
+          text: firstIssue?.message ?? "Invalid URL",
+        });
+        setSaving(false);
+        return;
+      }
     }
 
     const { error } = await supabase

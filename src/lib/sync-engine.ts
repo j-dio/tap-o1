@@ -19,10 +19,13 @@ export interface SyncConfig {
 export interface SyncResult {
   tasks: ParsedTask[];
   errors: string[];
+  /** Map of courseExternalId -> display name (from Google Classroom API) */
+  courseNames: Map<string, string>;
 }
 
 export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
   const errors: string[] = [];
+  const courseNames = new Map<string, string>();
   let uvecTasks: ParsedTask[] = [];
   let gclassroomTasks: ParsedTask[] = [];
 
@@ -36,14 +39,19 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
       errors: [
         "No data sources configured. Add UVEC URL or connect Google Classroom in Settings.",
       ],
+      courseNames,
     };
   }
 
   // --- UVEC ---
   if (config.uvecIcalUrl) {
     try {
-      const fetched = await ingestUvecTasks(config.uvecIcalUrl);
-      uvecTasks = Array.isArray(fetched) ? [...fetched] : [];
+      const result = await ingestUvecTasks(config.uvecIcalUrl);
+      uvecTasks = Array.isArray(result.tasks) ? [...result.tasks] : [];
+      // Merge UVEC course names
+      for (const [id, name] of result.courseNames) {
+        courseNames.set(id, name);
+      }
     } catch (err) {
       errors.push(
         `UVEC sync failed: ${err instanceof Error ? err.message : "Unknown error"}`,
@@ -75,6 +83,11 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
       });
       const courses = await gclassroom.getCourses();
 
+      // Collect course names for later upsert
+      for (const course of courses) {
+        courseNames.set(course.id, course.name);
+      }
+
       // Fetch courseWork in parallel for performance
       const results = await Promise.allSettled(
         courses.map((course) => gclassroom.getCourseWork(course.id)),
@@ -102,6 +115,9 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
               accessToken: refreshed.access_token,
             });
             const courses = await gclassroom.getCourses();
+            for (const course of courses) {
+              courseNames.set(course.id, course.name);
+            }
             const results = await Promise.allSettled(
               courses.map((course) => gclassroom.getCourseWork(course.id)),
             );
@@ -138,5 +154,5 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
     new Map(merged.map((t) => [`${t.source}:${t.externalId}`, t])).values(),
   );
 
-  return { tasks: deduped, errors };
+  return { tasks: deduped, errors, courseNames };
 }

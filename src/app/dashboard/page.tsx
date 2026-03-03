@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
 import { useSync } from "@/hooks/use-sync";
+import { useAutoSync } from "@/hooks/use-auto-sync";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { TaskBoard } from "@/components/task-board";
 import { TaskFilters as FilterBar } from "@/components/task-filters";
@@ -13,6 +14,8 @@ import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClipboardList } from "lucide-react";
+import type { TaskDisplayStatus } from "@/types/task";
+import type { SortOption } from "@/lib/utils";
 
 function TodayViewContent() {
   const searchParams = useSearchParams();
@@ -23,6 +26,7 @@ function TodayViewContent() {
   const type = searchParams.get("type");
   const course = searchParams.get("course");
   const status = searchParams.get("status");
+  const sort = (searchParams.get("sort") as SortOption) ?? "due-date";
   if (source && source !== "all")
     filters.source = source as TaskFilters["source"];
   if (type && type !== "all") filters.type = type as TaskFilters["type"];
@@ -32,6 +36,7 @@ function TodayViewContent() {
 
   const { data: tasks, isLoading: tasksLoading } = useTasks(filters);
   const { data: courses } = useCourses();
+  useAutoSync();
   const { bind, pullDistance, isReady } = usePullToRefresh({
     onRefresh: async () => {
       sync();
@@ -83,7 +88,11 @@ function TodayViewContent() {
           ))}
         </div>
       ) : tasks && tasks.length > 0 ? (
-        <TaskBoard tasks={tasks} />
+        <TaskBoard
+          tasks={tasks}
+          statusFilter={(status as TaskDisplayStatus) ?? undefined}
+          sort={sort}
+        />
       ) : (
         <EmptyState
           icon={ClipboardList}

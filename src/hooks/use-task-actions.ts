@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import type { TaskPriority, TaskStatus } from "@/types/task";
 
 interface TaskOverridePayload {
@@ -25,17 +26,42 @@ async function getCurrentUserId() {
   return user.id;
 }
 
+/**
+ * Fetch the existing override, merge with incoming changes, then upsert.
+ * This prevents overwriting untouched fields to null.
+ */
 async function upsertTaskOverride(payload: TaskOverridePayload) {
   const supabase = createClient();
   const userId = await getCurrentUserId();
+
+  // Fetch existing override to preserve untouched fields
+  const { data: existing } = await supabase
+    .from("task_overrides")
+    .select("custom_status, priority, notes")
+    .eq("user_id", userId)
+    .eq("task_id", payload.taskId)
+    .maybeSingle();
+
+  const merged = {
+    custom_status:
+      payload.customStatus !== undefined
+        ? payload.customStatus
+        : ((existing?.custom_status as TaskStatus | null) ?? null),
+    priority:
+      payload.priority !== undefined
+        ? payload.priority
+        : ((existing?.priority as TaskPriority | null) ?? null),
+    notes:
+      payload.notes !== undefined
+        ? payload.notes
+        : ((existing?.notes as string | null) ?? null),
+  };
 
   const { error } = await supabase.from("task_overrides").upsert(
     {
       user_id: userId,
       task_id: payload.taskId,
-      custom_status: payload.customStatus,
-      priority: payload.priority,
-      notes: payload.notes,
+      ...merged,
     },
     {
       onConflict: "user_id,task_id",
@@ -57,8 +83,18 @@ export function useTaskActions() {
     mutationFn: async ({ taskId, status }) => {
       await upsertTaskOverride({ taskId, customStatus: status });
     },
-    onSuccess: () => {
+    onSuccess: (_data, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      const label =
+        status === "done"
+          ? "Marked as done"
+          : status === "dismissed"
+            ? "Task dismissed"
+            : "Status updated";
+      toast.success(label);
+    },
+    onError: (err) => {
+      toast.error("Failed to update status", { description: err.message });
     },
   });
 
@@ -70,8 +106,14 @@ export function useTaskActions() {
     mutationFn: async ({ taskId, priority }) => {
       await upsertTaskOverride({ taskId, priority });
     },
-    onSuccess: () => {
+    onSuccess: (_data, { priority }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success(
+        priority ? `Priority set to ${priority}` : "Priority cleared",
+      );
+    },
+    onError: (err) => {
+      toast.error("Failed to update priority", { description: err.message });
     },
   });
 
@@ -85,6 +127,10 @@ export function useTaskActions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Notes saved");
+    },
+    onError: (err) => {
+      toast.error("Failed to save notes", { description: err.message });
     },
   });
 

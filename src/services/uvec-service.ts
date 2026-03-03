@@ -61,17 +61,24 @@ export async function fetchUvecICalViaProxy(
   return icsText;
 }
 
+export interface UvecIngestResult {
+  tasks: ParsedTask[];
+  courseNames: Map<string, string>;
+}
+
 /**
  * Fetches and parses UVEC tasks for a user.
  * Fetches directly from UVEC (server-side, no proxy needed).
  */
-export async function ingestUvecTasks(icalUrl: string): Promise<ParsedTask[]> {
+export async function ingestUvecTasks(
+  icalUrl: string,
+): Promise<UvecIngestResult> {
   const icsText = await fetchUvecICal(icalUrl);
-  const { tasks, errors } = parseICal(icsText);
+  const { tasks, errors, courseNames } = parseICal(icsText);
 
   if (tasks.length === 0 && errors.length > 0) {
     throw new Error(`UVEC parse failed: ${errors[0]}`);
   }
 
-  return tasks;
+  return { tasks, courseNames };
 }

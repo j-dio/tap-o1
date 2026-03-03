@@ -2,6 +2,32 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { syncAllTasks, type SyncResponse } from "@/lib/actions/sync";
+import { toast } from "sonner";
+
+/** Minimum interval between syncs (5 minutes) */
+const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
+/** Auto-sync threshold (1 hour since last sync) */
+export const AUTO_SYNC_STALE_MS = 60 * 60 * 1000;
+
+let lastSyncAtMs = 0;
+
+export function getLastSyncAt(): number {
+  return lastSyncAtMs;
+}
+
+export function timeSinceLastSync(): number {
+  if (lastSyncAtMs === 0) return Infinity;
+  return Date.now() - lastSyncAtMs;
+}
+
+export function isSyncOnCooldown(): boolean {
+  return timeSinceLastSync() < SYNC_COOLDOWN_MS;
+}
+
+export function cooldownRemainingMs(): number {
+  if (!isSyncOnCooldown()) return 0;
+  return SYNC_COOLDOWN_MS - timeSinceLastSync();
+}
 
 export function useSync() {
   const queryClient = useQueryClient();
@@ -18,12 +44,29 @@ export function useSync() {
             : `${result.errors[0]} (+${result.errors.length - 1} more)`;
         throw new Error(msg);
       }
+      // Record successful sync time
+      lastSyncAtMs = Date.now();
       return result;
     },
-    onSettled: () => {
+    onSettled: (_data, error) => {
       // Always invalidate caches — even on failure, the DB state may have changed
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["courses"] });
+
+      // Surface toast notifications
+      if (error) {
+        toast.error("Sync failed", { description: error.message });
+      } else if (_data) {
+        const { synced, errors: warnings } = _data;
+        if (synced > 0 && warnings.length === 0) {
+          toast.success(`Synced ${synced} task${synced !== 1 ? "s" : ""}`);
+        } else if (synced > 0 && warnings.length > 0) {
+          toast.warning(
+            `Synced ${synced} task${synced !== 1 ? "s" : ""} with warnings`,
+            { description: warnings[0] },
+          );
+        }
+      }
     },
   });
 }
