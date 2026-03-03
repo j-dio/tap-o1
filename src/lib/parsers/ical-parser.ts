@@ -29,20 +29,59 @@ function normalizeType(category: string | undefined): TaskType {
   return "event";
 }
 
+/**
+ * Extract a course identifier from iCal event properties.
+ * Moodle/UVEC often stores the course name in CATEGORIES or as a prefix
+ * in the DESCRIPTION field (e.g., "Course: Intro to CS" or
+ * "[CS101] Assignment 1").
+ */
+function extractCourseId(
+  category: string | null,
+  description: string | null,
+  summary: string | null,
+): string | null {
+  // Prefer CATEGORIES — Moodle sets this to the course shortname
+  if (category) {
+    const trimmed = category.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+
+  // Try to pull course from description: "Course: <name>" pattern
+  if (description) {
+    const courseMatch = description.match(/^Course:\s*(.+)/im);
+    if (courseMatch?.[1]) return courseMatch[1].trim();
+  }
+
+  // Try bracketed prefix in summary: "[CS101] Assignment 1"
+  if (summary) {
+    const bracketMatch = summary.match(/^\[([^\]]+)\]/);
+    if (bracketMatch?.[1]) return bracketMatch[1].trim();
+  }
+
+  return null;
+}
+
 export interface ICalParseResult {
   tasks: ParsedTask[];
   errors: string[];
+  /** Map of courseExternalId -> display name extracted from iCal */
+  courseNames: Map<string, string>;
 }
 
 export function parseICal(ics: string): ICalParseResult {
   const errors: string[] = [];
+  const courseNames = new Map<string, string>();
 
   if (ics.length > MAX_ICAL_SIZE) {
-    return { tasks: [], errors: ["iCal file exceeds 5MB size limit"] };
+    return {
+      tasks: [],
+      errors: ["iCal file exceeds 5MB size limit"],
+      courseNames,
+    };
   }
 
   if (!ics.trim()) {
-    return { tasks: [], errors: [] };
+    return { tasks: [], errors: [], courseNames };
   }
 
   try {
@@ -63,14 +102,22 @@ export function parseICal(ics: string): ICalParseResult {
         continue;
       }
 
+      const categoryStr = category ? String(category) : null;
+      const descStr = description ? String(description) : null;
+      const summaryStr = String(summary);
+      const courseId = extractCourseId(categoryStr, descStr, summaryStr);
+
+      // Track course names for later upsert
+      if (courseId) {
+        courseNames.set(courseId, courseId);
+      }
+
       const parsed = ICalEventSchema.safeParse({
         external_id: String(uid),
-        title: String(summary),
-        description: description ? String(description) : undefined,
+        title: summaryStr,
+        description: descStr ?? undefined,
         due_date: typeof dtstart === "string" ? dtstart : dtstart.toString(),
-        type: normalizeType(
-          category ? String(category).toLowerCase() : undefined,
-        ),
+        type: normalizeType(categoryStr?.toLowerCase() ?? undefined),
       });
 
       if (parsed.success) {
@@ -81,7 +128,7 @@ export function parseICal(ics: string): ICalParseResult {
           dueDate: parsed.data.due_date,
           type: parsed.data.type,
           source: "uvec",
-          courseExternalId: null,
+          courseExternalId: courseId,
           url: null,
         });
       } else {
@@ -89,13 +136,14 @@ export function parseICal(ics: string): ICalParseResult {
       }
     }
 
-    return { tasks, errors };
+    return { tasks, errors, courseNames };
   } catch (err) {
     return {
       tasks: [],
       errors: [
         `iCal parse error: ${err instanceof Error ? err.message : "Unknown error"}`,
       ],
+      courseNames,
     };
   }
 }
