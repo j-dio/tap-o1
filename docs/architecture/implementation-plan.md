@@ -161,6 +161,97 @@ src/components/task-filters.tsx
 src/components/task-detail-modal.tsx
 ```
 
+### Phase 5.5: Enhanced Features & Polish (Size: M — ~4 hours)
+
+**UI/UX Enhancements:**
+
+- [x] NEW badge on task cards — animated pulse effect for tasks created within 5 minutes
+- [x] Priority indicator system — visual badges (low/medium/high/urgent) on task cards
+- [x] Urgency-based visual hierarchy — color-coded left borders on cards:
+  - Red: Overdue
+  - Orange: Urgent
+  - Cyan: Due soon (this week)
+  - Grey: Later
+- [x] Toast notification system — integrated Sonner for real-time sync feedback and task actions
+- [x] Mobile-responsive enhancements:
+  - Pull-to-refresh gesture detection with threshold-based triggering
+  - Mobile sidebar navigation with hamburger menu
+  - Device-specific view toggle (Today/Week)
+  - Touch event binding with proper cancellation handling
+  - Responsive grid layouts using Tailwind CSS
+
+**State Management & Performance:**
+
+- [x] Auto-sync cooldown mechanism — 5-minute throttle prevents server load while maintaining freshness
+- [x] Stale time optimization — 5-minute stale time for task queries with query invalidation on mutations
+- [x] React Query integration — `useTasks()` hook with flexible filtering (source, type, course, status)
+- [x] Custom sync hooks:
+  - `useAutoSync()`: Automatic sync when data is stale (>1 hour), respecting 5-minute cooldown
+  - `usePullToRefresh()`: Touch gesture handling for mobile refresh
+  - `useTaskActions()`: Mutations for status, priority, and notes management
+  - `useSync()`: Central sync orchestration with cooldown management
+
+**Advanced Filtering & Sorting:**
+
+- [x] Enhanced filter bar with multiple persistent filters:
+  - Source filtering (UVEC/Google Classroom)
+  - Type filtering (assignment, quiz, exam, event, announcement)
+  - Course filtering with dynamic dropdown
+  - Status filtering including "overdue" display status
+- [x] Sort dropdown — tasks sortable by due-date, priority, type, and title
+- [x] URL-based state persistence — filters bookmarkable and shareable
+- [x] Grouping system with urgency buckets:
+  - Overdue, Today, This Week, Later columns with task count badges
+  - Conditional bucket logic based on active status filters
+  - Scroll areas for horizontal board layout
+
+**Data Integrity & Error Handling:**
+
+- [x] Graceful fallbacks — handles missing task_overrides table with safe error recovery
+- [x] Partial sync success — continues operation without failing on per-source errors
+- [x] Toast-based error messaging — user-friendly error descriptions
+- [x] Type safety improvements:
+  - `TaskWithCourse` type for joined database queries
+  - `TaskDisplayStatus` extending `TaskStatus` for overdue semantic distinctions
+  - `TaskUrgency` enum for clear urgency classification
+  - `ParsedTask` intermediate type used by both UVEC and GClassroom parsers
+
+**Service Architecture:**
+
+- [x] Dual-source deduplication — prevent task duplication by `source:externalId` combination
+- [x] Parallel fetching with error recovery — `Promise.allSettled()` for resilient multi-source ingestion
+- [x] Token refresh strategy — automatic Google OAuth token refresh with fallback handling
+- [x] Sync engine orchestration — `syncAllTasks()` server action for secure token handling
+
+**Additional Features:**
+
+- [x] Relative date formatting — human-readable time indicators ("in 2h", "3d ago", etc.)
+- [x] Course color assignment — deterministic hashing for consistent visual identification
+- [x] Dark mode support — CSS variable-based theming with system preference detection
+- [x] External links — direct links to source platforms (Google Classroom / UVEC Moodle)
+
+**Status:** Complete. All phase 5.5 enhancements have been implemented and integrated into the dashboard, improving both user experience and system reliability.
+
+**Files:**
+
+```
+src/components/task-card.tsx
+src/components/task-board.tsx
+src/components/sync-button.tsx
+src/hooks/use-sync.ts
+src/hooks/use-pull-to-refresh.ts
+src/hooks/use-task-actions.ts
+src/hooks/use-auto-sync.ts
+src/components/task-filters.tsx
+src/lib/sync-engine.ts
+src/services/gclassroom-service.ts
+src/services/uvec-service.ts
+src/lib/parsers/ical-parser.ts
+src/lib/parsers/gclassroom-parser.ts
+src/lib/actions/sync.ts
+src/types/task.ts
+```
+
 ### Phase 6: Notifications & Reminders (Size: M — ~4 hours)
 
 - [ ] Web Push API: subscription management
@@ -233,6 +324,7 @@ README.md
 | Phase 3: GClassroom Ingestion | 4h            | 14h                        |
 | Phase 4: Dashboard UI         | 6h            | 20h                        |
 | Phase 5: Task Management      | 3h            | 23h                        |
-| Phase 6: Notifications        | 4h            | 27h                        |
-| Phase 7: Polish & Launch      | 4h            | 31h                        |
-| **Total**                     | **~31 hours** | **~2-3 weeks** (part-time) |
+| Phase 5.5: Enhanced Features  | 4h            | 27h                        |
+| Phase 6: Notifications        | 4h            | 31h                        |
+| Phase 7: Polish & Launch      | 4h            | 35h                        |
+| **Total**                     | **~35 hours** | **~3-4 weeks** (part-time) |
