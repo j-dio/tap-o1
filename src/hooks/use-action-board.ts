@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { TaskWithCourse, ActionBoardBuckets } from "@/types/task";
 
 const DONE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const TODO_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days ahead
 
 export function useActionBoard(tasks: TaskWithCourse[]): ActionBoardBuckets {
   return useMemo(() => {
@@ -25,7 +26,12 @@ export function useActionBoard(tasks: TaskWithCourse[]): ActionBoardBuckets {
       } else if (task.status === "in_progress") {
         buckets.inProgress.push(task);
       } else {
-        buckets.todo.push(task);
+        // Only show pending tasks due within the next 7 days (or overdue /
+        // undated) — tasks further out are noise in the action board.
+        const dueMs = task.dueDate ? new Date(task.dueDate).getTime() : null;
+        if (dueMs === null || dueMs <= now + TODO_WINDOW_MS) {
+          buckets.todo.push(task);
+        }
       }
     }
 
