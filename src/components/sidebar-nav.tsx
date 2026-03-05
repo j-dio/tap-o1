@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarRange, LogOut, Settings } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,8 @@ interface SidebarNavProps {
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Today", icon: CalendarDays },
-  { href: "/dashboard/week", label: "Week", icon: CalendarRange },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/timeline", label: "Timeline", icon: CalendarDays },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

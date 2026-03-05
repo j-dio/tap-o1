@@ -7,11 +7,19 @@ export type TaskType =
   | "event"
   | "announcement";
 
-export type TaskStatus = "pending" | "done" | "dismissed";
+export type TaskStatus = "pending" | "in_progress" | "done" | "dismissed";
 
 export type TaskDisplayStatus = TaskStatus | "overdue";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
+
+export type ActionBoardColumn = "todo" | "in_progress" | "done";
+
+export interface ActionBoardBuckets {
+  todo: TaskWithCourse[];
+  inProgress: TaskWithCourse[];
+  done: TaskWithCourse[];
+}
 
 export interface Task {
   id: string;

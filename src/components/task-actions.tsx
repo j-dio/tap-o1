@@ -49,6 +49,23 @@ export function TaskActions({ task }: TaskActionsProps) {
         <Button
           type="button"
           size="sm"
+          variant={task.status === "in_progress" ? "default" : "outline"}
+          className={
+            task.status === "in_progress"
+              ? "bg-warning text-warning-foreground hover:bg-warning/90"
+              : ""
+          }
+          disabled={isSavingStatus}
+          onClick={() => {
+            setStatus.mutate({ taskId: task.id, status: "in_progress" });
+          }}
+        >
+          In Progress
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
           variant={task.status === "dismissed" ? "secondary" : "outline"}
           disabled={isSavingStatus}
           onClick={() => {

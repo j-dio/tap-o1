@@ -98,6 +98,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
         <SelectContent>
           <SelectItem value="all">All status</SelectItem>
           <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="in_progress">In Progress</SelectItem>
           <SelectItem value="overdue">Overdue</SelectItem>
           <SelectItem value="done">Done</SelectItem>
           <SelectItem value="dismissed">Dismissed</SelectItem>

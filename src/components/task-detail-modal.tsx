@@ -1,7 +1,7 @@
 "use client";
 
 import type { TaskWithCourse } from "@/types/task";
-import { formatRelativeDate, getTaskUrgency } from "@/lib/utils";
+import { formatRelativeDate, getTaskUrgency, cn } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
 import { SourceIcon } from "@/components/source-icon";
 import { TaskActions } from "@/components/task-actions";
@@ -57,11 +57,21 @@ export function TaskDetailModal({
           </Badge>
           <Badge
             variant={
-              task.displayStatus === "overdue" ? "destructive" : "secondary"
+              task.displayStatus === "overdue"
+                ? "destructive"
+                : task.status === "in_progress"
+                  ? "default"
+                  : "secondary"
             }
-            className="text-xs"
+            className={cn(
+              "text-xs",
+              task.status === "in_progress" &&
+                "bg-warning text-warning-foreground",
+            )}
           >
-            {task.displayStatus ?? task.status}
+            {task.status === "in_progress"
+              ? "in progress"
+              : (task.displayStatus ?? task.status)}
           </Badge>
         </div>
 
