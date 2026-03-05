@@ -150,6 +150,8 @@ src/lib/actions/sync.ts
 
 **Status:** Complete. Task overrides now persist per-user task management state (status, priority, notes) without mutating source data. Overdue is derived client-side from pending + due_date in the past.
 
+> **Bug discovered post-merge:** `supabase/migrations/003_task_overrides.sql` was never applied to the production Supabase project, causing all task action buttons (mark done, dismiss, reset, priority, notes) to return 404 errors from PostgREST. Fixed in Phase 5.6 by applying the migration directly. No application code was affected.
+
 **Files:**
 
 ```
@@ -252,6 +254,44 @@ src/lib/actions/sync.ts
 src/types/task.ts
 ```
 
+### Phase 5.6: Bug Fixes & Submission Sync (Size: S — fixes branch)
+
+**Bug Fixes:**
+
+- [x] Apply `003_task_overrides.sql` migration to production — resolves all 5 task action failures (mark done, dismiss, reset, set priority, save notes) that returned 404 from PostgREST due to missing table
+- [x] Reset button behavior confirmed correct — sets `custom_status` back to `"pending"` via `task_overrides` upsert, no code change required
+
+**Overdue & Later Date-Window Filtering:**
+
+- [x] Add `overdueWindowDays` (default 30) and `laterWindowDays` (default 60) to `TaskFilters`
+- [x] Applied as a single server-side `.or()` filter on `due_date` — tasks outside the window are never fetched (null due_date always included)
+- [x] "Show older" button at the bottom of Overdue and Later columns expands the respective window by 30 days per click
+- [x] Window state managed in the dashboard page with `useState`; callbacks passed down to `TaskBoard`; both the primary and PGRST200-fallback query paths apply the same filter
+
+**Google Classroom Submission Auto-Mark:**
+
+- [x] Add `getStudentSubmissions(courseId)` to `GClassroomService` using the wildcard endpoint `courseWork/-/studentSubmissions?userId=me` — fetches all submissions for a course in one request; failure is non-critical (tasks sync without status if endpoint errors)
+- [x] Submission fetch runs in parallel with `getCourseWork` per course inside `Promise.allSettled`; retry path on token expiry also includes submissions
+- [x] `parseGClassroomResponse` accepts optional `submissionMap: Map<string, string>` (courseWorkId → state); sets `status: "done"` for `TURNED_IN`/`RETURNED`, `status: "pending"` for any other known state
+- [x] Add optional `status?: TaskStatus` to `ParsedTask` interface so parsers can signal platform-level completion
+- [x] Task upsert in `syncAllTasks` conditionally includes `status` only when the parser explicitly set it — existing status is preserved otherwise
+
+**Status:** Complete. All reported bugs resolved; overdue backlog is now bounded by a rolling 30-day window; submitted Google Classroom assignments are automatically marked done on next sync.
+
+**Files:**
+
+```
+supabase/migrations/003_task_overrides.sql  (applied to production)
+src/hooks/use-tasks.ts
+src/app/dashboard/page.tsx
+src/components/task-board.tsx
+src/types/task.ts
+src/services/gclassroom-service.ts
+src/lib/parsers/gclassroom-parser.ts
+src/lib/sync-engine.ts
+src/lib/actions/sync.ts
+```
+
 ### Phase 6: Notifications & Reminders (Size: M — ~4 hours)
 
 - [ ] Web Push API: subscription management
@@ -325,6 +365,7 @@ README.md
 | Phase 4: Dashboard UI         | 6h            | 20h                        |
 | Phase 5: Task Management      | 3h            | 23h                        |
 | Phase 5.5: Enhanced Features  | 4h            | 27h                        |
-| Phase 6: Notifications        | 4h            | 31h                        |
-| Phase 7: Polish & Launch      | 4h            | 35h                        |
-| **Total**                     | **~35 hours** | **~3-4 weeks** (part-time) |
+| Phase 5.6: Bug Fixes          | 1h            | 28h                        |
+| Phase 6: Notifications        | 4h            | 32h                        |
+| Phase 7: Polish & Launch      | 4h            | 36h                        |
+| **Total**                     | **~36 hours** | **~3-4 weeks** (part-time) |
