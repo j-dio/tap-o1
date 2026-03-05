@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const views = [
-  { href: "/dashboard", label: "Today" },
-  { href: "/dashboard/week", label: "Week" },
+  { href: "/dashboard", label: "Board" },
+  { href: "/dashboard/timeline", label: "Timeline" },
 ];
 
 export function ViewToggle() {
