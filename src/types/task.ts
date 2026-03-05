@@ -19,6 +19,8 @@ export interface ActionBoardBuckets {
   todo: TaskWithCourse[];
   inProgress: TaskWithCourse[];
   done: TaskWithCourse[];
+  /** True when pending tasks exist beyond the current To Do time window. */
+  todoHasMore: boolean;
 }
 
 export interface Task {

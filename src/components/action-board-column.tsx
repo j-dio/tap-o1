@@ -11,8 +11,9 @@ import type {
 } from "@/types/task";
 import { SortableTaskCard } from "@/components/sortable-task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Clock, ListTodo } from "lucide-react";
+import { CheckCircle2, ChevronDown, Clock, ListTodo } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const columnIcons: Record<ColumnId, LucideIcon> = {
@@ -26,6 +27,10 @@ interface ActionBoardColumnProps {
   title: string;
   tasks: TaskWithCourse[];
   accentClass: string;
+  /** Show More callback — only provided for the To Do column. */
+  onShowMore?: () => void;
+  /** Current To Do window in days (used for button label). */
+  todoWindowDays?: number;
 }
 
 export function ActionBoardColumn({
@@ -33,6 +38,8 @@ export function ActionBoardColumn({
   title,
   tasks,
   accentClass,
+  onShowMore,
+  todoWindowDays,
 }: ActionBoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const Icon = columnIcons[id];
@@ -71,6 +78,19 @@ export function ActionBoardColumn({
             )}
           </div>
         </SortableContext>
+
+        {onShowMore && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full text-xs"
+            onClick={onShowMore}
+          >
+            <ChevronDown className="mr-1 size-3" />
+            Show tasks due in next{" "}
+            {todoWindowDays !== undefined ? todoWindowDays + 7 : 14} days
+          </Button>
+        )}
       </ScrollArea>
     </div>
   );

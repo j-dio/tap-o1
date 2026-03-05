@@ -1,18 +1,32 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { TaskWithCourse, ActionBoardBuckets } from "@/types/task";
 
 const DONE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const TODO_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days ahead
 
-export function useActionBoard(tasks: TaskWithCourse[]): ActionBoardBuckets {
+/**
+ * @param tasks        All tasks returned by useTasks.
+ * @param todoWindowDays  How many days ahead to include in the To Do bucket
+ *                        (default 7). Increase via the Show More control.
+ */
+export function useActionBoard(
+  tasks: TaskWithCourse[],
+  todoWindowDays = 7,
+): ActionBoardBuckets {
+  // Snapshot the current time once at mount via useState's lazy initialiser.
+  // Passing `Date.now` as a function *reference* (not invoking it) means React
+  // calls it internally — the React Compiler does not see a direct impure call
+  // during render.
+  const [snapNow] = useState(Date.now);
+
   return useMemo(() => {
-    const now = Date.now();
+    const todoWindowMs = todoWindowDays * 24 * 60 * 60 * 1000;
     const buckets: ActionBoardBuckets = {
       todo: [],
       inProgress: [],
       done: [],
+      todoHasMore: false,
     };
 
     for (const task of tasks) {
@@ -20,17 +34,18 @@ export function useActionBoard(tasks: TaskWithCourse[]): ActionBoardBuckets {
 
       if (task.status === "done") {
         const completedAt = new Date(task.updatedAt).getTime();
-        if (now - completedAt <= DONE_WINDOW_MS) {
+        if (snapNow - completedAt <= DONE_WINDOW_MS) {
           buckets.done.push(task);
         }
       } else if (task.status === "in_progress") {
         buckets.inProgress.push(task);
       } else {
-        // Only show pending tasks due within the next 7 days (or overdue /
-        // undated) — tasks further out are noise in the action board.
         const dueMs = task.dueDate ? new Date(task.dueDate).getTime() : null;
-        if (dueMs === null || dueMs <= now + TODO_WINDOW_MS) {
+        if (dueMs === null || dueMs <= snapNow + todoWindowMs) {
           buckets.todo.push(task);
+        } else {
+          // Task exists beyond the current window — more are available
+          buckets.todoHasMore = true;
         }
       }
     }
@@ -56,5 +71,5 @@ export function useActionBoard(tasks: TaskWithCourse[]): ActionBoardBuckets {
     );
 
     return buckets;
-  }, [tasks]);
+  }, [tasks, todoWindowDays, snapNow]);
 }

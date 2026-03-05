@@ -1,6 +1,8 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useCallback } from "react";
+
+const MAX_TODO_WINDOW_DAYS = 56; // 8 weeks — matches the 60-day fetch window
 import { useSearchParams } from "next/navigation";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
@@ -48,7 +50,16 @@ function DashboardContent() {
     disabled: isSyncing,
   });
 
-  const { todo, inProgress, done } = useActionBoard(tasks ?? []);
+  const [todoWindowDays, setTodoWindowDays] = useState(7);
+  const handleShowMoreTodo = useCallback(
+    () => setTodoWindowDays((d) => Math.min(d + 7, MAX_TODO_WINDOW_DAYS)),
+    [],
+  );
+
+  const { todo, inProgress, done, todoHasMore } = useActionBoard(
+    tasks ?? [],
+    todoWindowDays,
+  );
   const upNextTask = useUpNext(tasks ?? []);
   const focusTasks = useFocusMode(tasks ?? []);
 
@@ -126,6 +137,8 @@ function DashboardContent() {
               todoTasks={todo}
               inProgressTasks={inProgress}
               doneTasks={done}
+              todoWindowDays={todoWindowDays}
+              onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
             />
           </>
         )
