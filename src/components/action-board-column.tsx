@@ -60,7 +60,7 @@ export function ActionBoardColumn({
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="min-h-[100px] space-y-2">
+          <div className="min-h-25 space-y-2">
             {tasks.map((task) => (
               <SortableTaskCard key={task.id} task={task} />
             ))}
