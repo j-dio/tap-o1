@@ -13,7 +13,13 @@ import { SortableTaskCard } from "@/components/sortable-task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, ChevronDown, ChevronUp, Clock, ListTodo } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  ListTodo,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const columnIcons: Record<ColumnId, LucideIcon> = {

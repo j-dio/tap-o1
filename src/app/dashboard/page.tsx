@@ -143,7 +143,9 @@ function DashboardContent() {
               doneTasks={done}
               todoWindowDays={todoWindowDays}
               onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
-              onShowLessTodo={todoWindowDays > 7 ? handleShowLessTodo : undefined}
+              onShowLessTodo={
+                todoWindowDays > 7 ? handleShowLessTodo : undefined
+              }
             />
           </>
         )
