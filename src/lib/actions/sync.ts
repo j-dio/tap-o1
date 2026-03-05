@@ -169,6 +169,10 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     if (t.url) {
       row.url = t.url;
     }
+    // Only include status when the parser explicitly set it (e.g. GC submission)
+    if (t.status) {
+      row.status = t.status;
+    }
     return row;
   });
 

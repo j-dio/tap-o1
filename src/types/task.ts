@@ -57,6 +57,8 @@ export interface ParsedTask {
   source: TaskSource;
   courseExternalId: string | null;
   url: string | null;
+  /** Set by parsers when external source indicates completion (e.g. GC submission) */
+  status?: TaskStatus;
 }
 
 /**

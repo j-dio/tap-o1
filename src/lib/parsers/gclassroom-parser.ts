@@ -59,8 +59,13 @@ function formatDueDate(
   return `${y}-${m}-${d}T${h}:${min}:${s}`;
 }
 
+const SUBMITTED_STATES = new Set(["TURNED_IN", "RETURNED"]);
+
 // Convert Google Classroom courseWork array to ParsedTask[]
-export function parseGClassroomResponse(response: unknown): ParsedTask[] {
+export function parseGClassroomResponse(
+  response: unknown,
+  submissionMap?: Map<string, string>,
+): ParsedTask[] {
   if (!response || typeof response !== "object") return [];
   const courseWorkArr = (response as { courseWork?: unknown[] }).courseWork;
   if (!Array.isArray(courseWorkArr)) return [];
@@ -68,7 +73,8 @@ export function parseGClassroomResponse(response: unknown): ParsedTask[] {
     .map((item): ParsedTask | null => {
       try {
         const cw = GClassroomCourseWorkSchema.parse(item);
-        return {
+        const subState = submissionMap?.get(cw.id);
+        const task: ParsedTask = {
           externalId: cw.id,
           title: cw.title,
           description: cw.description ?? null,
@@ -78,6 +84,10 @@ export function parseGClassroomResponse(response: unknown): ParsedTask[] {
           courseExternalId: cw.courseId,
           url: cw.alternateLink ?? null,
         };
+        if (subState) {
+          task.status = SUBMITTED_STATES.has(subState) ? "done" : "pending";
+        }
+        return task;
       } catch {
         return null;
       }
