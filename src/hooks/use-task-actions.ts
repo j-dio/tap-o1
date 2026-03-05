@@ -1,9 +1,13 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import type { TaskPriority, TaskStatus } from "@/types/task";
+import type { TaskPriority, TaskStatus, TaskWithCourse } from "@/types/task";
 
 interface TaskOverridePayload {
   taskId: string;
@@ -78,10 +82,35 @@ export function useTaskActions() {
   const setStatus = useMutation<
     void,
     Error,
-    { taskId: string; status: TaskStatus }
+    { taskId: string; status: TaskStatus },
+    { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
   >({
     mutationFn: async ({ taskId, status }) => {
       await upsertTaskOverride({ taskId, customStatus: status });
+    },
+    onMutate: async ({ taskId, status }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousQueries = queryClient.getQueriesData<TaskWithCourse[]>({
+        queryKey: ["tasks"],
+      });
+      const now = new Date().toISOString();
+      queryClient.setQueriesData<TaskWithCourse[]>(
+        { queryKey: ["tasks"] },
+        (old) => {
+          if (!old) return old;
+          return old.map((task) => {
+            if (task.id !== taskId) return task;
+            const displayStatus =
+              status === "pending" &&
+              task.dueDate &&
+              new Date(task.dueDate) < new Date()
+                ? ("overdue" as const)
+                : status;
+            return { ...task, status, displayStatus, updatedAt: now };
+          });
+        },
+      );
+      return { previousQueries };
     },
     onSuccess: (_data, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -95,7 +124,12 @@ export function useTaskActions() {
               : "Status updated";
       toast.success(label);
     },
-    onError: (err) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       toast.error("Failed to update status", { description: err.message });
     },
   });
@@ -103,10 +137,27 @@ export function useTaskActions() {
   const setPriority = useMutation<
     void,
     Error,
-    { taskId: string; priority: TaskPriority | null }
+    { taskId: string; priority: TaskPriority | null },
+    { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
   >({
     mutationFn: async ({ taskId, priority }) => {
       await upsertTaskOverride({ taskId, priority });
+    },
+    onMutate: async ({ taskId, priority }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousQueries = queryClient.getQueriesData<TaskWithCourse[]>({
+        queryKey: ["tasks"],
+      });
+      queryClient.setQueriesData<TaskWithCourse[]>(
+        { queryKey: ["tasks"] },
+        (old) => {
+          if (!old) return old;
+          return old.map((task) =>
+            task.id === taskId ? { ...task, priority } : task,
+          );
+        },
+      );
+      return { previousQueries };
     },
     onSuccess: (_data, { priority }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -114,7 +165,12 @@ export function useTaskActions() {
         priority ? `Priority set to ${priority}` : "Priority cleared",
       );
     },
-    onError: (err) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       toast.error("Failed to update priority", { description: err.message });
     },
   });
@@ -122,16 +178,38 @@ export function useTaskActions() {
   const setNotes = useMutation<
     void,
     Error,
-    { taskId: string; notes: string | null }
+    { taskId: string; notes: string | null },
+    { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
   >({
     mutationFn: async ({ taskId, notes }) => {
       await upsertTaskOverride({ taskId, notes });
+    },
+    onMutate: async ({ taskId, notes }) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousQueries = queryClient.getQueriesData<TaskWithCourse[]>({
+        queryKey: ["tasks"],
+      });
+      queryClient.setQueriesData<TaskWithCourse[]>(
+        { queryKey: ["tasks"] },
+        (old) => {
+          if (!old) return old;
+          return old.map((task) =>
+            task.id === taskId ? { ...task, notes } : task,
+          );
+        },
+      );
+      return { previousQueries };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Notes saved");
     },
-    onError: (err) => {
+    onError: (err, _vars, context) => {
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
       toast.error("Failed to save notes", { description: err.message });
     },
   });

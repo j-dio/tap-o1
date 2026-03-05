@@ -369,3 +369,40 @@ README.md
 | Phase 6: Notifications        | 4h            | 32h                        |
 | Phase 7: Polish & Launch      | 4h            | 36h                        |
 | **Total**                     | **~36 hours** | **~3-4 weeks** (part-time) |
+
+---
+
+## Action Board — Bug Fixes & Polish (Phase 5.7)
+
+### ✅ Completed
+
+| #   | Change                                                                                         | Commit    |
+| --- | ---------------------------------------------------------------------------------------------- | --------- |
+| 1   | Done tasks disappear — `updatedAt` now uses `max(tasks.updated_at, task_overrides.updated_at)` | `df11613` |
+| 2   | In-Progress capped at 1 — `kanbanCollision` strategy replaces `closestCorners`                 | `df11613` |
+| 3   | Drag to Done blocked — `pointerWithin` + column-preference collision resolver                  | `df11613` |
+| 4   | Todo window limited to 7 days (reduces noise)                                                  | `df11613` |
+| 5   | Show More button — extends window by 7 days per click (max 56)                                 | `9e3ffa2` |
+| 6   | Show Less button — collapses window by 7 days per click (floor 7)                              | `064a8ad` |
+| 7   | `Date.now()` impure render error — replaced with `useState(Date.now)` lazy init                | `9e3ffa2` |
+| 8   | Optimistic UI — drag/button moves card instantly; rolls back on server error                   | latest    |
+| 9   | Per-column empty states — context-aware messages with icons per column                         | latest    |
+| 10  | Todo window persisted in `sessionStorage` — survives page refresh within session               | latest    |
+| 11  | `computeActionBoardBuckets` extracted as pure function for testability                         | latest    |
+| 12  | 13 unit tests for `computeActionBoardBuckets` — all passing                                    | latest    |
+
+### 🔲 Remaining / Deferred
+
+| Priority | Item                             | Notes                                                                              |
+| -------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| Low      | Animate Show More/Less expansion | Needs Framer Motion `AnimatePresence` or CSS grid trick; deferred to avoid new dep |
+| Low      | Unit tests for `kanbanCollision` | Requires `jsdom` environment; vitest currently runs in `node`                      |
+
+### 📐 Architecture Notes
+
+- **Collision**: `kanbanCollision` → `pointerWithin` → column-preference → `rectIntersection` fallback
+- **Window state**: `todoWindowDays` lives in `DashboardContent`, persisted to `sessionStorage["todoWindowDays"]`; threaded as `todoWindowDays` + `onShowMore` + `onShowLess`
+- **Time anchor**: `useState(Date.now)` at mount — stable across re-renders within a session
+- **Done visibility window**: 7 days from effective `updatedAt` (max of task + override timestamps)
+- **Todo visibility window**: user-controlled 7–56 days; tasks with no due date always shown
+- **Optimistic UI**: `onMutate` snapshots all `["tasks", *]` cache entries via `getQueriesData`; `onError` restores them; `onSuccess` confirms with `invalidateQueries`

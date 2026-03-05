@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  ListCheck,
   ListTodo,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -27,6 +28,42 @@ const columnIcons: Record<ColumnId, LucideIcon> = {
   in_progress: Clock,
   done: CheckCircle2,
 };
+
+// ---- Per-column empty state ------------------------------------------------
+
+interface ColumnEmptyStateProps {
+  id: ColumnId;
+  todoWindowDays?: number;
+}
+
+function ColumnEmptyState({ id, todoWindowDays }: ColumnEmptyStateProps) {
+  const config = {
+    todo: {
+      icon: ListTodo,
+      title: "All caught up!",
+      description: `No tasks due in the next ${todoWindowDays ?? 7} days.`,
+    },
+    in_progress: {
+      icon: Clock,
+      title: "Nothing in progress",
+      description: "Drag tasks here or mark one as in progress.",
+    },
+    done: {
+      icon: ListCheck,
+      title: "Nothing done yet",
+      description: "Drag tasks here or mark them as done.",
+    },
+  }[id];
+  const Icon = config.icon;
+
+  return (
+    <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center">
+      <Icon className="size-6 opacity-40" />
+      <p className="text-xs font-medium">{config.title}</p>
+      <p className="text-xs opacity-70">{config.description}</p>
+    </div>
+  );
+}
 
 interface ActionBoardColumnProps {
   id: ColumnId;
@@ -81,9 +118,7 @@ export function ActionBoardColumn({
               <SortableTaskCard key={task.id} task={task} />
             ))}
             {tasks.length === 0 && (
-              <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
-                {id === "done" ? "No completed tasks" : "Drop tasks here"}
-              </div>
+              <ColumnEmptyState id={id} todoWindowDays={todoWindowDays} />
             )}
           </div>
         </SortableContext>
