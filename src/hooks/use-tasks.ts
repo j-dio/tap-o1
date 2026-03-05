@@ -34,6 +34,15 @@ function mapRow(row: Record<string, unknown>): TaskWithCourse {
     effectiveStatus === "pending" && dueDate && new Date(dueDate) < new Date()
       ? "overdue"
       : effectiveStatus;
+  // Use the more recent of tasks.updated_at and task_overrides.updated_at so that
+  // marking a task as done (which only touches the override row) results in an
+  // up-to-date updatedAt, keeping the task visible in the done window.
+  const taskUpdatedAt = (row.updated_at as string) ?? "";
+  const overrideUpdatedAt = (override?.updated_at as string) ?? null;
+  const effectiveUpdatedAt =
+    overrideUpdatedAt && overrideUpdatedAt > taskUpdatedAt
+      ? overrideUpdatedAt
+      : taskUpdatedAt;
 
   return {
     id: row.id as string,
@@ -48,9 +57,9 @@ function mapRow(row: Record<string, unknown>): TaskWithCourse {
     dueDate,
     url: (row.url as string) ?? null,
     metadata: {},
-    fetchedAt: (row.updated_at as string) ?? "",
+    fetchedAt: taskUpdatedAt,
     createdAt: (row.created_at as string) ?? "",
-    updatedAt: (row.updated_at as string) ?? "",
+    updatedAt: effectiveUpdatedAt,
     priority: (override?.priority as TaskPriority | null) ?? null,
     notes: (override?.notes as string | null) ?? null,
     displayStatus,

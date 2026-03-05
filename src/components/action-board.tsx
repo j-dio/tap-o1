@@ -4,7 +4,8 @@ import { useState, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
@@ -12,7 +13,8 @@ import {
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
+  type CollisionDetection,
+  type CollisionDescriptor,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { TaskWithCourse, ActionBoardColumn } from "@/types/task";
@@ -32,6 +34,34 @@ const statusMap: Record<ActionBoardColumn, "pending" | "in_progress" | "done"> =
     in_progress: "in_progress",
     done: "done",
   };
+
+const COLUMN_IDS = new Set<ActionBoardColumn>(["todo", "in_progress", "done"]);
+
+/**
+ * Custom collision detection for the kanban board.
+ *
+ * Strategy:
+ * 1. Use pointerWithin — checks what the *mouse pointer* is physically over,
+ *    not which corners of the dragged card are geometrically nearest. This
+ *    prevents a card in an adjacent column from "stealing" the collision when
+ *    dragging across columns (the closestCorners bug).
+ * 2. Among the detected collisions, prefer column container IDs over task card
+ *    IDs so dropping onto an occupied column reliably resolves to the column.
+ * 3. Fall back to rectIntersection when the pointer isn't within any droppable
+ *    (e.g. dragging in a gap between columns).
+ */
+const kanbanCollision: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+
+  if (pointerCollisions.length > 0) {
+    const columnHit = pointerCollisions.find((c: CollisionDescriptor) =>
+      COLUMN_IDS.has(c.id as ActionBoardColumn),
+    );
+    return columnHit ? [columnHit] : pointerCollisions;
+  }
+
+  return rectIntersection(args);
+};
 
 export function ActionBoard({
   todoTasks,
@@ -78,10 +108,22 @@ export function ActionBoard({
       if (!over) return;
 
       const taskId = active.id as string;
-      const targetColumn = over.id as ActionBoardColumn;
       const task = findTask(taskId);
-
       if (!task) return;
+
+      // over.id can be either a column id or a task id (when dropped on top of
+      // a card inside a column). Resolve to the column in both cases.
+      let targetColumn: ActionBoardColumn;
+      if (COLUMN_IDS.has(over.id as ActionBoardColumn)) {
+        targetColumn = over.id as ActionBoardColumn;
+      } else {
+        const overTask = findTask(over.id as string);
+        if (!overTask) return;
+        if (overTask.status === "done") targetColumn = "done";
+        else if (overTask.status === "in_progress")
+          targetColumn = "in_progress";
+        else targetColumn = "todo";
+      }
 
       const newStatus = statusMap[targetColumn];
       if (!newStatus) return;
@@ -103,7 +145,7 @@ export function ActionBoard({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={kanbanCollision}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
