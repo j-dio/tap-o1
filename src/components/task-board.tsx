@@ -4,6 +4,7 @@ import type { TaskWithCourse, TaskDisplayStatus } from "@/types/task";
 import { groupTasksByUrgency, cn, type SortOption } from "@/lib/utils";
 import { TaskCard } from "@/components/task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
   Clock,
@@ -16,6 +17,8 @@ interface TaskBoardProps {
   tasks: TaskWithCourse[];
   statusFilter?: TaskDisplayStatus;
   sort?: SortOption;
+  onLoadMoreOverdue?: () => void;
+  onLoadMoreLater?: () => void;
 }
 
 interface ColumnDef {
@@ -52,13 +55,25 @@ const columns: ColumnDef[] = [
   },
 ];
 
-export function TaskBoard({ tasks, statusFilter, sort }: TaskBoardProps) {
+export function TaskBoard({
+  tasks,
+  statusFilter,
+  sort,
+  onLoadMoreOverdue,
+  onLoadMoreLater,
+}: TaskBoardProps) {
   const buckets = groupTasksByUrgency(tasks, { statusFilter, sort });
+
+  const loadMoreMap: Record<string, (() => void) | undefined> = {
+    overdue: onLoadMoreOverdue,
+    later: onLoadMoreLater,
+  };
 
   return (
     <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 lg:mx-0 lg:px-0">
       {columns.map((col) => {
         const items = buckets[col.key as keyof typeof buckets] ?? [];
+        const loadMore = loadMoreMap[col.key];
         return (
           <div
             key={col.key}
@@ -83,6 +98,17 @@ export function TaskBoard({ tasks, statusFilter, sort }: TaskBoardProps) {
                   <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-xs">
                     No tasks
                   </div>
+                )}
+                {loadMore && items.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={loadMore}
+                  >
+                    Show older
+                  </Button>
                 )}
               </div>
             </ScrollArea>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
@@ -17,11 +17,19 @@ import { ClipboardList } from "lucide-react";
 import type { TaskDisplayStatus } from "@/types/task";
 import type { SortOption } from "@/lib/utils";
 
+const WINDOW_INCREMENT = 30;
+
 function TodayViewContent() {
   const searchParams = useSearchParams();
   const { mutate: sync, isPending: isSyncing } = useSync();
 
-  const filters: TaskFilters = {};
+  const [overdueWindowDays, setOverdueWindowDays] = useState(30);
+  const [laterWindowDays, setLaterWindowDays] = useState(60);
+
+  const filters: TaskFilters = {
+    overdueWindowDays,
+    laterWindowDays,
+  };
   const source = searchParams.get("source");
   const type = searchParams.get("type");
   const course = searchParams.get("course");
@@ -43,6 +51,14 @@ function TodayViewContent() {
     },
     disabled: isSyncing,
   });
+
+  const handleLoadMoreOverdue = useCallback(() => {
+    setOverdueWindowDays((prev) => prev + WINDOW_INCREMENT);
+  }, []);
+
+  const handleLoadMoreLater = useCallback(() => {
+    setLaterWindowDays((prev) => prev + WINDOW_INCREMENT);
+  }, []);
 
   return (
     <div className="flex flex-col gap-6" {...bind}>
@@ -92,6 +108,8 @@ function TodayViewContent() {
           tasks={tasks}
           statusFilter={(status as TaskDisplayStatus) ?? undefined}
           sort={sort}
+          onLoadMoreOverdue={handleLoadMoreOverdue}
+          onLoadMoreLater={handleLoadMoreLater}
         />
       ) : (
         <EmptyState

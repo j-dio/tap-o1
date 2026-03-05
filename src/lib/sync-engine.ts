@@ -88,21 +88,34 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
         courseNames.set(course.id, course.name);
       }
 
-      // Fetch courseWork in parallel for performance
+      // Fetch courseWork and submissions in parallel per course
       const results = await Promise.allSettled(
-        courses.map((course) => gclassroom.getCourseWork(course.id)),
+        courses.map(async (course) => {
+          const [courseWork, submissions] = await Promise.all([
+            gclassroom.getCourseWork(course.id),
+            gclassroom.getStudentSubmissions(course.id),
+          ]);
+          return { courseWork, submissions };
+        }),
       );
 
       const allCourseWork: unknown[] = [];
+      const allSubmissions = new Map<string, string>();
       for (const result of results) {
         if (result.status === "fulfilled") {
-          allCourseWork.push(...result.value);
+          allCourseWork.push(...result.value.courseWork);
+          for (const [cwId, state] of result.value.submissions) {
+            allSubmissions.set(cwId, state);
+          }
         } else {
           errors.push(`Failed to fetch courseWork: ${result.reason}`);
         }
       }
 
-      gclassroomTasks = parseGClassroomResponse({ courseWork: allCourseWork });
+      gclassroomTasks = parseGClassroomResponse(
+        { courseWork: allCourseWork },
+        allSubmissions,
+      );
     } catch (err) {
       if (err instanceof Error && err.message === "GOOGLE_TOKEN_EXPIRED") {
         // Try refreshing if the token expired mid-sync
@@ -119,17 +132,28 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
               courseNames.set(course.id, course.name);
             }
             const results = await Promise.allSettled(
-              courses.map((course) => gclassroom.getCourseWork(course.id)),
+              courses.map(async (course) => {
+                const [courseWork, submissions] = await Promise.all([
+                  gclassroom.getCourseWork(course.id),
+                  gclassroom.getStudentSubmissions(course.id),
+                ]);
+                return { courseWork, submissions };
+              }),
             );
             const allCourseWork: unknown[] = [];
+            const allSubmissions = new Map<string, string>();
             for (const result of results) {
               if (result.status === "fulfilled") {
-                allCourseWork.push(...result.value);
+                allCourseWork.push(...result.value.courseWork);
+                for (const [cwId, state] of result.value.submissions) {
+                  allSubmissions.set(cwId, state);
+                }
               }
             }
-            gclassroomTasks = parseGClassroomResponse({
-              courseWork: allCourseWork,
-            });
+            gclassroomTasks = parseGClassroomResponse(
+              { courseWork: allCourseWork },
+              allSubmissions,
+            );
           } catch (retryErr) {
             errors.push(
               `GClassroom sync failed after token refresh: ${retryErr instanceof Error ? retryErr.message : "Unknown error"}`,

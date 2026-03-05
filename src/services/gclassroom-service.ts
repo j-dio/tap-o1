@@ -121,4 +121,33 @@ export class GClassroomService {
       })
       .filter(Boolean) as GClassroomAnnouncement[];
   }
+
+  /**
+   * Fetch all student submissions for a course using the wildcard
+   * courseWork ID ("-") so we get everything in a single request.
+   * Returns a map: courseWorkId -> submission state string.
+   */
+  async getStudentSubmissions(courseId: string): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    try {
+      const data = await this.fetch<{
+        studentSubmissions?: {
+          courseWorkId?: string;
+          state?: string;
+          userId?: string;
+        }[];
+      }>(`/courses/${courseId}/courseWork/-/studentSubmissions?userId=me`);
+
+      if (data.studentSubmissions) {
+        for (const sub of data.studentSubmissions) {
+          if (sub.courseWorkId && sub.state) {
+            map.set(sub.courseWorkId, sub.state);
+          }
+        }
+      }
+    } catch {
+      // Non-critical: if submissions fail, tasks still sync without status
+    }
+    return map;
+  }
 }

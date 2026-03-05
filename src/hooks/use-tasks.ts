@@ -16,6 +16,10 @@ export interface TaskFilters {
   type?: TaskType;
   courseId?: string;
   status?: TaskDisplayStatus;
+  /** How many days back to include overdue tasks (default 30) */
+  overdueWindowDays?: number;
+  /** How many days ahead to include future tasks (default 60) */
+  laterWindowDays?: number;
 }
 
 function mapRow(row: Record<string, unknown>): TaskWithCourse {
@@ -70,12 +74,27 @@ function mapRow(row: Record<string, unknown>): TaskWithCourse {
 async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   const supabase = createClient();
 
+  // Compute date window boundaries
+  const overdueFloor = new Date();
+  overdueFloor.setDate(
+    overdueFloor.getDate() - (filters.overdueWindowDays ?? 30),
+  );
+  const laterCeiling = new Date();
+  laterCeiling.setDate(
+    laterCeiling.getDate() + (filters.laterWindowDays ?? 60),
+  );
+
   // Try with task_overrides join first; fall back without if the table/FK is missing
   let selectStr = "*, courses(*), task_overrides(*)";
   let query = supabase
     .from("tasks")
     .select(selectStr)
     .order("due_date", { ascending: true, nullsFirst: false });
+
+  // Apply date window: include null due_date, and constrain known dates to the window
+  query = query.or(
+    `due_date.is.null,and(due_date.gte.${overdueFloor.toISOString()},due_date.lte.${laterCeiling.toISOString()})`,
+  );
 
   if (filters.source) {
     query = query.eq("source", filters.source);
@@ -100,9 +119,15 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
       .select(selectStr)
       .order("due_date", { ascending: true, nullsFirst: false });
 
-    if (filters.source) fallbackQuery = fallbackQuery.eq("source", filters.source);
+    fallbackQuery = fallbackQuery.or(
+      `due_date.is.null,and(due_date.gte.${overdueFloor.toISOString()},due_date.lte.${laterCeiling.toISOString()})`,
+    );
+
+    if (filters.source)
+      fallbackQuery = fallbackQuery.eq("source", filters.source);
     if (filters.type) fallbackQuery = fallbackQuery.eq("type", filters.type);
-    if (filters.courseId) fallbackQuery = fallbackQuery.eq("course_id", filters.courseId);
+    if (filters.courseId)
+      fallbackQuery = fallbackQuery.eq("course_id", filters.courseId);
     if (filters.status && filters.status !== "overdue") {
       fallbackQuery = fallbackQuery.eq("status", filters.status);
     }
