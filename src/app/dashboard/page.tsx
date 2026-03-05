@@ -55,6 +55,10 @@ function DashboardContent() {
     () => setTodoWindowDays((d) => Math.min(d + 7, MAX_TODO_WINDOW_DAYS)),
     [],
   );
+  const handleShowLessTodo = useCallback(
+    () => setTodoWindowDays((d) => Math.max(d - 7, 7)),
+    [],
+  );
 
   const { todo, inProgress, done, todoHasMore } = useActionBoard(
     tasks ?? [],
@@ -139,6 +143,7 @@ function DashboardContent() {
               doneTasks={done}
               todoWindowDays={todoWindowDays}
               onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
+              onShowLessTodo={todoWindowDays > 7 ? handleShowLessTodo : undefined}
             />
           </>
         )

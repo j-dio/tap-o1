@@ -28,6 +28,7 @@ interface ActionBoardProps {
   doneTasks: TaskWithCourse[];
   todoWindowDays: number;
   onShowMoreTodo?: () => void;
+  onShowLessTodo?: () => void;
 }
 
 const statusMap: Record<ActionBoardColumn, "pending" | "in_progress" | "done"> =
@@ -71,6 +72,7 @@ export function ActionBoard({
   doneTasks,
   todoWindowDays,
   onShowMoreTodo,
+  onShowLessTodo,
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
   const { setStatus } = useTaskActions();
@@ -160,6 +162,7 @@ export function ActionBoard({
           tasks={todoTasks}
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
+          onShowLess={onShowLessTodo}
           todoWindowDays={todoWindowDays}
         />
         <Column

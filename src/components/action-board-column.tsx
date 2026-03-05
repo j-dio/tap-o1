@@ -13,7 +13,7 @@ import { SortableTaskCard } from "@/components/sortable-task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, ChevronDown, Clock, ListTodo } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Clock, ListTodo } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const columnIcons: Record<ColumnId, LucideIcon> = {
@@ -27,9 +27,11 @@ interface ActionBoardColumnProps {
   title: string;
   tasks: TaskWithCourse[];
   accentClass: string;
-  /** Show More callback — only provided for the To Do column. */
+  /** Show More callback — only provided for the To Do column when more tasks exist. */
   onShowMore?: () => void;
-  /** Current To Do window in days (used for button label). */
+  /** Show Less callback — only provided for the To Do column when window > 7 days. */
+  onShowLess?: () => void;
+  /** Current To Do window in days (used for button labels). */
   todoWindowDays?: number;
 }
 
@@ -39,6 +41,7 @@ export function ActionBoardColumn({
   tasks,
   accentClass,
   onShowMore,
+  onShowLess,
   todoWindowDays,
 }: ActionBoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -79,17 +82,31 @@ export function ActionBoardColumn({
           </div>
         </SortableContext>
 
-        {onShowMore && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full text-xs"
-            onClick={onShowMore}
-          >
-            <ChevronDown className="mr-1 size-3" />
-            Show tasks due in next{" "}
-            {todoWindowDays !== undefined ? todoWindowDays + 7 : 14} days
-          </Button>
+        {(onShowLess || onShowMore) && (
+          <div className="mt-2 flex gap-1">
+            {onShowLess && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={onShowLess}
+              >
+                <ChevronUp className="mr-1 size-3" />
+                Show less
+              </Button>
+            )}
+            {onShowMore && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 text-xs"
+                onClick={onShowMore}
+              >
+                <ChevronDown className="mr-1 size-3" />
+                Next {todoWindowDays !== undefined ? todoWindowDays + 7 : 14}d
+              </Button>
+            )}
+          </div>
         )}
       </ScrollArea>
     </div>
