@@ -19,6 +19,7 @@ import {
   ExternalLink,
   ChevronDown,
 } from "lucide-react";
+import { NotificationSettings } from "@/components/notification-settings";
 
 export default function SettingsPage() {
   const [uvecUrl, setUvecUrl] = useState("");
@@ -377,6 +378,9 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Push Notifications */}
+      <NotificationSettings />
     </div>
   );
 }
