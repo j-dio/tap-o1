@@ -90,7 +90,9 @@ export function useTaskActions() {
           ? "Marked as done"
           : status === "dismissed"
             ? "Task dismissed"
-            : "Status updated";
+            : status === "in_progress"
+              ? "Marked as in progress"
+              : "Status updated";
       toast.success(label);
     },
     onError: (err) => {

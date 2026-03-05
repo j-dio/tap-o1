@@ -105,7 +105,11 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
   if (filters.courseId) {
     query = query.eq("course_id", filters.courseId);
   }
-  if (filters.status && filters.status !== "overdue") {
+  if (
+    filters.status &&
+    filters.status !== "overdue" &&
+    filters.status !== "in_progress"
+  ) {
     query = query.eq("status", filters.status);
   }
 
@@ -128,7 +132,11 @@ async function fetchTasks(filters: TaskFilters): Promise<TaskWithCourse[]> {
     if (filters.type) fallbackQuery = fallbackQuery.eq("type", filters.type);
     if (filters.courseId)
       fallbackQuery = fallbackQuery.eq("course_id", filters.courseId);
-    if (filters.status && filters.status !== "overdue") {
+    if (
+      filters.status &&
+      filters.status !== "overdue" &&
+      filters.status !== "in_progress"
+    ) {
       fallbackQuery = fallbackQuery.eq("status", filters.status);
     }
 
