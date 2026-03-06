@@ -14,7 +14,6 @@ import {
   type DragStartEvent,
   type DragEndEvent,
   type CollisionDetection,
-  type CollisionDescriptor,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { TaskWithCourse, ActionBoardColumn } from "@/types/task";
@@ -57,7 +56,7 @@ const kanbanCollision: CollisionDetection = (args) => {
   const pointerCollisions = pointerWithin(args);
 
   if (pointerCollisions.length > 0) {
-    const columnHit = pointerCollisions.find((c: CollisionDescriptor) =>
+    const columnHit = pointerCollisions.find((c) =>
       COLUMN_IDS.has(c.id as ActionBoardColumn),
     );
     return columnHit ? [columnHit] : pointerCollisions;
