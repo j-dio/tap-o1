@@ -37,6 +37,19 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 /**
+ * Resolves `navigator.serviceWorker.ready` with a timeout.
+ * Rejects if no SW activates within `ms` milliseconds.
+ */
+function swReady(ms = 5000): Promise<ServiceWorkerRegistration> {
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Service worker not available")), ms),
+    ),
+  ]);
+}
+
+/**
  * Hook to manage Web Push notification subscriptions.
  *
  * Handles permission requests, subscribe/unsubscribe via server actions,
@@ -63,14 +76,20 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
     setPermission(Notification.permission as PushPermissionState);
 
-    // Check if already subscribed
-    navigator.serviceWorker.ready
-      .then((registration) => registration.pushManager.getSubscription())
+    // Check if already subscribed — skip silently if SW not registered (e.g. dev mode)
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((regs) => {
+        if (regs.length === 0) return null;
+        return navigator.serviceWorker.ready.then((reg) =>
+          reg.pushManager.getSubscription(),
+        );
+      })
       .then((subscription) => {
         setIsSubscribed(subscription !== null);
       })
       .catch(() => {
-        // SW not ready yet — will retry when user clicks subscribe
+        // SW not ready — silent fallback
       });
   }, [isSupported]);
 
@@ -101,7 +120,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         return;
       }
 
-      const registration = await navigator.serviceWorker.ready;
+      // Check if SW is actually registered (disabled in dev mode)
+      const regs = await navigator.serviceWorker.getRegistrations();
+      if (regs.length === 0) {
+        setError(
+          "Service worker is not active. Push notifications require a production build (npm run build && npm start).",
+        );
+        return;
+      }
+
+      const registration = await swReady();
 
       // Subscribe to push manager
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
@@ -149,7 +177,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     setError(null);
 
     try {
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await swReady();
       const subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
