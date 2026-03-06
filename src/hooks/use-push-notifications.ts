@@ -23,7 +23,7 @@ interface UsePushNotificationsReturn {
 }
 
 /**
- * Convert a base64 string to a Uint8Array (for applicationServerKey).
+ * Convert a base64url string to a Uint8Array (required for applicationServerKey).
  */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -40,11 +40,14 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
  * Resolves `navigator.serviceWorker.ready` with a timeout.
  * Rejects if no SW activates within `ms` milliseconds.
  */
-function swReady(ms = 5000): Promise<ServiceWorkerRegistration> {
+function swReady(ms = 10000): Promise<ServiceWorkerRegistration> {
   return Promise.race([
     navigator.serviceWorker.ready,
     new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Service worker not available")), ms),
+      setTimeout(
+        () => reject(new Error("Service worker timed out after 10s")),
+        ms,
+      ),
     ),
   ]);
 }
@@ -76,7 +79,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
     setPermission(Notification.permission as PushPermissionState);
 
-    // Check if already subscribed — skip silently if SW not registered (e.g. dev mode)
+    // Check if already subscribed — skip silently if SW not registered (dev mode)
     navigator.serviceWorker
       .getRegistrations()
       .then((regs) => {
@@ -103,7 +106,16 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     setError(null);
 
     try {
-      // Request notification permission
+      // Step 1: Check SW is registered before asking for permission
+      const regs = await navigator.serviceWorker.getRegistrations();
+      if (regs.length === 0) {
+        setError(
+          "Service worker is not active. Push notifications require a production build (npm run build && npm start).",
+        );
+        return;
+      }
+
+      // Step 2: Request notification permission
       const result = await Notification.requestPermission();
       setPermission(result as PushPermissionState);
 
@@ -114,37 +126,39 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         return;
       }
 
+      // Step 3: Validate VAPID public key
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
-        setError("Push notification configuration is missing");
-        return;
-      }
-
-      // Check if SW is actually registered (disabled in dev mode)
-      const regs = await navigator.serviceWorker.getRegistrations();
-      if (regs.length === 0) {
         setError(
-          "Service worker is not active. Push notifications require a production build (npm run build && npm start).",
+          "Push notification configuration is missing (NEXT_PUBLIC_VAPID_PUBLIC_KEY not set)",
         );
         return;
       }
 
-      const registration = await swReady();
+      // Step 4: Wait for SW to be ready
+      const registration = await swReady(10000);
 
-      // Subscribe to push manager
+      // Step 5: Subscribe — Uint8Array.buffer needs explicit cast in strict mode
+      // (new Uint8Array() always uses ArrayBuffer, never SharedArrayBuffer)
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
       });
 
+      // Step 6: Validate subscription keys
       const subscriptionJson = subscription.toJSON();
-      if (!subscriptionJson.endpoint || !subscriptionJson.keys) {
-        setError("Failed to create push subscription");
+      if (
+        !subscriptionJson.endpoint ||
+        !subscriptionJson.keys?.p256dh ||
+        !subscriptionJson.keys?.auth
+      ) {
+        await subscription.unsubscribe();
+        setError("Failed to create push subscription — missing keys");
         return;
       }
 
-      // Save subscription to server
+      // Step 7: Save to server
       const serverResult = await subscribePush({
         endpoint: subscriptionJson.endpoint,
         keys: {
@@ -154,7 +168,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       });
 
       if (!serverResult.success) {
-        // Roll back the browser subscription if server save fails
         await subscription.unsubscribe();
         setError(serverResult.error ?? "Failed to save subscription");
         return;
@@ -177,16 +190,19 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     setError(null);
 
     try {
-      const registration = await swReady();
+      const regs = await navigator.serviceWorker.getRegistrations();
+      if (regs.length === 0) {
+        setIsSubscribed(false);
+        return;
+      }
+
+      const registration = await swReady(10000);
       const subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
         const { endpoint } = subscription;
-
-        // Unsubscribe from browser
         await subscription.unsubscribe();
 
-        // Remove from server
         const serverResult = await unsubscribePush(endpoint);
         if (!serverResult.success) {
           setError(serverResult.error ?? "Failed to remove subscription");
