@@ -294,21 +294,39 @@ src/lib/actions/sync.ts
 
 ### Phase 6: Notifications & Reminders (Size: M — ~4 hours)
 
-- [ ] Web Push API: subscription management
-- [ ] Push subscription table migration
-- [ ] Supabase Edge Function: send push notifications
-- [ ] Cron trigger: check for tasks due within 1 hour, send reminders
-- [ ] In-app notification center
-- [ ] Settings page: notification preferences
+- [x] Service Worker push event handler — handles `push` events, renders notifications with title/body/icon/badge, opens dashboard on click
+- [x] VAPID key pair via env vars — `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (client) + `VAPID_PRIVATE_KEY` (server), never hardcoded
+- [x] Push subscription table migration — `push_subscriptions` (user_id, endpoint, p256dh, auth, created_at) with RLS; `notification_log` (user_id, task_id, sent_at, type) with unique constraint to prevent duplicate notifications
+- [x] Subscribe/Unsubscribe server actions — `subscribePush()` validates with Zod, upserts to DB, sets `notification_enabled` on profile; `unsubscribePush()` deletes subscription and clears flag when no subscriptions remain
+- [x] `usePushNotifications` hook — manages browser permission, subscribe/unsubscribe lifecycle, `urlBase64ToUint8Array` VAPID conversion, optimistic error handling with rollback
+- [x] Settings UI notification toggle — `NotificationSettings` card in settings page with enable/disable button, permission-denied state, unsupported browser state, error display
+- [x] Supabase Edge Function `send-due-reminders` — native Web Crypto VAPID JWT (ES256) + RFC 8291 content encryption (ECDH + HKDF + AES-128-GCM); queries tasks due within 24 hrs not yet notified; groups by user; sends push; logs to `notification_log`; auto-deletes stale subscriptions on 410 Gone
+- [x] Zod validation schemas — `pushSubscriptionSchema` + `pushSubscriptionKeysSchema` with base64url regex validation
+- [x] Unit tests — 13 tests for notification validation schemas (valid/invalid endpoints, keys, edge cases)
+
+**Status:** Complete. Web Push notifications are fully implemented with native Deno Web Crypto for the Edge Function (no Node.js dependencies). Cron schedule to be configured in Supabase dashboard (every 15 minutes).
+
+> **Deployment notes:**
+>
+> 1. Generate VAPID keys: `npx web-push generate-vapid-keys` and set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` in env vars
+> 2. Apply migration: `006_push_subscriptions.sql`
+> 3. Deploy Edge Function: `supabase functions deploy send-due-reminders`
+> 4. Configure cron in Supabase dashboard: `*/15 * * * *` → `send-due-reminders`
+> 5. Set `VAPID_SUBJECT` env in Supabase Edge Function secrets (e.g. `mailto:admin@yourdomain.com`)
 
 **Files:**
 
 ```
+supabase/migrations/006_push_subscriptions.sql
+src/lib/validations/notifications.ts
+src/app/sw.ts
+src/lib/actions/notifications.ts
 src/hooks/use-push-notifications.ts
-src/app/(dashboard)/settings/page.tsx
-supabase/functions/send-notifications/index.ts
-supabase/migrations/004_push_subscriptions.sql
-public/sw.js (service worker for push)
+src/components/notification-settings.tsx
+src/app/dashboard/settings/page.tsx
+supabase/functions/send-due-reminders/index.ts
+supabase/functions/send-due-reminders/web-push.ts
+src/lib/__tests__/notifications-validation.test.ts
 ```
 
 ### Phase 7: Polish & Launch (Size: M — ~4 hours)
@@ -369,3 +387,40 @@ README.md
 | Phase 6: Notifications        | 4h            | 32h                        |
 | Phase 7: Polish & Launch      | 4h            | 36h                        |
 | **Total**                     | **~36 hours** | **~3-4 weeks** (part-time) |
+
+---
+
+## Action Board — Bug Fixes & Polish (Phase 5.7)
+
+### ✅ Completed
+
+| #   | Change                                                                                         | Commit    |
+| --- | ---------------------------------------------------------------------------------------------- | --------- |
+| 1   | Done tasks disappear — `updatedAt` now uses `max(tasks.updated_at, task_overrides.updated_at)` | `df11613` |
+| 2   | In-Progress capped at 1 — `kanbanCollision` strategy replaces `closestCorners`                 | `df11613` |
+| 3   | Drag to Done blocked — `pointerWithin` + column-preference collision resolver                  | `df11613` |
+| 4   | Todo window limited to 7 days (reduces noise)                                                  | `df11613` |
+| 5   | Show More button — extends window by 7 days per click (max 56)                                 | `9e3ffa2` |
+| 6   | Show Less button — collapses window by 7 days per click (floor 7)                              | `064a8ad` |
+| 7   | `Date.now()` impure render error — replaced with `useState(Date.now)` lazy init                | `9e3ffa2` |
+| 8   | Optimistic UI — drag/button moves card instantly; rolls back on server error                   | latest    |
+| 9   | Per-column empty states — context-aware messages with icons per column                         | latest    |
+| 10  | Todo window persisted in `sessionStorage` — survives page refresh within session               | latest    |
+| 11  | `computeActionBoardBuckets` extracted as pure function for testability                         | latest    |
+| 12  | 13 unit tests for `computeActionBoardBuckets` — all passing                                    | latest    |
+
+### 🔲 Remaining / Deferred
+
+| Priority | Item                             | Notes                                                                              |
+| -------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| Low      | Animate Show More/Less expansion | Needs Framer Motion `AnimatePresence` or CSS grid trick; deferred to avoid new dep |
+| Low      | Unit tests for `kanbanCollision` | Requires `jsdom` environment; vitest currently runs in `node`                      |
+
+### 📐 Architecture Notes
+
+- **Collision**: `kanbanCollision` → `pointerWithin` → column-preference → `rectIntersection` fallback
+- **Window state**: `todoWindowDays` lives in `DashboardContent`, persisted to `sessionStorage["todoWindowDays"]`; threaded as `todoWindowDays` + `onShowMore` + `onShowLess`
+- **Time anchor**: `useState(Date.now)` at mount — stable across re-renders within a session
+- **Done visibility window**: 7 days from effective `updatedAt` (max of task + override timestamps)
+- **Todo visibility window**: user-controlled 7–56 days; tasks with no due date always shown
+- **Optimistic UI**: `onMutate` snapshots all `["tasks", *]` cache entries via `getQueriesData`; `onError` restores them; `onSuccess` confirms with `invalidateQueries`

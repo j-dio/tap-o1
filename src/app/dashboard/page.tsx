@@ -1,9 +1,17 @@
 "use client";
 
 import { Suspense, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 
 const MAX_TODO_WINDOW_DAYS = 56; // 8 weeks — matches the 60-day fetch window
-import { useSearchParams } from "next/navigation";
+const SESSION_KEY = "todoWindowDays";
+
+function readWindowDays(): number {
+  if (typeof window === "undefined") return 7;
+  const stored = sessionStorage.getItem(SESSION_KEY);
+  const parsed = stored ? parseInt(stored, 10) : NaN;
+  return isNaN(parsed) ? 7 : parsed;
+}
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
 import { useSync } from "@/hooks/use-sync";
@@ -50,15 +58,23 @@ function DashboardContent() {
     disabled: isSyncing,
   });
 
-  const [todoWindowDays, setTodoWindowDays] = useState(7);
-  const handleShowMoreTodo = useCallback(
-    () => setTodoWindowDays((d) => Math.min(d + 7, MAX_TODO_WINDOW_DAYS)),
-    [],
-  );
-  const handleShowLessTodo = useCallback(
-    () => setTodoWindowDays((d) => Math.max(d - 7, 7)),
-    [],
-  );
+  const [todoWindowDays, setTodoWindowDays] = useState<number>(readWindowDays);
+  const handleShowMoreTodo = useCallback(() => {
+    setTodoWindowDays((d) => {
+      const next = Math.min(d + 7, MAX_TODO_WINDOW_DAYS);
+      sessionStorage.setItem(SESSION_KEY, String(next));
+      return next;
+    });
+  }, []);
+  const handleShowLessTodo = useCallback(() => {
+    setTodoWindowDays((d) => {
+      const next = Math.max(d - 7, 7);
+      next === 7
+        ? sessionStorage.removeItem(SESSION_KEY)
+        : sessionStorage.setItem(SESSION_KEY, String(next));
+      return next;
+    });
+  }, []);
 
   const { todo, inProgress, done, todoHasMore } = useActionBoard(
     tasks ?? [],
