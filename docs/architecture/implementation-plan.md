@@ -338,7 +338,7 @@ src/lib/__tests__/notifications-validation.test.ts
 - [ ] Error boundaries + Sentry integration
 - [ ] Landing page with feature highlights
 - [ ] README.md with setup instructions
-- [ ] Deploy to production
+- [ ] Deploy to production 
 
 **Files:**
 
