@@ -22,7 +22,7 @@ export function CourseBadge({ course, className }: CourseBadgeProps) {
         className="size-2 shrink-0 rounded-full"
         style={{ backgroundColor: color }}
       />
-      <span className="truncate max-w-[120px]">{course.name}</span>
+      <span className="truncate max-w-30">{course.name}</span>
     </span>
   );
 }
