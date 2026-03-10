@@ -1,4 +1,4 @@
-import { GraduationCap, Calendar } from "lucide-react";
+import { GraduationCap, Calendar, UserPen } from "lucide-react";
 import type { TaskSource } from "@/types/task";
 import { cn } from "@/lib/utils";
 
@@ -7,8 +7,14 @@ interface SourceIconProps {
   className?: string;
 }
 
+const sourceIcons: Record<TaskSource, typeof GraduationCap> = {
+  gclassroom: GraduationCap,
+  uvec: Calendar,
+  custom: UserPen,
+};
+
 export function SourceIcon({ source, className }: SourceIconProps) {
-  const Icon = source === "gclassroom" ? GraduationCap : Calendar;
+  const Icon = sourceIcons[source];
   return (
     <Icon
       className={cn("size-3.5 text-muted-foreground shrink-0", className)}

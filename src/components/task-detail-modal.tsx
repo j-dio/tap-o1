@@ -44,7 +44,11 @@ export function TaskDetailModal({
           <div className="text-muted-foreground mb-1 flex items-center gap-2">
             <SourceIcon source={task.source} />
             <span className="text-xs capitalize">
-              {task.source === "gclassroom" ? "Google Classroom" : "UVEC"}
+              {task.source === "gclassroom"
+                ? "Google Classroom"
+                : task.source === "custom"
+                  ? "Custom"
+                  : "UVEC"}
             </span>
           </div>
           <DialogTitle className="text-base">{task.title}</DialogTitle>

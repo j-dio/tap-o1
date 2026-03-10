@@ -52,6 +52,7 @@ export function TaskFilters({ courses }: TaskFiltersProps) {
           <SelectItem value="all">All sources</SelectItem>
           <SelectItem value="uvec">UVEC</SelectItem>
           <SelectItem value="gclassroom">Classroom</SelectItem>
+          <SelectItem value="custom">Custom</SelectItem>
         </SelectContent>
       </Select>
 
