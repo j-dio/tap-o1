@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import type { TaskWithCourse, TaskType, TaskPriority } from "@/types/task";
 import { useCourses } from "@/hooks/use-courses";
 import { useTaskActions } from "@/hooks/use-task-actions";
@@ -35,7 +35,7 @@ const TASK_PRIORITIES: { value: TaskPriority; label: string }[] = [
   { value: "urgent", label: "Urgent" },
 ];
 
-interface CustomTaskModalProps {
+export interface CustomTaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** When provided, opens in edit mode for this custom task. */
@@ -56,48 +56,67 @@ function fromLocalDatetimeValue(value: string): string | undefined {
   return new Date(value).toISOString();
 }
 
-export function CustomTaskModal({
-  open,
-  onOpenChange,
-  task,
-}: CustomTaskModalProps) {
-  const isEdit = !!task?.isCustom;
+interface FormState {
+  title: string;
+  description: string;
+  dueDate: string;
+  type: TaskType;
+  priority: TaskPriority | "none";
+  courseId: string;
+}
+
+function buildInitialForm(
+  task: TaskWithCourse | undefined,
+  isEdit: boolean,
+): FormState {
+  if (isEdit && task) {
+    return {
+      title: task.title,
+      description: task.description ?? "",
+      dueDate: toLocalDatetimeValue(task.dueDate),
+      type: task.type,
+      priority: task.priority ?? "none",
+      courseId: task.courseId ?? "none",
+    };
+  }
+  return {
+    title: "",
+    description: "",
+    dueDate: "",
+    type: "assignment",
+    priority: "none",
+    courseId: "none",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Inner form — receives props, initialises state lazily, never needs an effect.
+// The parent mounts a fresh instance via `key` whenever the dialog reopens.
+// ---------------------------------------------------------------------------
+
+interface TaskFormContentProps {
+  isEdit: boolean;
+  task: TaskWithCourse | undefined;
+  onClose: () => void;
+}
+
+function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
   const { data: courses } = useCourses();
   const { createTask, editTask } = useTaskActions();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [type, setType] = useState<TaskType>("assignment");
-  const [priority, setPriority] = useState<TaskPriority | "none">("none");
-  const [courseId, setCourseId] = useState<string>("none");
-
-  // Reset form when dialog opens / task changes
-  useEffect(() => {
-    if (!open) return;
-    if (isEdit && task) {
-      setTitle(task.title);
-      setDescription(task.description ?? "");
-      setDueDate(toLocalDatetimeValue(task.dueDate));
-      setType(task.type);
-      setPriority(task.priority ?? "none");
-      setCourseId(task.courseId ?? "none");
-    } else {
-      setTitle("");
-      setDescription("");
-      setDueDate("");
-      setType("assignment");
-      setPriority("none");
-      setCourseId("none");
-    }
-  }, [open, isEdit, task]);
+  // Lazy initialiser runs only on mount — no useEffect required.
+  const [form, setForm] = useState<FormState>(() =>
+    buildInitialForm(task, isEdit),
+  );
 
   const isPending = createTask.isPending || editTask.isPending;
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (!title.trim()) return;
+      if (!form.title.trim()) return;
+
+      const { title, description, dueDate, type, priority, courseId } = form;
 
       const payload = {
         title: title.trim(),
@@ -120,28 +139,185 @@ export function CustomTaskModal({
               courseId: (payload.courseId ?? null) as string | null,
             },
           },
-          { onSuccess: () => onOpenChange(false) },
+          { onSuccess: onClose },
         );
       } else {
-        createTask.mutate(payload, {
-          onSuccess: () => onOpenChange(false),
-        });
+        createTask.mutate(payload, { onSuccess: onClose });
       }
     },
-    [
-      title,
-      description,
-      dueDate,
-      type,
-      priority,
-      courseId,
-      isEdit,
-      task,
-      createTask,
-      editTask,
-      onOpenChange,
-    ],
+    [form, isEdit, task, createTask, editTask, onClose],
   );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Title */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="ct-title"
+          className="text-muted-foreground text-xs font-medium"
+        >
+          Title <span className="text-destructive">*</span>
+        </label>
+        <Input
+          id="ct-title"
+          value={form.title}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, title: e.target.value }))
+          }
+          placeholder="Task title"
+          required
+          autoFocus
+        />
+      </div>
+
+      {/* Due date/time */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="ct-due"
+          className="text-muted-foreground text-xs font-medium"
+        >
+          Due date &amp; time
+        </label>
+        <Input
+          id="ct-due"
+          type="datetime-local"
+          value={form.dueDate}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, dueDate: e.target.value }))
+          }
+        />
+      </div>
+
+      {/* Type + Priority row */}
+      <div className="flex gap-3">
+        <div className="flex-1 space-y-1.5">
+          <label className="text-muted-foreground text-xs font-medium">
+            Type
+          </label>
+          <Select
+            value={form.type}
+            onValueChange={(v) =>
+              setForm((prev) => ({ ...prev, type: v as TaskType }))
+            }
+          >
+            <SelectTrigger className="h-9 w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TASK_TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex-1 space-y-1.5">
+          <label className="text-muted-foreground text-xs font-medium">
+            Priority
+          </label>
+          <Select
+            value={form.priority}
+            onValueChange={(v) =>
+              setForm((prev) => ({
+                ...prev,
+                priority: v as TaskPriority | "none",
+              }))
+            }
+          >
+            <SelectTrigger className="h-9 w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {TASK_PRIORITIES.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Course */}
+      {courses && courses.length > 0 && (
+        <div className="space-y-1.5">
+          <label className="text-muted-foreground text-xs font-medium">
+            Course
+          </label>
+          <Select
+            value={form.courseId}
+            onValueChange={(v) => setForm((prev) => ({ ...prev, courseId: v }))}
+          >
+            <SelectTrigger className="h-9 w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No course (personal)</SelectItem>
+              {courses.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Description */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="ct-desc"
+          className="text-muted-foreground text-xs font-medium"
+        >
+          Description
+        </label>
+        <textarea
+          id="ct-desc"
+          className="border-input bg-background min-h-20 w-full rounded-md border p-2 text-sm"
+          value={form.description}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, description: e.target.value }))
+          }
+          placeholder="Optional notes or description..."
+        />
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          disabled={isPending}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={isPending || !form.title.trim()}
+        >
+          {isPending ? "Saving..." : isEdit ? "Save changes" : "Create task"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Public modal shell
+// ---------------------------------------------------------------------------
+
+export function CustomTaskModal({
+  open,
+  onOpenChange,
+  task,
+}: CustomTaskModalProps) {
+  const isEdit = !!task?.isCustom;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,124 +326,20 @@ export function CustomTaskModal({
           <DialogTitle>{isEdit ? "Edit Task" : "New Task"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
-          <div className="space-y-1.5">
-            <label htmlFor="ct-title" className="text-muted-foreground text-xs font-medium">
-              Title <span className="text-destructive">*</span>
-            </label>
-            <Input
-              id="ct-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Task title"
-              required
-              autoFocus
-            />
-          </div>
-
-          {/* Due date/time */}
-          <div className="space-y-1.5">
-            <label htmlFor="ct-due" className="text-muted-foreground text-xs font-medium">
-              Due date &amp; time
-            </label>
-            <Input
-              id="ct-due"
-              type="datetime-local"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
-          </div>
-
-          {/* Type + Priority row */}
-          <div className="flex gap-3">
-            <div className="flex-1 space-y-1.5">
-              <label className="text-muted-foreground text-xs font-medium">Type</label>
-              <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
-                <SelectTrigger className="h-9 w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TASK_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex-1 space-y-1.5">
-              <label className="text-muted-foreground text-xs font-medium">Priority</label>
-              <Select
-                value={priority}
-                onValueChange={(v) => setPriority(v as TaskPriority | "none")}
-              >
-                <SelectTrigger className="h-9 w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {TASK_PRIORITIES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Course */}
-          {courses && courses.length > 0 && (
-            <div className="space-y-1.5">
-              <label className="text-muted-foreground text-xs font-medium">Course</label>
-              <Select value={courseId} onValueChange={setCourseId}>
-                <SelectTrigger className="h-9 w-full text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No course (personal)</SelectItem>
-                  {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Description */}
-          <div className="space-y-1.5">
-            <label htmlFor="ct-desc" className="text-muted-foreground text-xs font-medium">
-              Description
-            </label>
-            <textarea
-              id="ct-desc"
-              className="border-input bg-background min-h-20 w-full rounded-md border p-2 text-sm"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional notes or description..."
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" disabled={isPending || !title.trim()}>
-              {isPending ? "Saving..." : isEdit ? "Save changes" : "Create task"}
-            </Button>
-          </div>
-        </form>
+        {/*
+         * Conditional render + `key` together ensure TaskFormContent is fully
+         * unmounted when the dialog closes and remounted fresh when it reopens
+         * (or when a different task is passed for editing). This means the lazy
+         * useState initialiser re-runs on every open — no useEffect needed.
+         */}
+        {open && (
+          <TaskFormContent
+            key={task?.id ?? "new"}
+            isEdit={isEdit}
+            task={task}
+            onClose={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
