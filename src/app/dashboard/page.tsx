@@ -21,6 +21,7 @@ import { useActionBoard } from "@/hooks/use-action-board";
 import { useUpNext } from "@/hooks/use-up-next";
 import { useFocusMode } from "@/hooks/use-focus-mode";
 import { ActionBoard } from "@/components/action-board";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { TaskFilters as FilterBar } from "@/components/task-filters";
 import { TaskList } from "@/components/task-list";
 import { UpNextWidget } from "@/components/up-next-widget";
@@ -160,16 +161,18 @@ function DashboardContent() {
         ) : (
           <>
             <UpNextWidget task={upNextTask} />
-            <ActionBoard
-              todoTasks={todo}
-              inProgressTasks={inProgress}
-              doneTasks={done}
-              todoWindowDays={todoWindowDays}
-              onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
-              onShowLessTodo={
-                todoWindowDays > 7 ? handleShowLessTodo : undefined
-              }
-            />
+            <ErrorBoundary>
+              <ActionBoard
+                todoTasks={todo}
+                inProgressTasks={inProgress}
+                doneTasks={done}
+                todoWindowDays={todoWindowDays}
+                onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
+                onShowLessTodo={
+                  todoWindowDays > 7 ? handleShowLessTodo : undefined
+                }
+              />
+            </ErrorBoundary>
           </>
         )
       ) : (
@@ -188,23 +191,25 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-24 w-full" />
-          <div className="flex gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex-1 space-y-3">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ))}
+    <ErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-24 w-full" />
+            <div className="flex gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex-1 space-y-3">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      }
-    >
-      <DashboardContent />
-    </Suspense>
+        }
+      >
+        <DashboardContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

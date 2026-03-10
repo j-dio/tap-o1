@@ -392,23 +392,88 @@ src/lib/__tests__/course-colors.test.ts
 src/hooks/__tests__/use-action-board.test.ts
 ```
 
-### Phase 7: Polish & Launch (Size: M — ~4 hours)
+### Phase 7: Polish (Size: M — ~4 hours)
 
-- [ ] Offline support: service worker caches task data
-- [ ] "Add to Home Screen" prompt + tutorial
-- [ ] Calendar view (monthly overview)
-- [ ] Export tasks to .ics file (for native calendar apps)
-- [ ] Error boundaries + Sentry integration
+Focused on app quality and completeness before a bug-fixing sprint. No new external dependencies introduced.
+
+**Item 1 — Error Boundary:**
+
+- [x] `ErrorBoundary` class component (`src/components/error-boundary.tsx`) — catches runtime crashes in child subtrees via `getDerivedStateFromError` / `componentDidCatch`; shows error message in dev, generic message in prod; "Try again" button resets state
+- [x] `<DashboardContent>` wrapped in outer `<ErrorBoundary>` inside `DashboardPage` — prevents blank screen on top-level crashes
+- [x] `<ActionBoard>` wrapped in inner `<ErrorBoundary>` inside `DashboardContent` — isolates drag-and-drop board failures from the rest of the UI
+
+**Item 2 — Offline / Service Worker Cache:**
+
+- [x] `src/app/sw.ts` enhanced with explicit `RuntimeCaching` entries prepended before `defaultCache`:
+  - `NetworkFirst` (5 s timeout) for Supabase REST/Auth API (`*.supabase.co`, `*.supabase.in`) — cached 1 h, 64 entries
+  - `NetworkFirst` (3 s timeout) for same-origin navigation requests (app shell HTML) — cached 24 h, 32 entries
+  - `NetworkFirst` (5 s timeout) for same-origin `/api/*` routes — cached 1 h, 32 entries
+  - `StaleWhileRevalidate` for static assets (`script`, `style`, `image` destinations) — cached 7 days, 128 entries
+- [x] `src/components/offline-banner.tsx` — uses `useSyncExternalStore` subscribed to the `online`/`offline` window events; renders a fixed top banner with `WifiOff` icon when `navigator.onLine === false`; SSR-safe via `getServerSnapshot`
+- [x] `OfflineBanner` rendered at the top of `<QueryProvider>` in `src/app/layout.tsx`
+
+**Item 3 — "Add to Home Screen" prompt:**
+
+- [x] `src/components/add-to-homescreen-prompt.tsx` — captures `beforeinstallprompt` via a module-level event listener stored in `deferredPrompt`; tracks it with `useSyncExternalStore` for SSR safety; also fires `appinstalled` listener to clear the prompt
+- [x] Android/Chrome: shows a fixed bottom banner with Install / Not now buttons; calls `deferredPrompt.prompt()` and awaits `userChoice`
+- [x] iOS Safari: detects `navigator.userAgent` for iPad/iPhone/iPod + absence of `MSStream`; shows a Sheet (slides up from bottom) with numbered step-by-step instructions (Share → "Add to Home Screen" → Add) with inline Lucide icons
+- [x] Standalone mode detected via `matchMedia('(display-mode: standalone)')` and `navigator.standalone` — prompt hidden when already installed
+- [x] `localStorage` key `"a2hs-dismissed"` prevents re-showing the prompt after dismissal or installation on the same device
+- [x] `AddToHomescreenPrompt` rendered inside `<QueryProvider>` in `src/app/layout.tsx`, after `{children}`
+
+**Item 4 — Calendar view:**
+
+- [x] `src/app/dashboard/calendar/page.tsx` — monthly calendar grid built with `getMonthGrid(year, month)` computing Monday-anchored week rows; `Suspense` boundary wraps `CalendarContent`
+- [x] Month navigation — Prev / Next buttons + "Today" shortcut; state stored as `{ year, month }` in a single `useState` object; `useCallback` for all navigation handlers
+- [x] Today highlighting — `isSameDay(day, today)` drives a filled `bg-primary` circle on the date number
+- [x] Task pills — up to 3 task title pills per cell (truncated), `+N` overflow indicator; powered by `getTaskCountForDay` filtering against `useTasks()` data
+- [x] Selected date side panel — clicking a day sets `selectedDate`; the right panel renders `TaskList` for tasks due that day or an `EmptyState` prompt; `useMemo` keeps filtered list stable
+- [x] Full filter support — URL search params (`source`, `type`, `course`, `status`) passed directly to `useTasks(filters)` with the same pattern as the Dashboard and Timeline pages; `ViewToggle` and `FilterBar` both rendered
+- [x] "Calendar" nav link added to `sidebar-nav.tsx` with the `Calendar` Lucide icon, positioned between Timeline and Settings
+
+**Verification:**
+
+- `npx tsc --noEmit` — zero errors
+- `npx vitest run` — all 61 tests passing (no regressions)
+
+**Status:** Complete. All four polish items merged on branch `phase-7` under four separate conventional commits.
+
+**Files:**
+
+```
+src/components/error-boundary.tsx             (new)
+src/app/dashboard/page.tsx                    (ErrorBoundary wrapping)
+src/app/sw.ts                                 (extended runtime caching)
+src/components/offline-banner.tsx             (new)
+src/app/layout.tsx                            (OfflineBanner + AddToHomescreenPrompt)
+src/components/add-to-homescreen-prompt.tsx   (new)
+src/app/dashboard/calendar/page.tsx           (new)
+src/components/sidebar-nav.tsx                (Calendar nav link)
+```
+
+### Phase 8: Stabilization & Launch (Size: L — ~6 hours)
+
+Bug-fixing sprint followed by launch prep.
+
+**Bug Fixing:**
+
+- [ ] End-to-end testing of all features (sync, custom tasks, drag-and-drop, notifications, filters)
+- [ ] Fix any regressions discovered during testing
+
+**Launch Prep:**
+
+- [ ] Export tasks to `.ics` — download tasks as a calendar file openable in Apple Calendar, Google Calendar, Outlook, etc.
+- [ ] Sentry integration — runtime error monitoring and alerting for production
 - [ ] Landing page with feature highlights
-- [ ] README.md with setup instructions
+- [ ] README.md with setup instructions for self-hosting
 - [ ] Deploy to production
 
 **Files:**
 
 ```
-src/app/(dashboard)/calendar/page.tsx
 src/app/page.tsx (landing)
-src/components/error-boundary.tsx
+src/lib/actions/export.ts
+src/components/sentry-provider.tsx
 README.md
 ```
 
@@ -437,20 +502,21 @@ README.md
 
 ## Estimated Timeline
 
-| Phase                         | Effort        | Cumulative                 |
-| ----------------------------- | ------------- | -------------------------- |
-| Phase 0: Scaffolding          | 2h            | 2h                         |
-| Phase 1: Auth & Onboarding    | 4h            | 6h                         |
-| Phase 2: UVEC Ingestion       | 4h            | 10h                        |
-| Phase 3: GClassroom Ingestion | 4h            | 14h                        |
-| Phase 4: Dashboard UI         | 6h            | 20h                        |
-| Phase 5: Task Management      | 3h            | 23h                        |
-| Phase 5.5: Enhanced Features  | 4h            | 27h                        |
-| Phase 5.6: Bug Fixes          | 1h            | 28h                        |
-| Phase 6: Notifications        | 4h            | 32h                        |
-| Phase 6.5: Custom Tasks       | 3h            | 35h                        |
-| Phase 7: Polish & Launch      | 4h            | 39h                        |
-| **Total**                     | **~39 hours** | **~3-4 weeks** (part-time) |
+| Phase                           | Effort        | Cumulative                 |
+| ------------------------------- | ------------- | -------------------------- |
+| Phase 0: Scaffolding            | 2h            | 2h                         |
+| Phase 1: Auth & Onboarding      | 4h            | 6h                         |
+| Phase 2: UVEC Ingestion         | 4h            | 10h                        |
+| Phase 3: GClassroom Ingestion   | 4h            | 14h                        |
+| Phase 4: Dashboard UI           | 6h            | 20h                        |
+| Phase 5: Task Management        | 3h            | 23h                        |
+| Phase 5.5: Enhanced Features    | 4h            | 27h                        |
+| Phase 5.6: Bug Fixes            | 1h            | 28h                        |
+| Phase 6: Notifications          | 4h            | 32h                        |
+| Phase 6.5: Custom Tasks         | 3h            | 35h                        |
+| Phase 7: Polish                 | 4h            | 39h                        |
+| Phase 8: Stabilization & Launch | 6h            | 45h                        |
+| **Total**                       | **~45 hours** | **~4-5 weeks** (part-time) |
 
 ---
 
