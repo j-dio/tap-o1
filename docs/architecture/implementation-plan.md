@@ -392,23 +392,46 @@ src/lib/__tests__/course-colors.test.ts
 src/hooks/__tests__/use-action-board.test.ts
 ```
 
-### Phase 7: Polish & Launch (Size: M — ~4 hours)
+### Phase 7: Polish (Size: M — ~4 hours)
 
-- [ ] Offline support: service worker caches task data
-- [ ] "Add to Home Screen" prompt + tutorial
-- [ ] Calendar view (monthly overview)
-- [ ] Export tasks to .ics file (for native calendar apps)
-- [ ] Error boundaries + Sentry integration
+Focused on app quality and completeness before a bug-fixing sprint. No new external dependencies introduced here.
+
+- [ ] Offline support — service worker caches task data so the dashboard loads without a network connection
+- [ ] "Add to Home Screen" prompt + tutorial — required for iOS Web Push; shown contextually after first sync
+- [ ] Calendar view — monthly overview page at `/dashboard/calendar`
+- [ ] Error boundaries — React `ErrorBoundary` component wrapping the dashboard and task board; shows a graceful fallback instead of a blank screen on runtime crashes
+
+**Files:**
+
+```
+src/app/dashboard/calendar/page.tsx
+src/components/error-boundary.tsx
+public/sw.js (updated cache strategy)
+```
+
+### Phase 8: Stabilization & Launch (Size: L — ~6 hours)
+
+Bug-fixing sprint followed by launch prep.
+
+**Bug Fixing:**
+
+- [ ] End-to-end testing of all features (sync, custom tasks, drag-and-drop, notifications, filters)
+- [ ] Fix any regressions discovered during testing
+
+**Launch Prep:**
+
+- [ ] Export tasks to `.ics` — download tasks as a calendar file openable in Apple Calendar, Google Calendar, Outlook, etc.
+- [ ] Sentry integration — runtime error monitoring and alerting for production
 - [ ] Landing page with feature highlights
-- [ ] README.md with setup instructions
+- [ ] README.md with setup instructions for self-hosting
 - [ ] Deploy to production
 
 **Files:**
 
 ```
-src/app/(dashboard)/calendar/page.tsx
 src/app/page.tsx (landing)
-src/components/error-boundary.tsx
+src/lib/actions/export.ts
+src/components/sentry-provider.tsx
 README.md
 ```
 
@@ -437,20 +460,21 @@ README.md
 
 ## Estimated Timeline
 
-| Phase                         | Effort        | Cumulative                 |
-| ----------------------------- | ------------- | -------------------------- |
-| Phase 0: Scaffolding          | 2h            | 2h                         |
-| Phase 1: Auth & Onboarding    | 4h            | 6h                         |
-| Phase 2: UVEC Ingestion       | 4h            | 10h                        |
-| Phase 3: GClassroom Ingestion | 4h            | 14h                        |
-| Phase 4: Dashboard UI         | 6h            | 20h                        |
-| Phase 5: Task Management      | 3h            | 23h                        |
-| Phase 5.5: Enhanced Features  | 4h            | 27h                        |
-| Phase 5.6: Bug Fixes          | 1h            | 28h                        |
-| Phase 6: Notifications        | 4h            | 32h                        |
-| Phase 6.5: Custom Tasks       | 3h            | 35h                        |
-| Phase 7: Polish & Launch      | 4h            | 39h                        |
-| **Total**                     | **~39 hours** | **~3-4 weeks** (part-time) |
+| Phase                           | Effort        | Cumulative                 |
+| ------------------------------- | ------------- | -------------------------- |
+| Phase 0: Scaffolding            | 2h            | 2h                         |
+| Phase 1: Auth & Onboarding      | 4h            | 6h                         |
+| Phase 2: UVEC Ingestion         | 4h            | 10h                        |
+| Phase 3: GClassroom Ingestion   | 4h            | 14h                        |
+| Phase 4: Dashboard UI           | 6h            | 20h                        |
+| Phase 5: Task Management        | 3h            | 23h                        |
+| Phase 5.5: Enhanced Features    | 4h            | 27h                        |
+| Phase 5.6: Bug Fixes            | 1h            | 28h                        |
+| Phase 6: Notifications          | 4h            | 32h                        |
+| Phase 6.5: Custom Tasks         | 3h            | 35h                        |
+| Phase 7: Polish                 | 4h            | 39h                        |
+| Phase 8: Stabilization & Launch | 6h            | 45h                        |
+| **Total**                       | **~45 hours** | **~4-5 weeks** (part-time) |
 
 ---
 
