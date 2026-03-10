@@ -76,6 +76,10 @@ interface ActionBoardColumnProps {
   onShowLess?: () => void;
   /** Current To Do window in days (used for button labels). */
   todoWindowDays?: number;
+  /** Callback to dismiss all tasks in this column (used for Done column). */
+  onDismissAll?: () => void;
+  /** Whether the dismiss-all mutation is currently pending. */
+  isDismissAllPending?: boolean;
 }
 
 export function ActionBoardColumn({
@@ -86,6 +90,8 @@ export function ActionBoardColumn({
   onShowMore,
   onShowLess,
   todoWindowDays,
+  onDismissAll,
+  isDismissAllPending,
 }: ActionBoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const Icon = columnIcons[id];
@@ -102,7 +108,21 @@ export function ActionBoardColumn({
       <div className="mb-3 flex items-center gap-2">
         <Icon className={cn("size-4", accentClass)} />
         <span className="text-sm font-semibold">{title}</span>
-        <span className="bg-muted text-muted-foreground ml-auto rounded-full px-2 py-0.5 text-xs font-medium">
+        {id === "done" && onDismissAll && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-xs"
+            disabled={tasks.length === 0 || isDismissAllPending}
+            onClick={onDismissAll}
+          >
+            Dismiss all
+          </Button>
+        )}
+        <span className={cn(
+          "bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium",
+          !(id === "done" && onDismissAll) && "ml-auto",
+        )}>
           {tasks.length}
         </span>
       </div>
