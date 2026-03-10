@@ -192,4 +192,48 @@ describe("computeActionBoardBuckets", () => {
     expect(result.done).toHaveLength(1);
     expect(result.todoHasMore).toBe(true);
   });
+
+  // ---- Custom tasks ----------------------------------------------------
+
+  it("routes a custom source task to todo bucket like any other pending task", () => {
+    const task = makeTask({
+      id: "custom-1",
+      source: "custom",
+      isCustom: true,
+      status: "pending",
+      dueDate: new Date(NOW + 2 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7);
+    expect(result.todo).toHaveLength(1);
+    expect(result.todo[0].source).toBe("custom");
+  });
+
+  it("routes a custom task marked done into the done bucket", () => {
+    const task = makeTask({
+      id: "custom-done",
+      source: "custom",
+      isCustom: true,
+      status: "done",
+      updatedAt: new Date(NOW - 1 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7);
+    expect(result.done).toHaveLength(1);
+  });
+
+  it("dismiss-all: tasks with status dismissed are excluded from all buckets", () => {
+    const tasks = [
+      makeTask({
+        id: "d1",
+        status: "dismissed",
+      }),
+      makeTask({
+        id: "d2",
+        status: "dismissed",
+      }),
+    ];
+    const result = computeActionBoardBuckets(tasks, NOW, 7);
+    expect(result.todo).toHaveLength(0);
+    expect(result.inProgress).toHaveLength(0);
+    expect(result.done).toHaveLength(0);
+  });
 });
