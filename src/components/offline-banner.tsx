@@ -32,7 +32,7 @@ export function OfflineBanner() {
   return (
     <div
       role="alert"
-      className="bg-warning text-warning-foreground fixed inset-x-0 top-0 z-[100] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium shadow-sm"
+      className="bg-warning text-warning-foreground fixed inset-x-0 top-0 z-100 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium shadow-sm"
     >
       <WifiOff className="size-4" />
       <span>You are offline — showing cached data</span>

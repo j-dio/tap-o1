@@ -31,7 +31,6 @@ export class ErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // In production, this could report to an error tracking service
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
       console.error("ErrorBoundary caught:", error, errorInfo);
     }
   }

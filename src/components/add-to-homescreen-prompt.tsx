@@ -168,7 +168,7 @@ export function AddToHomescreenPrompt() {
 
   /* ── Android/Chrome: Install banner ── */
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[90] p-4 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:max-w-sm">
+    <div className="fixed inset-x-0 bottom-0 z-90 p-4 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:max-w-sm">
       <div className="bg-card flex items-start gap-3 rounded-lg border p-4 shadow-lg">
         <div className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-lg">
           <Download className="text-primary size-5" />
