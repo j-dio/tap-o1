@@ -20,6 +20,7 @@ function makeTask(overrides: Partial<TaskWithCourse>): TaskWithCourse {
     dueDate: null,
     url: null,
     metadata: {},
+    isCustom: false,
     fetchedAt: new Date(NOW).toISOString(),
     createdAt: new Date(NOW).toISOString(),
     updatedAt: new Date(NOW).toISOString(),
