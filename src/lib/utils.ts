@@ -196,28 +196,30 @@ export function groupTasksByDay(
 }
 
 /**
- * Get a deterministic chart color variable for a course.
+ * Generate a unique HSL color string for a course based on its ID.
+ * Uses a hash-based hue with fixed saturation/lightness for consistent,
+ * visually distinct colors that avoid the 5-color collision of the old palette.
  */
-const COURSE_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
+export function generateCourseColor(courseId: string): string {
+  let hash = 0;
+  for (let i = 0; i < courseId.length; i++) {
+    hash = (hash * 31 + courseId.charCodeAt(i)) | 0;
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 70%, 60%)`;
+}
 
+/**
+ * Get a deterministic chart color variable for a course.
+ * Prefers persisted `courseColor`, falls back to HSL generation.
+ */
 export function getCourseColor(
   courseId: string | null,
   courseColor: string | null,
 ): string {
   if (courseColor) return courseColor;
-  if (!courseId) return COURSE_COLORS[0];
-  // Simple hash to pick a consistent color
-  let hash = 0;
-  for (let i = 0; i < courseId.length; i++) {
-    hash = (hash * 31 + courseId.charCodeAt(i)) | 0;
-  }
-  return COURSE_COLORS[Math.abs(hash) % COURSE_COLORS.length];
+  if (!courseId) return "hsl(0, 70%, 60%)";
+  return generateCourseColor(courseId);
 }
 
 /**

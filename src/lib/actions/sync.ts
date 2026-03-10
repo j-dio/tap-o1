@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { syncTasks, type SyncResult } from "@/lib/sync-engine";
+import { generateCourseColor } from "@/lib/utils";
 
 export interface SyncResponse {
   synced: number;
@@ -146,6 +147,24 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     if (existingCourses) {
       for (const c of existingCourses) {
         courseMap.set(`${c.external_id}:${c.source}`, c.id);
+      }
+    }
+  }
+
+  // Backfill course colors for any courses missing a color
+  if (courseMap.size > 0) {
+    const { data: coursesWithoutColor } = await supabase
+      .from("courses")
+      .select("id")
+      .eq("user_id", user.id)
+      .is("color", null);
+
+    if (coursesWithoutColor && coursesWithoutColor.length > 0) {
+      for (const row of coursesWithoutColor) {
+        await supabase
+          .from("courses")
+          .update({ color: generateCourseColor(row.id) })
+          .eq("id", row.id);
       }
     }
   }
