@@ -7,5 +7,6 @@ export type {
   TaskPriority,
   Course,
   TaskOverride,
+  TaskWithCourse,
   Profile,
 } from "./task";

@@ -74,7 +74,7 @@ export function ActionBoard({
   onShowLessTodo,
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
-  const { setStatus } = useTaskActions();
+  const { setStatus, dismissAll } = useTaskActions();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -175,6 +175,8 @@ export function ActionBoard({
           title="Done"
           tasks={doneTasks}
           accentClass="text-success"
+          onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
+          isDismissAllPending={dismissAll.isPending}
         />
       </div>
 

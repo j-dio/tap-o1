@@ -8,6 +8,16 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import type { TaskPriority, TaskStatus, TaskWithCourse } from "@/types/task";
+import {
+  createCustomTask,
+  updateCustomTask,
+  deleteCustomTask,
+  dismissAllDone,
+} from "@/lib/actions/tasks";
+import type {
+  CreateCustomTaskInput,
+  UpdateCustomTaskInput,
+} from "@/lib/validations/tasks";
 
 interface TaskOverridePayload {
   taskId: string;
@@ -214,9 +224,137 @@ export function useTaskActions() {
     },
   });
 
+  const createTask = useMutation<{ id?: string }, Error, CreateCustomTaskInput>(
+    {
+      mutationFn: async (input) => {
+        const result = await createCustomTask(input);
+        if (!result.success)
+          throw new Error(result.error ?? "Failed to create task");
+        return { id: result.id };
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        toast.success("Task created");
+      },
+      onError: (err) => {
+        toast.error("Failed to create task", { description: err.message });
+      },
+    },
+  );
+
+  const editTask = useMutation<
+    void,
+    Error,
+    { id: string; input: UpdateCustomTaskInput }
+  >({
+    mutationFn: async ({ id, input }) => {
+      const result = await updateCustomTask(id, input);
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to update task");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task updated");
+    },
+    onError: (err) => {
+      toast.error("Failed to update task", { description: err.message });
+    },
+  });
+
+  const deleteTask = useMutation<
+    void,
+    Error,
+    string,
+    { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
+  >({
+    mutationFn: async (id) => {
+      const result = await deleteCustomTask(id);
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to delete task");
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousQueries = queryClient.getQueriesData<TaskWithCourse[]>({
+        queryKey: ["tasks"],
+      });
+      queryClient.setQueriesData<TaskWithCourse[]>(
+        { queryKey: ["tasks"] },
+        (old) => {
+          if (!old) return old;
+          return old.filter((task) => task.id !== id);
+        },
+      );
+      return { previousQueries };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Task deleted");
+    },
+    onError: (err, _id, context) => {
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      toast.error("Failed to delete task", { description: err.message });
+    },
+  });
+
+  const dismissAll = useMutation<
+    void,
+    Error,
+    string[],
+    { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
+  >({
+    mutationFn: async (taskIds) => {
+      const result = await dismissAllDone(taskIds);
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to dismiss tasks");
+    },
+    onMutate: async (taskIds) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousQueries = queryClient.getQueriesData<TaskWithCourse[]>({
+        queryKey: ["tasks"],
+      });
+      const idSet = new Set(taskIds);
+      queryClient.setQueriesData<TaskWithCourse[]>(
+        { queryKey: ["tasks"] },
+        (old) => {
+          if (!old) return old;
+          return old.map((task) =>
+            idSet.has(task.id)
+              ? {
+                  ...task,
+                  status: "dismissed" as const,
+                  displayStatus: "dismissed" as const,
+                }
+              : task,
+          );
+        },
+      );
+      return { previousQueries };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("All done tasks dismissed");
+    },
+    onError: (err, _ids, context) => {
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      toast.error("Failed to dismiss tasks", { description: err.message });
+    },
+  });
+
   return {
     setStatus,
     setPriority,
     setNotes,
+    createTask,
+    editTask,
+    deleteTask,
+    dismissAll,
   };
 }

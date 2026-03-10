@@ -6,14 +6,14 @@ import type { TaskWithCourse } from "@/types/task";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import { Button } from "@/components/ui/button";
 import type { TaskPriority } from "@/types/task";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 
 interface TaskActionsProps {
   task: TaskWithCourse;
 }
 
 export function TaskActions({ task }: TaskActionsProps) {
-  const { setStatus, setPriority, setNotes } = useTaskActions();
+  const { setStatus, setPriority, setNotes, deleteTask } = useTaskActions();
   const [notesDraft, setNotesDraft] = useState(task.notes ?? "");
 
   const isSavingStatus = useMemo(
@@ -29,6 +29,11 @@ export function TaskActions({ task }: TaskActionsProps) {
   const isSavingNotes = useMemo(
     () => setNotes.isPending && setNotes.variables?.taskId === task.id,
     [setNotes.isPending, setNotes.variables?.taskId, task.id],
+  );
+
+  const isDeletingTask = useMemo(
+    () => deleteTask.isPending && deleteTask.variables === task.id,
+    [deleteTask.isPending, deleteTask.variables, task.id],
   );
 
   return (
@@ -93,6 +98,21 @@ export function TaskActions({ task }: TaskActionsProps) {
               <ExternalLink className="size-4" />
               Open in {task.source === "gclassroom" ? "Classroom" : "UVEC"}
             </a>
+          </Button>
+        )}
+
+        {task.isCustom && (
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            disabled={isDeletingTask}
+            onClick={() => {
+              deleteTask.mutate(task.id);
+            }}
+          >
+            <Trash2 className="size-4" />
+            Delete
           </Button>
         )}
       </div>

@@ -57,6 +57,7 @@ function mapRow(row: Record<string, unknown>): TaskWithCourse {
     dueDate,
     url: (row.url as string) ?? null,
     metadata: {},
+    isCustom: (row.is_custom as boolean) ?? false,
     fetchedAt: taskUpdatedAt,
     createdAt: (row.created_at as string) ?? "",
     updatedAt: effectiveUpdatedAt,

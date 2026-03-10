@@ -1,4 +1,4 @@
-export type TaskSource = "uvec" | "gclassroom";
+export type TaskSource = "uvec" | "gclassroom" | "custom";
 
 export type TaskType =
   | "assignment"
@@ -36,6 +36,7 @@ export interface Task {
   dueDate: string | null;
   url: string | null;
   metadata: Record<string, unknown>;
+  isCustom: boolean;
   fetchedAt: string;
   createdAt: string;
   updatedAt: string;

@@ -228,7 +228,7 @@ src/components/task-detail-modal.tsx
 **Additional Features:**
 
 - [x] Relative date formatting — human-readable time indicators ("in 2h", "3d ago", etc.)
-- [x] Course color assignment — deterministic hashing for consistent visual identification
+- [x] Course color assignment — deterministic hashing for consistent visual identification _(superseded in Phase 6.5 by full HSL hue-wheel generation and DB persistence)_
 - [x] Dark mode support — CSS variable-based theming with system preference detection
 - [x] External links — direct links to source platforms (Google Classroom / UVEC Moodle)
 
@@ -329,6 +329,69 @@ supabase/functions/send-due-reminders/web-push.ts
 src/lib/__tests__/notifications-validation.test.ts
 ```
 
+### Phase 6.5: Custom Tasks, Dismiss All & Persistent Course Colors (Size: M — ~3 hours)
+
+**Custom Task CRUD:**
+
+- [x] DB migration 007 — extends `tasks.source` CHECK constraint to include `'custom'`; adds `is_custom BOOLEAN NOT NULL DEFAULT false` column; adds index on `(user_id, is_custom)`
+- [x] `TaskSource` union extended with `'custom'`; `isCustom: boolean` field added to `Task` and `TaskWithCourse` interfaces
+- [x] Zod schemas — `createCustomTaskSchema` (title required, dueDate ISO, type/priority enums, courseId UUID optional) and `updateCustomTaskSchema` (title required, all else nullable) in `src/lib/validations/tasks.ts`
+- [x] Server actions — `createCustomTask` (validates, generates `external_id` via `crypto.randomUUID()`, inserts with `source='custom'`, upserts priority override), `updateCustomTask` (guards `is_custom=true`), `deleteCustomTask` (hard delete, guards `is_custom=true`), `dismissAllDone` (bulk upserts `task_overrides` with `custom_status='dismissed'`) in `src/lib/actions/tasks.ts`
+- [x] `useTaskActions` extended — `createTask`, `editTask`, `deleteTask`, `dismissAll` mutations with full optimistic-update + rollback pattern; all invalidate `["tasks"]` on success
+- [x] `CustomTaskModal` — `key`-based inner component (`TaskFormContent`) with lazy `useState` initialiser; no `useEffect` needed; fresh mount on every dialog open eliminates React linter error
+- [x] "New task" button (Plus icon) added to dashboard header; wired to `CustomTaskModal`
+- [x] Delete button (trash icon) rendered in `task-actions.tsx` only when `task.isCustom === true`
+- [x] `UserPen` Lucide icon mapped to `'custom'` source in `source-icon.tsx`
+- [x] Task detail modal and task filters updated to handle `'custom'` source correctly
+
+**Dismiss All Done:**
+
+- [x] `onDismissAll?: () => void` and `isDismissAllPending?: boolean` props added to `ActionBoardColumn`
+- [x] "Dismiss all" button rendered in the Done column header; calls `dismissAll.mutate(doneTasks.map(t => t.id))` from `action-board.tsx`
+
+**Persistent Unique Course Colors:**
+
+- [x] Replaced fixed 5-color `COURSE_COLORS` palette with `generateCourseColor(courseId): string` — deterministic HSL hash (`hsl(${Math.abs(hash) % 360}, 70%, 60%)`) giving a unique color per course across the full hue wheel
+- [x] `getCourseColor` falls back to `generateCourseColor` for courses without a stored color
+- [x] Sync action backfills `color` for any course where `color IS NULL` in the DB, so colors persist across devices/sessions
+
+**Tests:**
+
+- [x] `src/lib/validations/__tests__/tasks-validation.test.ts` — 15 tests for `createCustomTaskSchema` and `updateCustomTaskSchema`
+- [x] `src/lib/__tests__/course-colors.test.ts` — 7 tests asserting HSL uniqueness, hue-wheel distribution, and stable output
+- [x] `src/hooks/__tests__/use-action-board.test.ts` — 16 tests (updated for new dismiss-all bucket logic)
+- [x] Total: 61 tests passing across 7 test files
+
+**Status:** Complete. Branch `custom-task` pushed; migration 007 must be applied to Supabase before deploying.
+
+> **Deployment notes:**
+>
+> 1. Apply migration: `supabase db push` (or paste `007_custom_tasks_dismiss_colors.sql` in Supabase SQL Editor)
+> 2. No new environment variables required
+
+**Files:**
+
+```
+supabase/migrations/007_custom_tasks_dismiss_colors.sql
+src/types/task.ts
+src/lib/validations/tasks.ts
+src/lib/actions/tasks.ts
+src/hooks/use-task-actions.ts
+src/components/custom-task-modal.tsx
+src/app/dashboard/page.tsx
+src/components/task-actions.tsx
+src/components/source-icon.tsx
+src/components/task-detail-modal.tsx
+src/components/task-filters.tsx
+src/components/action-board-column.tsx
+src/components/action-board.tsx
+src/lib/utils.ts
+src/lib/actions/sync.ts
+src/lib/validations/__tests__/tasks-validation.test.ts
+src/lib/__tests__/course-colors.test.ts
+src/hooks/__tests__/use-action-board.test.ts
+```
+
 ### Phase 7: Polish & Launch (Size: M — ~4 hours)
 
 - [ ] Offline support: service worker caches task data
@@ -338,7 +401,7 @@ src/lib/__tests__/notifications-validation.test.ts
 - [ ] Error boundaries + Sentry integration
 - [ ] Landing page with feature highlights
 - [ ] README.md with setup instructions
-- [ ] Deploy to production 
+- [ ] Deploy to production
 
 **Files:**
 
@@ -385,8 +448,9 @@ README.md
 | Phase 5.5: Enhanced Features  | 4h            | 27h                        |
 | Phase 5.6: Bug Fixes          | 1h            | 28h                        |
 | Phase 6: Notifications        | 4h            | 32h                        |
-| Phase 7: Polish & Launch      | 4h            | 36h                        |
-| **Total**                     | **~36 hours** | **~3-4 weeks** (part-time) |
+| Phase 6.5: Custom Tasks       | 3h            | 35h                        |
+| Phase 7: Polish & Launch      | 4h            | 39h                        |
+| **Total**                     | **~39 hours** | **~3-4 weeks** (part-time) |
 
 ---
 

@@ -28,13 +28,16 @@ import { FocusModeToggle } from "@/components/focus-mode-toggle";
 import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
+import { CustomTaskModal } from "@/components/custom-task-modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipboardList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ClipboardList, Plus } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
   const { mutate: sync, isPending: isSyncing } = useSync();
   const [focusMode, setFocusMode] = useState(false);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
 
   const filters: TaskFilters = {};
   const source = searchParams.get("source");
@@ -108,6 +111,10 @@ function DashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => setNewTaskOpen(true)}>
+            <Plus className="mr-1 size-4" />
+            New task
+          </Button>
           <FocusModeToggle
             enabled={focusMode}
             onToggle={() => setFocusMode(!focusMode)}
@@ -173,6 +180,8 @@ function DashboardContent() {
           action={{ label: "Sync now", onClick: () => sync() }}
         />
       )}
+
+      <CustomTaskModal open={newTaskOpen} onOpenChange={setNewTaskOpen} />
     </div>
   );
 }
