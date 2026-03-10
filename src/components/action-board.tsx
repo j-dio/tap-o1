@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -88,7 +88,10 @@ export function ActionBoard({
     }),
   );
 
-  const allTasks = [...todoTasks, ...inProgressTasks, ...doneTasks];
+  const allTasks = useMemo(
+    () => [...todoTasks, ...inProgressTasks, ...doneTasks],
+    [todoTasks, inProgressTasks, doneTasks],
+  );
 
   const findTask = useCallback(
     (id: string): TaskWithCourse | undefined => {
