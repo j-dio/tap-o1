@@ -14,7 +14,10 @@ import {
   deleteCustomTask,
   dismissAllDone,
 } from "@/lib/actions/tasks";
-import type { CreateCustomTaskInput, UpdateCustomTaskInput } from "@/lib/validations/tasks";
+import type {
+  CreateCustomTaskInput,
+  UpdateCustomTaskInput,
+} from "@/lib/validations/tasks";
 
 interface TaskOverridePayload {
   taskId: string;
@@ -221,24 +224,23 @@ export function useTaskActions() {
     },
   });
 
-  const createTask = useMutation<
-    { id?: string },
-    Error,
-    CreateCustomTaskInput
-  >({
-    mutationFn: async (input) => {
-      const result = await createCustomTask(input);
-      if (!result.success) throw new Error(result.error ?? "Failed to create task");
-      return { id: result.id };
+  const createTask = useMutation<{ id?: string }, Error, CreateCustomTaskInput>(
+    {
+      mutationFn: async (input) => {
+        const result = await createCustomTask(input);
+        if (!result.success)
+          throw new Error(result.error ?? "Failed to create task");
+        return { id: result.id };
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        toast.success("Task created");
+      },
+      onError: (err) => {
+        toast.error("Failed to create task", { description: err.message });
+      },
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task created");
-    },
-    onError: (err) => {
-      toast.error("Failed to create task", { description: err.message });
-    },
-  });
+  );
 
   const editTask = useMutation<
     void,
@@ -247,7 +249,8 @@ export function useTaskActions() {
   >({
     mutationFn: async ({ id, input }) => {
       const result = await updateCustomTask(id, input);
-      if (!result.success) throw new Error(result.error ?? "Failed to update task");
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to update task");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -266,7 +269,8 @@ export function useTaskActions() {
   >({
     mutationFn: async (id) => {
       const result = await deleteCustomTask(id);
-      if (!result.success) throw new Error(result.error ?? "Failed to delete task");
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to delete task");
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
@@ -304,7 +308,8 @@ export function useTaskActions() {
   >({
     mutationFn: async (taskIds) => {
       const result = await dismissAllDone(taskIds);
-      if (!result.success) throw new Error(result.error ?? "Failed to dismiss tasks");
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to dismiss tasks");
     },
     onMutate: async (taskIds) => {
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
@@ -318,7 +323,11 @@ export function useTaskActions() {
           if (!old) return old;
           return old.map((task) =>
             idSet.has(task.id)
-              ? { ...task, status: "dismissed" as const, displayStatus: "dismissed" as const }
+              ? {
+                  ...task,
+                  status: "dismissed" as const,
+                  displayStatus: "dismissed" as const,
+                }
               : task,
           );
         },

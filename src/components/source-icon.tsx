@@ -17,7 +17,7 @@ export function SourceIcon({ source, className }: SourceIconProps) {
   const Icon = sourceIcons[source];
   return (
     <Icon
-      className={cn("size-3.5 text-muted-foreground shrink-0", className)}
+      className={cn("text-muted-foreground size-3.5 shrink-0", className)}
     />
   );
 }

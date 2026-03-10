@@ -19,7 +19,10 @@ export interface ActionResult {
 export async function createCustomTask(input: unknown): Promise<ActionResult> {
   const parsed = createCustomTaskSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
 
   const supabase = await createClient();
@@ -87,7 +90,10 @@ export async function updateCustomTask(
 ): Promise<ActionResult> {
   const parsed = updateCustomTaskSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    };
   }
 
   const supabase = await createClient();
@@ -215,12 +221,10 @@ export async function dismissAllDone(
     custom_status: "dismissed",
   }));
 
-  const { error } = await supabase
-    .from("task_overrides")
-    .upsert(rows, {
-      onConflict: "user_id,task_id",
-      ignoreDuplicates: false,
-    });
+  const { error } = await supabase.from("task_overrides").upsert(rows, {
+    onConflict: "user_id,task_id",
+    ignoreDuplicates: false,
+  });
 
   if (error) {
     return { success: false, error: error.message };

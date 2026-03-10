@@ -119,10 +119,12 @@ export function ActionBoardColumn({
             Dismiss all
           </Button>
         )}
-        <span className={cn(
-          "bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium",
-          !(id === "done" && onDismissAll) && "ml-auto",
-        )}>
+        <span
+          className={cn(
+            "bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium",
+            !(id === "done" && onDismissAll) && "ml-auto",
+          )}
+        >
           {tasks.length}
         </span>
       </div>

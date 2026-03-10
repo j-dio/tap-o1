@@ -1,6 +1,12 @@
 import { z } from "zod/v4";
 
-const TASK_TYPES = ["assignment", "quiz", "exam", "event", "announcement"] as const;
+const TASK_TYPES = [
+  "assignment",
+  "quiz",
+  "exam",
+  "event",
+  "announcement",
+] as const;
 const TASK_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 
 /**
@@ -9,10 +15,7 @@ const TASK_PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 export const createCustomTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).optional(),
-  dueDate: z
-    .string()
-    .datetime({ offset: true })
-    .optional(),
+  dueDate: z.string().datetime({ offset: true }).optional(),
   type: z.enum(TASK_TYPES).optional().default("assignment"),
   courseId: z.uuid().optional(),
   priority: z.enum(TASK_PRIORITIES).optional(),
@@ -27,11 +30,7 @@ export type CreateCustomTaskInput = z.infer<typeof createCustomTaskSchema>;
 export const updateCustomTaskSchema = z.object({
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).nullable().optional(),
-  dueDate: z
-    .string()
-    .datetime({ offset: true })
-    .nullable()
-    .optional(),
+  dueDate: z.string().datetime({ offset: true }).nullable().optional(),
   type: z.enum(TASK_TYPES).optional(),
   courseId: z.uuid().nullable().optional(),
   priority: z.enum(TASK_PRIORITIES).nullable().optional(),

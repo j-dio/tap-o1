@@ -111,10 +111,7 @@ function DashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            onClick={() => setNewTaskOpen(true)}
-          >
+          <Button size="sm" onClick={() => setNewTaskOpen(true)}>
             <Plus className="mr-1 size-4" />
             New task
           </Button>
