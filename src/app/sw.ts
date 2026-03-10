@@ -1,6 +1,15 @@
 import { defaultCache } from "@serwist/next/worker";
-import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import type {
+  PrecacheEntry,
+  RuntimeCaching,
+  SerwistGlobalConfig,
+} from "serwist";
+import {
+  Serwist,
+  NetworkFirst,
+  StaleWhileRevalidate,
+  ExpirationPlugin,
+} from "serwist";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -10,12 +19,71 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+/* ─── Additional runtime caching rules ─── */
+const extraCaching: RuntimeCaching[] = [
+  // Supabase REST / Auth API — NetworkFirst so offline reads come from cache
+  {
+    matcher: ({ url }) =>
+      url.hostname.endsWith(".supabase.co") ||
+      url.hostname.endsWith(".supabase.in"),
+    handler: new NetworkFirst({
+      cacheName: "supabase-api",
+      networkTimeoutSeconds: 5,
+      plugins: [
+        new ExpirationPlugin({ maxEntries: 64, maxAgeSeconds: 60 * 60 }),
+      ],
+    }),
+  },
+  // App shell HTML pages — NetworkFirst with cache fallback
+  {
+    matcher: ({ request, sameOrigin }) =>
+      sameOrigin &&
+      request.mode === "navigate" &&
+      !request.url.includes("/api/"),
+    handler: new NetworkFirst({
+      cacheName: "app-shell",
+      networkTimeoutSeconds: 3,
+      plugins: [
+        new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 }),
+      ],
+    }),
+  },
+  // Same-origin API routes — NetworkFirst
+  {
+    matcher: ({ url, sameOrigin }) =>
+      sameOrigin && url.pathname.startsWith("/api/"),
+    handler: new NetworkFirst({
+      cacheName: "api-routes",
+      networkTimeoutSeconds: 5,
+      plugins: [
+        new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 60 * 60 }),
+      ],
+    }),
+  },
+  // Static assets (JS, CSS, images) — StaleWhileRevalidate
+  {
+    matcher: ({ request }) =>
+      request.destination === "script" ||
+      request.destination === "style" ||
+      request.destination === "image",
+    handler: new StaleWhileRevalidate({
+      cacheName: "static-assets-swr",
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 128,
+          maxAgeSeconds: 7 * 24 * 60 * 60,
+        }),
+      ],
+    }),
+  },
+];
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [...extraCaching, ...defaultCache],
 });
 
 serwist.addEventListeners();
