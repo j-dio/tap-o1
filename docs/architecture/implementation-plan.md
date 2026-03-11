@@ -428,15 +428,19 @@ Focused on app quality and completeness before a bug-fixing sprint. No new exter
 - [x] Today highlighting — `isSameDay(day, today)` drives a filled `bg-primary` circle on the date number
 - [x] Task pills — up to 3 task title pills per cell (truncated), `+N` overflow indicator; powered by `getTaskCountForDay` filtering against `useTasks()` data
 - [x] Selected date side panel — clicking a day sets `selectedDate`; the right panel renders `TaskList` for tasks due that day or an `EmptyState` prompt; `useMemo` keeps filtered list stable
-- [x] Full filter support — URL search params (`source`, `type`, `course`, `status`) passed directly to `useTasks(filters)` with the same pattern as the Dashboard and Timeline pages; `ViewToggle` and `FilterBar` both rendered
-- [x] "Calendar" nav link added to `sidebar-nav.tsx` with the `Calendar` Lucide icon, positioned between Timeline and Settings
+- [x] Full filter support — URL search params (`source`, `type`, `course`, `status`) passed directly to `useTasks(filters)` with the same pattern as the Dashboard pages; `ViewToggle` and `FilterBar` both rendered
+- [x] "Calendar" nav link added to `sidebar-nav.tsx` with the `Calendar` Lucide icon, replacing Timeline; `CalendarDays` import removed
+- [x] `view-toggle.tsx` (mobile segmented control) updated — Timeline entry replaced with Calendar (`/dashboard/calendar`)
+- [x] `src/app/dashboard/week/page.tsx` redirect target updated to `/dashboard/calendar`
+- [x] `next.config.ts` — permanent (308) redirect added: `/dashboard/timeline` → `/dashboard/calendar` to handle bookmarks and old links
+- [x] `src/app/dashboard/timeline/page.tsx` deleted — route superseded by the calendar view
 
 **Verification:**
 
 - `npx tsc --noEmit` — zero errors
 - `npx vitest run` — all 61 tests passing (no regressions)
 
-**Status:** Complete. All four polish items merged on branch `phase-7` under four separate conventional commits.
+**Status:** Complete. All four polish items shipped on branch `phase-7`; timeline route subsequently removed and redirected to calendar in the same branch.
 
 **Files:**
 
@@ -448,7 +452,11 @@ src/components/offline-banner.tsx             (new)
 src/app/layout.tsx                            (OfflineBanner + AddToHomescreenPrompt)
 src/components/add-to-homescreen-prompt.tsx   (new)
 src/app/dashboard/calendar/page.tsx           (new)
-src/components/sidebar-nav.tsx                (Calendar nav link)
+src/app/dashboard/timeline/page.tsx           (deleted — redirected to /dashboard/calendar)
+src/components/sidebar-nav.tsx                (Calendar nav link, Timeline removed)
+src/components/view-toggle.tsx                (Timeline → Calendar)
+src/app/dashboard/week/page.tsx               (redirect target updated)
+next.config.ts                                (permanent redirect /dashboard/timeline → /dashboard/calendar)
 ```
 
 ### Phase 8: Stabilization & Launch (Size: L — ~6 hours)
