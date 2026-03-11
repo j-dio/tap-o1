@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Calendar,
-  LayoutDashboard,
-  LogOut,
-  Settings,
-} from "lucide-react";
+import { Calendar, LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
