@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Calendar,
-  CalendarDays,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -24,7 +23,6 @@ interface SidebarNavProps {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/timeline", label: "Timeline", icon: CalendarDays },
   { href: "/dashboard/calendar", label: "Calendar", icon: Calendar },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

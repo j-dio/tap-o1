@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const views = [
   { href: "/dashboard", label: "Board" },
-  { href: "/dashboard/timeline", label: "Timeline" },
+  { href: "/dashboard/calendar", label: "Calendar" },
 ];
 
 export function ViewToggle() {
