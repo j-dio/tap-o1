@@ -8,6 +8,7 @@ import { signOut } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SyncButton } from "@/components/sync-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 interface SidebarNavProps {
@@ -37,9 +38,11 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5">
         <div className="bg-primary flex size-8 items-center justify-center rounded-lg">
-          <span className="text-primary-foreground text-xs font-bold">TA</span>
+          <span className="text-primary-foreground text-[9px] font-bold">
+            O(1)
+          </span>
         </div>
-        <span className="text-sm font-semibold">Task Aggregator</span>
+        <span className="text-sm font-semibold">TapO(1)</span>
       </div>
 
       <Separator />
@@ -94,6 +97,7 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
             <p className="text-muted-foreground truncate text-xs">{email}</p>
           </div>
           <div className="flex items-center gap-0.5">
+            <ThemeToggle />
             <SyncButton />
             <Button
               variant="ghost"

@@ -1,11 +1,11 @@
 {
-  "name": "Task Aggregator",
-  "short_name": "TaskAgg",
-  "description": "Aggregate and track university tasks from UVEC and Google Classroom in one place",
+  "name": "TapO(1)",
+  "short_name": "TapO(1)",
+  "description": "Academic tracking in constant time. Aggregate tasks from UVEC and Google Classroom in one place.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0a0a0a",
+  "background_color": "#f5f0e8",
+  "theme_color": "#6b2b2b",
   "orientation": "portrait-primary",
   "icons": [
     {

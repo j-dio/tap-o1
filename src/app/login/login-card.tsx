@@ -62,19 +62,19 @@ export function LoginCard({ error }: { error?: string }) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary">
-          <span className="text-2xl font-bold text-primary-foreground">
-            TA
+        <div className="bg-primary mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl">
+          <span className="text-primary-foreground text-xl font-bold">
+            O(1)
           </span>
         </div>
-        <CardTitle className="text-2xl font-bold">Task Aggregator</CardTitle>
+        <CardTitle className="text-2xl font-bold">TapO(1)</CardTitle>
         <CardDescription className="text-base">
-          All your university tasks from UVEC and Google Classroom in one place.
+          Academic tracking in constant time.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {errorMessage && (
-          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-4 py-3 text-sm">
             {errorMessage}
           </div>
         )}
@@ -90,7 +90,7 @@ export function LoginCard({ error }: { error?: string }) {
           {isPending ? "Redirecting..." : "Sign in with Google"}
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-center text-xs">
           We&apos;ll request access to your Google Classroom courses to
           aggregate your tasks. Your data stays private.
         </p>

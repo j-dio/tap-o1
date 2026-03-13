@@ -459,6 +459,82 @@ src/app/dashboard/week/page.tsx               (redirect target updated)
 next.config.ts                                (permanent redirect /dashboard/timeline → /dashboard/calendar)
 ```
 
+### Phase 7.5: Polishes — Bugs & UX Improvements (Size: M — ~5 hours)
+
+> **Full plan:** [phase-7.5-polishes.md](phase-7.5-polishes.md)
+
+Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested Improvements_ review. Items are ordered by implementation dependency, not original PDF order.
+
+**Item 1 — Branding (TapO(1) Identity & UP Cebu Theme):**
+
+- [x] Replace `:root` light palette in `globals.css` with UP Cebu maroon/cream (primary `oklch(0.40 0.15 25)`, background `oklch(0.97 0.01 80)`)
+- [x] Adjust `.dark` `--primary` to lighter maroon (`oklch(0.68 0.15 25)`) for brand consistency
+- [x] Create `ThemeToggle` component — Sun/Moon button, stores preference in `localStorage["theme"]`
+- [x] Update sidebar logo: "TA" → "O(1)", "Task Aggregator" → "TapO(1)"
+- [x] Update mobile header, login page, landing page, `<title>`, `<meta>`, `manifest.json`
+- [ ] Verify WCAG AA contrast (≥4.5:1) for maroon-on-cream across all surfaces
+
+**Item 2 — Task Card Hover Fix:**
+
+- [ ] Remove `GripVertical` drag handle (6 dots) — entire card is already the drag target
+- [ ] Reposition `SourceIcon` to bottom row to eliminate overlap with hover quick-actions
+- [ ] Add `hover:bg-accent/40 hover:shadow-sm` to card container
+- [ ] Add `cursor-grab` / `active:cursor-grabbing` to sortable wrapper
+
+**Item 3 — Drag-and-Drop Animations:**
+
+- [ ] Add `dropAnimation` config to `DragOverlay` (200ms ease) — replaces `null` for smooth card landing
+- [ ] Enhance `isOver` column styling — add `ring-2 ring-primary/20 ring-inset` + stronger bg tint
+- [ ] Add `transition-transform duration-200` to sortable card wrapper for smooth gap creation
+
+**Item 4 — Column Pagination (In Progress & Done):**
+
+- [ ] Extend `ActionBoardBuckets` type with `inProgressHasMore` and `doneHasMore` booleans
+- [ ] Add `doneWindowDays` param to `computeActionBoardBuckets` (default 7d, 7d increments)
+- [ ] Add `inProgressLimit` param to `computeActionBoardBuckets` (default 5, +5 per click)
+- [ ] Add `doneWindowDays` and `inProgressLimit` state to dashboard page (sessionStorage-backed)
+- [ ] Wire Show More / Show Less buttons for In Progress and Done columns in `ActionBoardColumn`
+- [ ] Add 6+ unit tests for new windowing logic
+
+**Item 5 — Smart First-Sync Experience:**
+
+- [ ] Create `FirstSyncBanner` component — detects >3 past-due pending tasks after first sync
+- [ ] Add `bulkSetStatus` server action (generalizes `dismissAllDone` for any target status)
+- [ ] Add `archivePastDue` mutation to `useTaskActions`
+- [ ] Detection via `localStorage["firstSyncHandled"]` (no migration needed)
+- [ ] "Archive all past tasks" one-click bulk action + "I'll sort them myself" dismiss
+
+**Tests:**
+
+- [ ] 6+ new unit tests for done/in-progress windowing in `use-action-board.test.ts`
+- [ ] 4+ new tests for first-sync heuristic
+- [ ] Manual test checklist (see full plan)
+
+**Status:** In progress. Item 1 implementation is complete; WCAG verification is pending.
+
+**Files:**
+
+```
+src/app/globals.css                      (UP Cebu palette)
+src/components/theme-toggle.tsx          (new)
+src/components/sidebar-nav.tsx           (branding + theme toggle)
+src/app/dashboard/dashboard-shell.tsx    (mobile header brand)
+src/app/layout.tsx                       (title, meta, theme script)
+src/app/login/login-card.tsx             (brand name)
+public/manifest.json                     (name, theme_color)
+src/components/task-card.tsx             (hover fix, remove drag handle)
+src/components/sortable-task-card.tsx    (cursor, transition)
+src/components/action-board.tsx          (drop animation, pass new props)
+src/components/action-board-column.tsx   (enhanced isOver, generalized pagination)
+src/types/task.ts                        (ActionBoardBuckets extension)
+src/hooks/use-action-board.ts            (new windowing params)
+src/app/dashboard/page.tsx               (done/inProgress state, FirstSyncBanner)
+src/components/first-sync-banner.tsx     (new)
+src/lib/actions/tasks.ts                 (bulkSetStatus)
+src/hooks/use-task-actions.ts            (archivePastDue mutation)
+src/hooks/__tests__/use-action-board.test.ts (new tests)
+```
+
 ### Phase 8: Stabilization & Launch (Size: L — ~6 hours)
 
 Bug-fixing sprint followed by launch prep.
@@ -523,8 +599,9 @@ README.md
 | Phase 6: Notifications          | 4h            | 32h                        |
 | Phase 6.5: Custom Tasks         | 3h            | 35h                        |
 | Phase 7: Polish                 | 4h            | 39h                        |
-| Phase 8: Stabilization & Launch | 6h            | 45h                        |
-| **Total**                       | **~45 hours** | **~4-5 weeks** (part-time) |
+| Phase 7.5: Polishes & UX        | 5h            | 44h                        |
+| Phase 8: Stabilization & Launch | 6h            | 50h                        |
+| **Total**                       | **~50 hours** | **~5-6 weeks** (part-time) |
 
 ---
 

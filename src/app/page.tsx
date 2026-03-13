@@ -23,19 +23,19 @@ const features: { icon: LucideIcon; title: string; desc: string }[] = [
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4">
       <main className="flex max-w-lg flex-col items-center gap-8 text-center">
-        <div className="flex size-20 items-center justify-center rounded-2xl bg-primary">
-          <span className="text-3xl font-bold text-primary-foreground">TA</span>
+        <div className="bg-primary flex size-20 items-center justify-center rounded-2xl">
+          <span className="text-primary-foreground text-2xl font-bold">
+            O(1)
+          </span>
         </div>
 
         <div className="flex flex-col gap-3">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Task Aggregator
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            All your university tasks from UVEC and Google Classroom in one
-            place. Never miss a deadline again.
+          <h1 className="text-4xl font-bold tracking-tight">TapO(1)</h1>
+          <p className="text-muted-foreground text-lg">
+            Academic tracking in constant time. All your university tasks from
+            UVEC and Google Classroom in one place.
           </p>
         </div>
 
@@ -47,10 +47,13 @@ export default function Home() {
 
         <div className="grid gap-4 sm:grid-cols-3">
           {features.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="rounded-lg border bg-card p-4 text-left">
-              <Icon className="size-5 text-primary" />
+            <div
+              key={title}
+              className="bg-card rounded-lg border p-4 text-left"
+            >
+              <Icon className="text-primary size-5" />
               <h3 className="mt-2 text-sm font-semibold">{title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
+              <p className="text-muted-foreground mt-1 text-xs">{desc}</p>
             </div>
           ))}
         </div>
