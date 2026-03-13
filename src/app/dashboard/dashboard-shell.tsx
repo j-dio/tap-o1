@@ -22,19 +22,15 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="bg-background flex min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r bg-sidebar">
-        <SidebarNav
-          displayName={displayName}
-          email={email}
-          hasUvec={hasUvec}
-        />
+      <aside className="bg-sidebar hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r">
+        <SidebarNav displayName={displayName} email={email} hasUvec={hasUvec} />
       </aside>
 
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-60 p-0 bg-sidebar">
+        <SheetContent side="left" className="bg-sidebar w-60 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarNav
             displayName={displayName}
@@ -45,7 +41,7 @@ export function DashboardShell({
       </Sheet>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile header */}
         <header className="flex h-14 items-center gap-3 border-b px-4 lg:hidden">
           <Button
@@ -57,12 +53,12 @@ export function DashboardShell({
             <Menu className="size-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary">
-              <span className="text-[10px] font-bold text-primary-foreground">
-                TA
+            <div className="bg-primary flex size-7 items-center justify-center rounded-md">
+              <span className="text-primary-foreground text-[9px] font-bold">
+                O(1)
               </span>
             </div>
-            <span className="text-sm font-semibold">Task Aggregator</span>
+            <span className="text-sm font-semibold">TapO(1)</span>
           </div>
         </header>
 

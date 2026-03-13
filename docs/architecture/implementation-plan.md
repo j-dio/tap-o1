@@ -467,11 +467,11 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 
 **Item 1 — Branding (TapO(1) Identity & UP Cebu Theme):**
 
-- [ ] Replace `:root` light palette in `globals.css` with UP Cebu maroon/cream (primary `oklch(0.40 0.15 25)`, background `oklch(0.97 0.01 80)`)
-- [ ] Adjust `.dark` `--primary` to lighter maroon (`oklch(0.68 0.15 25)`) for brand consistency
-- [ ] Create `ThemeToggle` component — Sun/Moon button, stores preference in `localStorage["theme"]`
-- [ ] Update sidebar logo: "TA" → "T(1)", "Task Aggregator" → "TapO(1)"
-- [ ] Update mobile header, login page, landing page, `<title>`, `<meta>`, `manifest.json`
+- [x] Replace `:root` light palette in `globals.css` with UP Cebu maroon/cream (primary `oklch(0.40 0.15 25)`, background `oklch(0.97 0.01 80)`)
+- [x] Adjust `.dark` `--primary` to lighter maroon (`oklch(0.68 0.15 25)`) for brand consistency
+- [x] Create `ThemeToggle` component — Sun/Moon button, stores preference in `localStorage["theme"]`
+- [x] Update sidebar logo: "TA" → "O(1)", "Task Aggregator" → "TapO(1)"
+- [x] Update mobile header, login page, landing page, `<title>`, `<meta>`, `manifest.json`
 - [ ] Verify WCAG AA contrast (≥4.5:1) for maroon-on-cream across all surfaces
 
 **Item 2 — Task Card Hover Fix:**
@@ -510,7 +510,7 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 - [ ] 4+ new tests for first-sync heuristic
 - [ ] Manual test checklist (see full plan)
 
-**Status:** Not started.
+**Status:** In progress. Item 1 implementation is complete; WCAG verification is pending.
 
 **Files:**
 

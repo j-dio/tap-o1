@@ -116,14 +116,16 @@ public/manifest.json                    → name, short_name, description
 
 ### Implementation Steps
 
-1. Update `globals.css` — replace `:root` light-mode variables with UP Cebu palette; tweak `.dark` `--primary`.
-2. Create `src/components/theme-toggle.tsx` — button that cycles `light`↔`dark`, updates `localStorage` and `document.documentElement.classList`.
-3. Update `sidebar-nav.tsx` — replace "TA" logo and "Task Aggregator" text; add `ThemeToggle` next to sync/signout buttons.
-4. Update `dashboard-shell.tsx` mobile header — "TapO(1)" text.
-5. Update `layout.tsx` — `<title>`, meta tags, theme initialization script (read from localStorage).
-6. Update `login-card.tsx` / `page.tsx` — brand name and tagline.
-7. Update `manifest.json` — name, short_name, description, theme_color to maroon hex.
-8. Verify WCAG AA contrast across all updated surfaces.
+1. [x] Update `globals.css` — replace `:root` light-mode variables with UP Cebu palette; tweak `.dark` `--primary`.
+2. [x] Create `src/components/theme-toggle.tsx` — button that cycles `light`↔`dark`, updates `localStorage` and `document.documentElement.classList`.
+3. [x] Update `sidebar-nav.tsx` — replace "TA" logo and "Task Aggregator" text; add `ThemeToggle` next to sync/signout buttons.
+4. [x] Update `dashboard-shell.tsx` mobile header — "TapO(1)" text.
+5. [x] Update `layout.tsx` — `<title>`, meta tags, theme initialization script (read from localStorage).
+6. [x] Update `login-card.tsx` / `page.tsx` — brand name and tagline.
+7. [x] Update `manifest.json` — name, short_name, description, theme_color to maroon hex.
+8. [ ] Verify WCAG AA contrast across all updated surfaces.
+
+**Item 1 status:** In progress (implementation complete, accessibility verification pending).
 
 ---
 

@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const APP_NAME = "Task Aggregator";
+const APP_NAME = "TapO(1)";
 const APP_DESCRIPTION =
-  "Aggregate and track university tasks from UVEC and Google Classroom in one place";
+  "Academic tracking in constant time. Aggregate tasks from UVEC and Google Classroom in one place.";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f9f9fb" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f0e8" },
     { media: "(prefers-color-scheme: dark)", color: "#111127" },
   ],
   width: "device-width",
@@ -58,7 +58,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var d=document.documentElement;var m=window.matchMedia('(prefers-color-scheme:dark)');if(m.matches)d.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var d=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches))d.classList.add('dark');else d.classList.remove('dark')}catch(e){}})()`,
           }}
         />
       </head>
