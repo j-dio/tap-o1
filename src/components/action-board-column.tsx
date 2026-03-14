@@ -70,11 +70,13 @@ interface ActionBoardColumnProps {
   title: string;
   tasks: TaskWithCourse[];
   accentClass: string;
-  /** Show More callback — only provided for the To Do column when more tasks exist. */
+  /** Show More callback — provided when more tasks exist beyond the current window. */
   onShowMore?: () => void;
-  /** Show Less callback — only provided for the To Do column when window > 7 days. */
+  /** Show Less callback — provided when the window is larger than the minimum. */
   onShowLess?: () => void;
-  /** Current To Do window in days (used for button labels). */
+  /** Label for the Show More button (e.g. "Next 14d" or "Show 5 more"). */
+  showMoreLabel?: string;
+  /** Current To Do window in days (used for the empty state description). */
   todoWindowDays?: number;
   /** Callback to dismiss all tasks in this column (used for Done column). */
   onDismissAll?: () => void;
@@ -89,6 +91,7 @@ export function ActionBoardColumn({
   accentClass,
   onShowMore,
   onShowLess,
+  showMoreLabel,
   todoWindowDays,
   onDismissAll,
   isDismissAllPending,
@@ -101,7 +104,7 @@ export function ActionBoardColumn({
       ref={setNodeRef}
       className={cn(
         "flex w-70 shrink-0 flex-col transition-colors lg:min-w-60 lg:flex-1",
-        isOver && "bg-accent/30 rounded-lg",
+        isOver && "bg-accent/40 rounded-lg ring-2 ring-primary/20 ring-inset",
       )}
     >
       {/* Column header */}
@@ -166,7 +169,7 @@ export function ActionBoardColumn({
                 onClick={onShowMore}
               >
                 <ChevronDown className="mr-1 size-3" />
-                Next {todoWindowDays !== undefined ? todoWindowDays + 7 : 14}d
+                {showMoreLabel ?? "Show more"}
               </Button>
             )}
           </div>

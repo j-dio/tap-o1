@@ -26,8 +26,14 @@ interface ActionBoardProps {
   inProgressTasks: TaskWithCourse[];
   doneTasks: TaskWithCourse[];
   todoWindowDays: number;
+  doneWindowDays: number;
+  inProgressLimit: number;
   onShowMoreTodo?: () => void;
   onShowLessTodo?: () => void;
+  onShowMoreDone?: () => void;
+  onShowLessDone?: () => void;
+  onShowMoreInProgress?: () => void;
+  onShowLessInProgress?: () => void;
 }
 
 const statusMap: Record<ActionBoardColumn, "pending" | "in_progress" | "done"> =
@@ -70,8 +76,14 @@ export function ActionBoard({
   inProgressTasks,
   doneTasks,
   todoWindowDays,
+  doneWindowDays,
+  inProgressLimit,
   onShowMoreTodo,
   onShowLessTodo,
+  onShowMoreDone,
+  onShowLessDone,
+  onShowMoreInProgress,
+  onShowLessInProgress,
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
   const { setStatus, dismissAll } = useTaskActions();
@@ -165,6 +177,7 @@ export function ActionBoard({
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
+          showMoreLabel={`Next ${todoWindowDays + 7}d`}
           todoWindowDays={todoWindowDays}
         />
         <Column
@@ -172,18 +185,29 @@ export function ActionBoard({
           title="In Progress"
           tasks={inProgressTasks}
           accentClass="text-warning"
+          onShowMore={onShowMoreInProgress}
+          onShowLess={onShowLessInProgress}
+          showMoreLabel={`Show ${inProgressLimit + 5} total`}
         />
         <Column
           id="done"
           title="Done"
           tasks={doneTasks}
           accentClass="text-success"
+          onShowMore={onShowMoreDone}
+          onShowLess={onShowLessDone}
+          showMoreLabel={`Next ${doneWindowDays + 7}d`}
           onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
           isDismissAllPending={dismissAll.isPending}
         />
       </div>
 
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay
+        dropAnimation={{
+          duration: 200,
+          easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
+        }}
+      >
         {activeTask ? <TaskCard task={activeTask} isDragging /> : null}
       </DragOverlay>
     </DndContext>
