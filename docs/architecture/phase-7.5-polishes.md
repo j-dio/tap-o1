@@ -119,13 +119,13 @@ public/manifest.json                    → name, short_name, description
 1. [x] Update `globals.css` — replace `:root` light-mode variables with UP Cebu palette; tweak `.dark` `--primary`.
 2. [x] Create `src/components/theme-toggle.tsx` — button that cycles `light`↔`dark`, updates `localStorage` and `document.documentElement.classList`.
 3. [x] Update `sidebar-nav.tsx` — replace "TA" logo and "Task Aggregator" text; add `ThemeToggle` next to sync/signout buttons.
-4. [x] Update `dashboard-shell.tsx` mobile header — "TapO(1)" text.
+4. [x] Update `dashboard-shell.tsx` mobile header — "TapO(1)" text + ThemeToggle surfaced in header.
 5. [x] Update `layout.tsx` — `<title>`, meta tags, theme initialization script (read from localStorage).
 6. [x] Update `login-card.tsx` / `page.tsx` — brand name and tagline.
 7. [x] Update `manifest.json` — name, short_name, description, theme_color to maroon hex.
-8. [ ] Verify WCAG AA contrast across all updated surfaces.
+8. [x] Verify WCAG AA contrast across all updated surfaces. Refined palette: light mode uses warmer cream (hue 80) with golden accent (hue 60) and deeper maroon `oklch(0.38 0.18 25)`; dark mode background shifted from cool blue-gray (hue 265) to warm brownish-maroon (hue 30) for brand harmony. foreground/background contrast ≥22:1 both modes; primary-foreground/primary ≥7:1 both modes; muted-foreground `oklch(0.44 0.022 30)` on cream ≥4.5:1 ✅
 
-**Item 1 status:** In progress (implementation complete, accessibility verification pending).
+**Item 1 status:** Complete.
 
 ---
 
@@ -182,14 +182,14 @@ src/components/sortable-task-card.tsx  → Add cursor-grab class
 
 ### Implementation Steps
 
-1. In `task-card.tsx`:
+1. [x] In `task-card.tsx`:
    - Delete the `GripVertical` import and the absolute-positioned drag handle `<div>`.
    - Move `<SourceIcon>` from the title row to the bottom metadata row (after `<CountdownBadge>`), or keep it in the title row but ensure quick-action buttons don't overlap by giving them a dedicated slot.
    - Add `hover:bg-accent/40 hover:shadow-sm` to the card container.
    - Remove `lg:pl-0` from the card content (no longer needed since drag handle is gone).
    - Adjust mobile checkbox position if needed (it was at `left-3` to account for the drag handle gap).
 
-2. In `sortable-task-card.tsx`:
+2. [x] In `sortable-task-card.tsx`:
    - Add `cursor-grab active:cursor-grabbing` to the wrapper div.
 
 ---
@@ -275,9 +275,9 @@ src/components/sortable-task-card.tsx    → Add transition class for smooth gap
 
 ### Implementation Steps
 
-1. In `action-board.tsx`: Replace `dropAnimation={null}` with a configured drop animation object.
-2. In `action-board-column.tsx`: Enhance `isOver` class — add `ring-2 ring-primary/20 ring-inset` and increase bg opacity.
-3. In `sortable-task-card.tsx`: Add `transition-transform duration-200` to wrapper div for smooth gap creation.
+1. [x] In `action-board.tsx`: Replace `dropAnimation={null}` with a configured drop animation object.
+2. [x] In `action-board-column.tsx`: Enhance `isOver` class — add `ring-2 ring-primary/20 ring-inset` and increase bg opacity.
+3. [x] In `sortable-task-card.tsx`: Add `transition-transform duration-200` to wrapper div for smooth gap creation.
 
 ---
 
@@ -355,20 +355,20 @@ src/components/action-board-column.tsx → Generalize Show More/Less labels, ren
 
 ### Implementation Steps
 
-1. Update `ActionBoardBuckets` type — add `inProgressHasMore: boolean` and `doneHasMore: boolean`.
-2. Update `computeActionBoardBuckets`:
+1. [x] Update `ActionBoardBuckets` type — add `inProgressHasMore: boolean` and `doneHasMore: boolean`.
+2. [x] Update `computeActionBoardBuckets`:
    - Add `doneWindowDays` parameter (default 7). Filter done tasks by effective `updatedAt` window. Set `doneHasMore`.
    - Add `inProgressLimit` parameter (default 5). Slice in-progress array after sorting. Set `inProgressHasMore`.
-3. Update `useActionBoard` hook — accept and pass through the new parameters.
-4. Update `DashboardContent` in `page.tsx`:
+3. [x] Update `useActionBoard` hook — accept and pass through the new parameters.
+4. [x] Update `DashboardContent` in `page.tsx`:
    - Add `doneWindowDays` state (sessionStorage-backed, same pattern as `todoWindowDays`).
    - Add `inProgressLimit` state (sessionStorage-backed, default 5, increment/decrement by 5).
    - Create `handleShowMoreDone`, `handleShowLessDone`, `handleShowMoreInProgress`, `handleShowLessInProgress`.
-5. Update `ActionBoard` props — pass through done/in-progress show more/less callbacks and window metadata.
-6. Update `ActionBoardColumn`:
+5. [x] Update `ActionBoard` props — pass through done/in-progress show more/less callbacks and window metadata.
+6. [x] Update `ActionBoardColumn`:
    - Make `Show more` / `Show less` buttons render for any column that provides `onShowMore` / `onShowLess`.
-   - Use a `windowLabel` string prop for the button text (e.g., "Next 14d" for time-based, "Show 5 more" for count-based).
-7. Add unit tests for new windowing logic in `use-action-board.test.ts`.
+   - Use a `showMoreLabel` string prop for the button text (e.g., "Next 14d" for time-based, "Show 10 total" for count-based).
+7. [x] Add unit tests for new windowing logic in `use-action-board.test.ts`.
 
 ---
 

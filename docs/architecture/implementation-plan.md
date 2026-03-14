@@ -472,29 +472,29 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 - [x] Create `ThemeToggle` component — Sun/Moon button, stores preference in `localStorage["theme"]`
 - [x] Update sidebar logo: "TA" → "O(1)", "Task Aggregator" → "TapO(1)"
 - [x] Update mobile header, login page, landing page, `<title>`, `<meta>`, `manifest.json`
-- [ ] Verify WCAG AA contrast (≥4.5:1) for maroon-on-cream across all surfaces
+- [x] Verify WCAG AA contrast (≥4.5:1) for maroon-on-cream across all surfaces — palette refined: warmer cream background (hue 80), golden accent (hue 60), dark mode background shifted to warm hue 30 to harmonize with maroon brand; ThemeToggle also surfaced in mobile dashboard header
 
 **Item 2 — Task Card Hover Fix:**
 
-- [ ] Remove `GripVertical` drag handle (6 dots) — entire card is already the drag target
-- [ ] Reposition `SourceIcon` to bottom row to eliminate overlap with hover quick-actions
-- [ ] Add `hover:bg-accent/40 hover:shadow-sm` to card container
-- [ ] Add `cursor-grab` / `active:cursor-grabbing` to sortable wrapper
+- [x] Remove `GripVertical` drag handle (6 dots) — entire card is already the drag target
+- [x] Reposition `SourceIcon` to bottom row to eliminate overlap with hover quick-actions
+- [x] Add `hover:bg-accent/40 hover:shadow-sm` to card container
+- [x] Add `cursor-grab` / `active:cursor-grabbing` to sortable wrapper
 
 **Item 3 — Drag-and-Drop Animations:**
 
-- [ ] Add `dropAnimation` config to `DragOverlay` (200ms ease) — replaces `null` for smooth card landing
-- [ ] Enhance `isOver` column styling — add `ring-2 ring-primary/20 ring-inset` + stronger bg tint
-- [ ] Add `transition-transform duration-200` to sortable card wrapper for smooth gap creation
+- [x] Add `dropAnimation` config to `DragOverlay` (200ms ease) — replaces `null` for smooth card landing
+- [x] Enhance `isOver` column styling — add `ring-2 ring-primary/20 ring-inset` + stronger bg tint
+- [x] Add `transition-transform duration-200` to sortable card wrapper for smooth gap creation
 
 **Item 4 — Column Pagination (In Progress & Done):**
 
-- [ ] Extend `ActionBoardBuckets` type with `inProgressHasMore` and `doneHasMore` booleans
-- [ ] Add `doneWindowDays` param to `computeActionBoardBuckets` (default 7d, 7d increments)
-- [ ] Add `inProgressLimit` param to `computeActionBoardBuckets` (default 5, +5 per click)
-- [ ] Add `doneWindowDays` and `inProgressLimit` state to dashboard page (sessionStorage-backed)
-- [ ] Wire Show More / Show Less buttons for In Progress and Done columns in `ActionBoardColumn`
-- [ ] Add 6+ unit tests for new windowing logic
+- [x] Extend `ActionBoardBuckets` type with `inProgressHasMore` and `doneHasMore` booleans
+- [x] Add `doneWindowDays` param to `computeActionBoardBuckets` (default 7d, max 28d, 7d increments)
+- [x] Add `inProgressLimit` param to `computeActionBoardBuckets` (default 5, +5 per click)
+- [x] Add `doneWindowDays` and `inProgressLimit` state to dashboard page (sessionStorage-backed)
+- [x] Wire Show More / Show Less buttons for In Progress and Done columns in `ActionBoardColumn`
+- [x] Add 6+ unit tests for new windowing logic
 
 **Item 5 — Smart First-Sync Experience:**
 
@@ -506,11 +506,11 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 
 **Tests:**
 
-- [ ] 6+ new unit tests for done/in-progress windowing in `use-action-board.test.ts`
+- [x] 6+ new unit tests for done/in-progress windowing in `use-action-board.test.ts` (67 total passing)
 - [ ] 4+ new tests for first-sync heuristic
 - [ ] Manual test checklist (see full plan)
 
-**Status:** In progress. Item 1 implementation is complete; WCAG verification is pending.
+**Status:** In progress. Items 1–4 complete. Item 5 (Smart First-Sync) remaining.
 
 **Files:**
 
