@@ -3,31 +3,29 @@
 import { Suspense, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 
-const MAX_TODO_WINDOW_DAYS = 56; // 8 weeks — matches the 60-day fetch window
-const MAX_DONE_WINDOW_DAYS = 28; // 4 weeks
-const SESSION_KEY_TODO = "todoWindowDays";
-const SESSION_KEY_DONE = "doneWindowDays";
-const SESSION_KEY_INPROGRESS = "inProgressLimit";
+const SESSION_KEY_TODO_DISPLAY = "todoDisplayLimit";
+const SESSION_KEY_DONE_DISPLAY = "doneDisplayLimit";
+const SESSION_KEY_INPROGRESS_DISPLAY = "inProgressDisplayLimit";
 
-function readWindowDays(): number {
+function readTodoDisplayLimit(): number {
   if (typeof window === "undefined") return 7;
-  const stored = sessionStorage.getItem(SESSION_KEY_TODO);
+  const stored = sessionStorage.getItem(SESSION_KEY_TODO_DISPLAY);
   const parsed = stored ? parseInt(stored, 10) : NaN;
   return isNaN(parsed) ? 7 : parsed;
 }
 
-function readDoneWindowDays(): number {
+function readDoneDisplayLimit(): number {
   if (typeof window === "undefined") return 7;
-  const stored = sessionStorage.getItem(SESSION_KEY_DONE);
+  const stored = sessionStorage.getItem(SESSION_KEY_DONE_DISPLAY);
   const parsed = stored ? parseInt(stored, 10) : NaN;
   return isNaN(parsed) ? 7 : parsed;
 }
 
-function readInProgressLimit(): number {
-  if (typeof window === "undefined") return 5;
-  const stored = sessionStorage.getItem(SESSION_KEY_INPROGRESS);
+function readInProgressDisplayLimit(): number {
+  if (typeof window === "undefined") return 7;
+  const stored = sessionStorage.getItem(SESSION_KEY_INPROGRESS_DISPLAY);
   const parsed = stored ? parseInt(stored, 10) : NaN;
-  return isNaN(parsed) ? 5 : parsed;
+  return isNaN(parsed) ? 7 : parsed;
 }
 import { useTasks, type TaskFilters } from "@/hooks/use-tasks";
 import { useCourses } from "@/hooks/use-courses";
@@ -79,64 +77,70 @@ function DashboardContent() {
     disabled: isSyncing,
   });
 
-  const [todoWindowDays, setTodoWindowDays] = useState<number>(readWindowDays);
+  const [todoDisplayLimit, setTodoDisplayLimit] =
+    useState<number>(readTodoDisplayLimit);
   const handleShowMoreTodo = useCallback(() => {
-    setTodoWindowDays((d) => {
-      const next = Math.min(d + 7, MAX_TODO_WINDOW_DAYS);
-      sessionStorage.setItem(SESSION_KEY_TODO, String(next));
+    setTodoDisplayLimit((l) => {
+      const next = l + 7;
+      sessionStorage.setItem(SESSION_KEY_TODO_DISPLAY, String(next));
       return next;
     });
   }, []);
   const handleShowLessTodo = useCallback(() => {
-    setTodoWindowDays((d) => {
-      const next = Math.max(d - 7, 7);
+    setTodoDisplayLimit((l) => {
+      const next = Math.max(l - 7, 7);
       next === 7
-        ? sessionStorage.removeItem(SESSION_KEY_TODO)
-        : sessionStorage.setItem(SESSION_KEY_TODO, String(next));
+        ? sessionStorage.removeItem(SESSION_KEY_TODO_DISPLAY)
+        : sessionStorage.setItem(SESSION_KEY_TODO_DISPLAY, String(next));
       return next;
     });
   }, []);
 
-  const [doneWindowDays, setDoneWindowDays] =
-    useState<number>(readDoneWindowDays);
+  const [doneDisplayLimit, setDoneDisplayLimit] =
+    useState<number>(readDoneDisplayLimit);
   const handleShowMoreDone = useCallback(() => {
-    setDoneWindowDays((d) => {
-      const next = Math.min(d + 7, MAX_DONE_WINDOW_DAYS);
-      sessionStorage.setItem(SESSION_KEY_DONE, String(next));
+    setDoneDisplayLimit((l) => {
+      const next = l + 7;
+      sessionStorage.setItem(SESSION_KEY_DONE_DISPLAY, String(next));
       return next;
     });
   }, []);
   const handleShowLessDone = useCallback(() => {
-    setDoneWindowDays((d) => {
-      const next = Math.max(d - 7, 7);
+    setDoneDisplayLimit((l) => {
+      const next = Math.max(l - 7, 7);
       next === 7
-        ? sessionStorage.removeItem(SESSION_KEY_DONE)
-        : sessionStorage.setItem(SESSION_KEY_DONE, String(next));
+        ? sessionStorage.removeItem(SESSION_KEY_DONE_DISPLAY)
+        : sessionStorage.setItem(SESSION_KEY_DONE_DISPLAY, String(next));
       return next;
     });
   }, []);
 
-  const [inProgressLimit, setInProgressLimit] =
-    useState<number>(readInProgressLimit);
+  const [inProgressDisplayLimit, setInProgressDisplayLimit] =
+    useState<number>(readInProgressDisplayLimit);
   const handleShowMoreInProgress = useCallback(() => {
-    setInProgressLimit((l) => {
-      const next = l + 5;
-      sessionStorage.setItem(SESSION_KEY_INPROGRESS, String(next));
+    setInProgressDisplayLimit((l) => {
+      const next = l + 7;
+      sessionStorage.setItem(SESSION_KEY_INPROGRESS_DISPLAY, String(next));
       return next;
     });
   }, []);
   const handleShowLessInProgress = useCallback(() => {
-    setInProgressLimit((l) => {
-      const next = Math.max(l - 5, 5);
-      next === 5
-        ? sessionStorage.removeItem(SESSION_KEY_INPROGRESS)
-        : sessionStorage.setItem(SESSION_KEY_INPROGRESS, String(next));
+    setInProgressDisplayLimit((l) => {
+      const next = Math.max(l - 7, 7);
+      next === 7
+        ? sessionStorage.removeItem(SESSION_KEY_INPROGRESS_DISPLAY)
+        : sessionStorage.setItem(SESSION_KEY_INPROGRESS_DISPLAY, String(next));
       return next;
     });
   }, []);
 
   const { todo, inProgress, done, todoHasMore, doneHasMore, inProgressHasMore } =
-    useActionBoard(tasks ?? [], todoWindowDays, doneWindowDays, inProgressLimit);
+    useActionBoard(
+      tasks ?? [],
+      todoDisplayLimit,
+      doneDisplayLimit,
+      inProgressDisplayLimit,
+    );
   const upNextTask = useUpNext(tasks ?? []);
   const focusTasks = useFocusMode(tasks ?? []);
 
@@ -219,22 +223,21 @@ function DashboardContent() {
                 todoTasks={todo}
                 inProgressTasks={inProgress}
                 doneTasks={done}
-                todoWindowDays={todoWindowDays}
-                doneWindowDays={doneWindowDays}
-                inProgressLimit={inProgressLimit}
                 onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
                 onShowLessTodo={
-                  todoWindowDays > 7 ? handleShowLessTodo : undefined
+                  todoDisplayLimit > 7 ? handleShowLessTodo : undefined
                 }
                 onShowMoreDone={doneHasMore ? handleShowMoreDone : undefined}
                 onShowLessDone={
-                  doneWindowDays > 7 ? handleShowLessDone : undefined
+                  doneDisplayLimit > 7 ? handleShowLessDone : undefined
                 }
                 onShowMoreInProgress={
                   inProgressHasMore ? handleShowMoreInProgress : undefined
                 }
                 onShowLessInProgress={
-                  inProgressLimit > 5 ? handleShowLessInProgress : undefined
+                  inProgressDisplayLimit > 7
+                    ? handleShowLessInProgress
+                    : undefined
                 }
               />
             </ErrorBoundary>

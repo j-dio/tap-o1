@@ -3,25 +3,28 @@
 import { useMemo, useState } from "react";
 import type { TaskWithCourse, ActionBoardBuckets } from "@/types/task";
 
+const DONE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
 /**
  * Pure bucketing logic extracted from the hook so it can be unit-tested
  * without a React renderer.
  *
- * @param tasks            All tasks from useTasks.
- * @param now              Epoch ms timestamp to compare against (pass Date.now()).
- * @param todoWindowDays   How many days ahead to include in the To Do bucket.
- * @param doneWindowDays   How many days back to include in the Done bucket (default 7).
- * @param inProgressLimit  Max number of in-progress tasks to show (default 5).
+ * @param tasks                  All tasks from useTasks.
+ * @param now                    Epoch ms timestamp to compare against (pass Date.now()).
+ * @param todoWindowDays         How many days ahead to include in the To Do bucket.
+ * @param todoDisplayLimit       Max number of to-do tasks to show (default 7).
+ * @param doneDisplayLimit       Max number of done tasks to show (default 7).
+ * @param inProgressDisplayLimit Max number of in-progress tasks to show (default 7).
  */
 export function computeActionBoardBuckets(
   tasks: TaskWithCourse[],
   now: number,
   todoWindowDays: number,
-  doneWindowDays = 7,
-  inProgressLimit = 5,
+  todoDisplayLimit = 7,
+  doneDisplayLimit = 7,
+  inProgressDisplayLimit = 7,
 ): ActionBoardBuckets {
   const todoWindowMs = todoWindowDays * 24 * 60 * 60 * 1000;
-  const doneWindowMs = doneWindowDays * 24 * 60 * 60 * 1000;
   const buckets: ActionBoardBuckets = {
     todo: [],
     inProgress: [],
@@ -36,11 +39,10 @@ export function computeActionBoardBuckets(
 
     if (task.status === "done") {
       const completedAt = new Date(task.updatedAt).getTime();
-      if (now - completedAt <= doneWindowMs) {
+      if (now - completedAt <= DONE_WINDOW_MS) {
         buckets.done.push(task);
-      } else {
-        buckets.doneHasMore = true;
       }
+      // tasks beyond the 7-day window are silently dropped
     } else if (task.status === "in_progress") {
       buckets.inProgress.push(task);
     } else {
@@ -53,45 +55,53 @@ export function computeActionBoardBuckets(
     }
   }
 
-  // To Do: most urgent (earliest due date) at top
+  // To Do: most urgent (earliest due date) at top, then apply display limit
   buckets.todo.sort((a, b) => {
     if (!a.dueDate) return 1;
     if (!b.dueDate) return -1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
+  if (buckets.todo.length > todoDisplayLimit) {
+    buckets.todoHasMore = true;
+    buckets.todo = buckets.todo.slice(0, todoDisplayLimit);
+  }
 
-  // In Progress: most urgent at top, then apply limit
+  // In Progress: most urgent at top, then apply display limit
   buckets.inProgress.sort((a, b) => {
     if (!a.dueDate) return 1;
     if (!b.dueDate) return -1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
-  if (buckets.inProgress.length > inProgressLimit) {
+  if (buckets.inProgress.length > inProgressDisplayLimit) {
     buckets.inProgressHasMore = true;
-    buckets.inProgress = buckets.inProgress.slice(0, inProgressLimit);
+    buckets.inProgress = buckets.inProgress.slice(0, inProgressDisplayLimit);
   }
 
-  // Done: most recently completed first
+  // Done: most recently completed first, then apply display limit
   buckets.done.sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
+  if (buckets.done.length > doneDisplayLimit) {
+    buckets.doneHasMore = true;
+    buckets.done = buckets.done.slice(0, doneDisplayLimit);
+  }
 
   return buckets;
 }
 
 /**
- * @param tasks            All tasks returned by useTasks.
- * @param todoWindowDays   How many days ahead to include in the To Do bucket
- *                         (default 7). Controlled by the Show More/Less buttons.
- * @param doneWindowDays   How many days back to include in the Done bucket
- *                         (default 7). Controlled by the Show More/Less buttons.
- * @param inProgressLimit  Max in-progress tasks to show (default 5).
+ * @param tasks                  All tasks returned by useTasks.
+ * @param todoDisplayLimit       Max to-do tasks to show (default 7).
+ * @param doneDisplayLimit       Max done tasks to show (default 7).
+ * @param inProgressDisplayLimit Max in-progress tasks to show (default 7).
+ *
+ * Time windows are hardcoded: todo looks 7 days ahead, done looks 7 days back.
  */
 export function useActionBoard(
   tasks: TaskWithCourse[],
-  todoWindowDays = 7,
-  doneWindowDays = 7,
-  inProgressLimit = 5,
+  todoDisplayLimit = 7,
+  doneDisplayLimit = 7,
+  inProgressDisplayLimit = 7,
 ): ActionBoardBuckets {
   // Snapshot the current time once at mount via useState's lazy initialiser.
   // Passing `Date.now` as a function *reference* means React calls it
@@ -103,10 +113,11 @@ export function useActionBoard(
       computeActionBoardBuckets(
         tasks,
         snapNow,
-        todoWindowDays,
-        doneWindowDays,
-        inProgressLimit,
+        7, // todoWindowDays hardcoded
+        todoDisplayLimit,
+        doneDisplayLimit,
+        inProgressDisplayLimit,
       ),
-    [tasks, snapNow, todoWindowDays, doneWindowDays, inProgressLimit],
+    [tasks, snapNow, todoDisplayLimit, doneDisplayLimit, inProgressDisplayLimit],
   );
 }

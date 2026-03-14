@@ -25,9 +25,6 @@ interface ActionBoardProps {
   todoTasks: TaskWithCourse[];
   inProgressTasks: TaskWithCourse[];
   doneTasks: TaskWithCourse[];
-  todoWindowDays: number;
-  doneWindowDays: number;
-  inProgressLimit: number;
   onShowMoreTodo?: () => void;
   onShowLessTodo?: () => void;
   onShowMoreDone?: () => void;
@@ -75,9 +72,6 @@ export function ActionBoard({
   todoTasks,
   inProgressTasks,
   doneTasks,
-  todoWindowDays,
-  doneWindowDays,
-  inProgressLimit,
   onShowMoreTodo,
   onShowLessTodo,
   onShowMoreDone,
@@ -177,8 +171,7 @@ export function ActionBoard({
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
-          showMoreLabel={`Next ${todoWindowDays + 7}d`}
-          todoWindowDays={todoWindowDays}
+          showMoreLabel="Show 7 more"
         />
         <Column
           id="in_progress"
@@ -187,7 +180,7 @@ export function ActionBoard({
           accentClass="text-warning"
           onShowMore={onShowMoreInProgress}
           onShowLess={onShowLessInProgress}
-          showMoreLabel={`Show ${inProgressLimit + 5} total`}
+          showMoreLabel="Show 7 more"
         />
         <Column
           id="done"
@@ -196,7 +189,7 @@ export function ActionBoard({
           accentClass="text-success"
           onShowMore={onShowMoreDone}
           onShowLess={onShowLessDone}
-          showMoreLabel={`Next ${doneWindowDays + 7}d`}
+          showMoreLabel="Show 7 more"
           onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
           isDismissAllPending={dismissAll.isPending}
         />
