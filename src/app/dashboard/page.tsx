@@ -3,12 +3,27 @@
 import { Suspense, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 
-const MAX_TODO_WINDOW_DAYS = 56; // 8 weeks — matches the 60-day fetch window
-const SESSION_KEY = "todoWindowDays";
+const SESSION_KEY_TODO_DISPLAY = "todoDisplayLimit";
+const SESSION_KEY_DONE_DISPLAY = "doneDisplayLimit";
+const SESSION_KEY_INPROGRESS_DISPLAY = "inProgressDisplayLimit";
 
-function readWindowDays(): number {
+function readTodoDisplayLimit(): number {
   if (typeof window === "undefined") return 7;
-  const stored = sessionStorage.getItem(SESSION_KEY);
+  const stored = sessionStorage.getItem(SESSION_KEY_TODO_DISPLAY);
+  const parsed = stored ? parseInt(stored, 10) : NaN;
+  return isNaN(parsed) ? 7 : parsed;
+}
+
+function readDoneDisplayLimit(): number {
+  if (typeof window === "undefined") return 7;
+  const stored = sessionStorage.getItem(SESSION_KEY_DONE_DISPLAY);
+  const parsed = stored ? parseInt(stored, 10) : NaN;
+  return isNaN(parsed) ? 7 : parsed;
+}
+
+function readInProgressDisplayLimit(): number {
+  if (typeof window === "undefined") return 7;
+  const stored = sessionStorage.getItem(SESSION_KEY_INPROGRESS_DISPLAY);
   const parsed = stored ? parseInt(stored, 10) : NaN;
   return isNaN(parsed) ? 7 : parsed;
 }
@@ -62,28 +77,70 @@ function DashboardContent() {
     disabled: isSyncing,
   });
 
-  const [todoWindowDays, setTodoWindowDays] = useState<number>(readWindowDays);
+  const [todoDisplayLimit, setTodoDisplayLimit] =
+    useState<number>(readTodoDisplayLimit);
   const handleShowMoreTodo = useCallback(() => {
-    setTodoWindowDays((d) => {
-      const next = Math.min(d + 7, MAX_TODO_WINDOW_DAYS);
-      sessionStorage.setItem(SESSION_KEY, String(next));
+    setTodoDisplayLimit((l) => {
+      const next = l + 7;
+      sessionStorage.setItem(SESSION_KEY_TODO_DISPLAY, String(next));
       return next;
     });
   }, []);
   const handleShowLessTodo = useCallback(() => {
-    setTodoWindowDays((d) => {
-      const next = Math.max(d - 7, 7);
+    setTodoDisplayLimit((l) => {
+      const next = Math.max(l - 7, 7);
       next === 7
-        ? sessionStorage.removeItem(SESSION_KEY)
-        : sessionStorage.setItem(SESSION_KEY, String(next));
+        ? sessionStorage.removeItem(SESSION_KEY_TODO_DISPLAY)
+        : sessionStorage.setItem(SESSION_KEY_TODO_DISPLAY, String(next));
       return next;
     });
   }, []);
 
-  const { todo, inProgress, done, todoHasMore } = useActionBoard(
-    tasks ?? [],
-    todoWindowDays,
-  );
+  const [doneDisplayLimit, setDoneDisplayLimit] =
+    useState<number>(readDoneDisplayLimit);
+  const handleShowMoreDone = useCallback(() => {
+    setDoneDisplayLimit((l) => {
+      const next = l + 7;
+      sessionStorage.setItem(SESSION_KEY_DONE_DISPLAY, String(next));
+      return next;
+    });
+  }, []);
+  const handleShowLessDone = useCallback(() => {
+    setDoneDisplayLimit((l) => {
+      const next = Math.max(l - 7, 7);
+      next === 7
+        ? sessionStorage.removeItem(SESSION_KEY_DONE_DISPLAY)
+        : sessionStorage.setItem(SESSION_KEY_DONE_DISPLAY, String(next));
+      return next;
+    });
+  }, []);
+
+  const [inProgressDisplayLimit, setInProgressDisplayLimit] =
+    useState<number>(readInProgressDisplayLimit);
+  const handleShowMoreInProgress = useCallback(() => {
+    setInProgressDisplayLimit((l) => {
+      const next = l + 7;
+      sessionStorage.setItem(SESSION_KEY_INPROGRESS_DISPLAY, String(next));
+      return next;
+    });
+  }, []);
+  const handleShowLessInProgress = useCallback(() => {
+    setInProgressDisplayLimit((l) => {
+      const next = Math.max(l - 7, 7);
+      next === 7
+        ? sessionStorage.removeItem(SESSION_KEY_INPROGRESS_DISPLAY)
+        : sessionStorage.setItem(SESSION_KEY_INPROGRESS_DISPLAY, String(next));
+      return next;
+    });
+  }, []);
+
+  const { todo, inProgress, done, todoHasMore, doneHasMore, inProgressHasMore } =
+    useActionBoard(
+      tasks ?? [],
+      todoDisplayLimit,
+      doneDisplayLimit,
+      inProgressDisplayLimit,
+    );
   const upNextTask = useUpNext(tasks ?? []);
   const focusTasks = useFocusMode(tasks ?? []);
 
@@ -166,10 +223,21 @@ function DashboardContent() {
                 todoTasks={todo}
                 inProgressTasks={inProgress}
                 doneTasks={done}
-                todoWindowDays={todoWindowDays}
                 onShowMoreTodo={todoHasMore ? handleShowMoreTodo : undefined}
                 onShowLessTodo={
-                  todoWindowDays > 7 ? handleShowLessTodo : undefined
+                  todoDisplayLimit > 7 ? handleShowLessTodo : undefined
+                }
+                onShowMoreDone={doneHasMore ? handleShowMoreDone : undefined}
+                onShowLessDone={
+                  doneDisplayLimit > 7 ? handleShowLessDone : undefined
+                }
+                onShowMoreInProgress={
+                  inProgressHasMore ? handleShowMoreInProgress : undefined
+                }
+                onShowLessInProgress={
+                  inProgressDisplayLimit > 7
+                    ? handleShowLessInProgress
+                    : undefined
                 }
               />
             </ErrorBoundary>

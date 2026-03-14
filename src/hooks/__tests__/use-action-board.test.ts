@@ -114,6 +114,19 @@ describe("computeActionBoardBuckets", () => {
     expect(result.todo).toHaveLength(1);
   });
 
+  it("sets todoHasMore true when todo tasks in window exceed todoDisplayLimit", () => {
+    const tasks = Array.from({ length: 8 }, (_, i) =>
+      makeTask({
+        id: `todo${i}`,
+        status: "pending",
+        dueDate: new Date(NOW + (i + 1) * DAY).toISOString(),
+      }),
+    );
+    const result = computeActionBoardBuckets(tasks, NOW, 7);
+    expect(result.todo).toHaveLength(7);
+    expect(result.todoHasMore).toBe(true);
+  });
+
   // ---- Sorting ---------------------------------------------------------
 
   it("sorts todo tasks by dueDate ascending (most urgent first)", () => {
@@ -235,5 +248,75 @@ describe("computeActionBoardBuckets", () => {
     expect(result.todo).toHaveLength(0);
     expect(result.inProgress).toHaveLength(0);
     expect(result.done).toHaveLength(0);
+  });
+
+  // ---- Done bucket (hardcoded 7-day window + count-based display limit) ----
+
+  it("includes done task within 7-day window and sets doneHasMore false", () => {
+    const task = makeTask({
+      id: "done-recent",
+      status: "done",
+      updatedAt: new Date(NOW - 3 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7);
+    expect(result.done).toHaveLength(1);
+    expect(result.doneHasMore).toBe(false);
+  });
+
+  it("silently drops done task beyond 7-day window; doneHasMore stays false (count-based only)", () => {
+    const task = makeTask({
+      id: "done-old",
+      status: "done",
+      updatedAt: new Date(NOW - 10 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7);
+    expect(result.done).toHaveLength(0);
+    expect(result.doneHasMore).toBe(false);
+  });
+
+  it("sets doneHasMore true when done bucket exceeds doneDisplayLimit", () => {
+    // 8 tasks spread 20 hours apart — all within the 7-day window
+    const TWENTY_HOURS = 20 * 60 * 60 * 1000;
+    const tasks = Array.from({ length: 8 }, (_, i) =>
+      makeTask({
+        id: `done${i}`,
+        status: "done",
+        updatedAt: new Date(NOW - i * TWENTY_HOURS).toISOString(),
+      }),
+    );
+    const result = computeActionBoardBuckets(tasks, NOW, 7);
+    expect(result.done).toHaveLength(7);
+    expect(result.doneHasMore).toBe(true);
+  });
+
+  // ---- In Progress display limit ---------------------------------------
+
+  it("shows all tasks when in-progress count is within inProgressDisplayLimit", () => {
+    const tasks = [
+      makeTask({ id: "ip1", status: "in_progress" }),
+      makeTask({ id: "ip2", status: "in_progress" }),
+      makeTask({ id: "ip3", status: "in_progress" }),
+    ];
+    const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 7, 5);
+    expect(result.inProgress).toHaveLength(3);
+    expect(result.inProgressHasMore).toBe(false);
+  });
+
+  it("limits in-progress to inProgressDisplayLimit and sets inProgressHasMore true", () => {
+    const tasks = Array.from({ length: 7 }, (_, i) =>
+      makeTask({ id: `ip${i}`, status: "in_progress" }),
+    );
+    const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 7, 5);
+    expect(result.inProgress).toHaveLength(5);
+    expect(result.inProgressHasMore).toBe(true);
+  });
+
+  it("shows all 8 tasks when inProgressDisplayLimit is 10", () => {
+    const tasks = Array.from({ length: 8 }, (_, i) =>
+      makeTask({ id: `ip${i}`, status: "in_progress" }),
+    );
+    const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 7, 10);
+    expect(result.inProgress).toHaveLength(8);
+    expect(result.inProgressHasMore).toBe(false);
   });
 });

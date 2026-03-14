@@ -119,13 +119,13 @@ public/manifest.json                    → name, short_name, description
 1. [x] Update `globals.css` — replace `:root` light-mode variables with UP Cebu palette; tweak `.dark` `--primary`.
 2. [x] Create `src/components/theme-toggle.tsx` — button that cycles `light`↔`dark`, updates `localStorage` and `document.documentElement.classList`.
 3. [x] Update `sidebar-nav.tsx` — replace "TA" logo and "Task Aggregator" text; add `ThemeToggle` next to sync/signout buttons.
-4. [x] Update `dashboard-shell.tsx` mobile header — "TapO(1)" text.
+4. [x] Update `dashboard-shell.tsx` mobile header — "TapO(1)" text + ThemeToggle surfaced in header.
 5. [x] Update `layout.tsx` — `<title>`, meta tags, theme initialization script (read from localStorage).
 6. [x] Update `login-card.tsx` / `page.tsx` — brand name and tagline.
 7. [x] Update `manifest.json` — name, short_name, description, theme_color to maroon hex.
-8. [ ] Verify WCAG AA contrast across all updated surfaces.
+8. [x] Verify WCAG AA contrast across all updated surfaces. Refined palette: light mode uses warmer cream (hue 80) with golden accent (hue 60) and deeper maroon `oklch(0.38 0.18 25)`; dark mode background shifted from cool blue-gray (hue 265) to warm brownish-maroon (hue 30) for brand harmony. foreground/background contrast ≥22:1 both modes; primary-foreground/primary ≥7:1 both modes; muted-foreground `oklch(0.44 0.022 30)` on cream ≥4.5:1 ✅
 
-**Item 1 status:** In progress (implementation complete, accessibility verification pending).
+**Item 1 status:** Complete.
 
 ---
 
@@ -182,14 +182,14 @@ src/components/sortable-task-card.tsx  → Add cursor-grab class
 
 ### Implementation Steps
 
-1. In `task-card.tsx`:
+1. [x] In `task-card.tsx`:
    - Delete the `GripVertical` import and the absolute-positioned drag handle `<div>`.
    - Move `<SourceIcon>` from the title row to the bottom metadata row (after `<CountdownBadge>`), or keep it in the title row but ensure quick-action buttons don't overlap by giving them a dedicated slot.
    - Add `hover:bg-accent/40 hover:shadow-sm` to the card container.
    - Remove `lg:pl-0` from the card content (no longer needed since drag handle is gone).
    - Adjust mobile checkbox position if needed (it was at `left-3` to account for the drag handle gap).
 
-2. In `sortable-task-card.tsx`:
+2. [x] In `sortable-task-card.tsx`:
    - Add `cursor-grab active:cursor-grabbing` to the wrapper div.
 
 ---
@@ -275,100 +275,120 @@ src/components/sortable-task-card.tsx    → Add transition class for smooth gap
 
 ### Implementation Steps
 
-1. In `action-board.tsx`: Replace `dropAnimation={null}` with a configured drop animation object.
-2. In `action-board-column.tsx`: Enhance `isOver` class — add `ring-2 ring-primary/20 ring-inset` and increase bg opacity.
-3. In `sortable-task-card.tsx`: Add `transition-transform duration-200` to wrapper div for smooth gap creation.
+1. [x] In `action-board.tsx`: Replace `dropAnimation={null}` with a configured drop animation object.
+2. [x] In `action-board-column.tsx`: Enhance `isOver` class — add `ring-2 ring-primary/20 ring-inset` and increase bg opacity.
+3. [x] In `sortable-task-card.tsx`: Add `transition-transform duration-200` to wrapper div for smooth gap creation.
 
 ---
 
-## Item 4 → (Build Order 4): Show More / Show Less for In Progress & Done Columns
+## Item 4 → (Build Order 4): Unified 7-by-7 Column Pagination
 
 ### Problem
 
-Only the To Do column has Show More/Less buttons. In Progress and Done columns show all their tasks without pagination, which can be visually overwhelming.
+The previous implementation used inconsistent pagination models across columns (time-window for To Do/Done, count-based for In Progress), making the UI harder to reason about.
 
-### Design Analysis
+### Design Decision
 
-| Column          | Current Behavior           | Window Strategy                | Rationale                                                                                                                      |
-| --------------- | -------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| **To Do**       | 7–56 day window, paginated | Time-based (7d increments)     | ✅ Already implemented                                                                                                         |
-| **In Progress** | All tasks shown            | **Count-based (5 at a time)**  | In-progress tasks don't have a natural time window. Students rarely have >7 tasks in progress. Show 5 by default, expand by 5. |
-| **Done**        | Last 7 days shown          | **Time-based (7d increments)** | Mirrors To Do pattern. Expand from 7d → 14d → 21d → 28d. Students may want to review older completed tasks.                    |
+All three columns use a single consistent model: **7 cards visible by default, Show More reveals +7, Show Less collapses -7**. Time windows (todoWindowDays=7, doneWindowDays=7) are hardcoded as invisible background filters — students don't need to control them.
 
 ### Changes to `computeActionBoardBuckets`
 
-Currently the function populates 3 buckets. We need to add windowing metadata:
-
 ```typescript
-export interface ActionBoardBuckets {
-  todo: TaskWithCourse[];
-  inProgress: TaskWithCourse[];
-  done: TaskWithCourse[];
-  todoHasMore: boolean;
-  inProgressHasMore: boolean; // NEW
-  doneHasMore: boolean; // NEW
-}
+// New signature — display limits replace time-window params
+computeActionBoardBuckets(
+  tasks,
+  now,
+  todoWindowDays,        // internal filter only (hardcoded to 7 in hook)
+  todoDisplayLimit = 7,  // count cap for To Do
+  doneDisplayLimit = 7,  // count cap for Done
+  inProgressDisplayLimit = 7, // count cap for In Progress
+)
 ```
 
-**Done window:**
-
-- Add `doneWindowDays` parameter (default 7)
-- Filter done tasks by `updatedAt > now - doneWindowDays`
-- Set `doneHasMore = true` if any done task was filtered out
-
-**In Progress window:**
-
-- Add `inProgressLimit` parameter (default 5)
-- After sorting, slice to first `inProgressLimit` tasks
-- Set `inProgressHasMore = true` if more exist beyond the limit
+- `doneWindowDays` removed as a parameter (hardcoded at 7 days internally)
+- All three buckets truncated at their display limit after sorting
+- `todoHasMore`: true when tasks inside window exceed `todoDisplayLimit` **or** tasks exist beyond the window
+- `doneHasMore` / `inProgressHasMore`: true when bucket length before slicing exceeds display limit
 
 ### Dashboard Page State
 
-Add state for `doneWindowDays` and `inProgressLimit`, mirroring the existing `todoWindowDays` pattern:
+Three sessionStorage-backed display-limit states replace all time-window state:
 
 ```typescript
-const [doneWindowDays, setDoneWindowDays] = useState(7);
-const [inProgressLimit, setInProgressLimit] = useState(5);
+const [todoDisplayLimit, setTodoDisplayLimit] = useState(7);    // key: "todoDisplayLimit"
+const [doneDisplayLimit, setDoneDisplayLimit] = useState(7);    // key: "doneDisplayLimit"
+const [inProgressDisplayLimit, setInProgressDisplayLimit] = useState(7); // key: "inProgressDisplayLimit"
 ```
 
-Persist in `sessionStorage` with keys `"doneWindowDays"` and `"inProgressLimit"`.
+All handlers follow the same pattern: `+7` for Show More, `-7` (floor 7) for Show Less.
 
-### Column UI
-
-`ActionBoardColumn` already accepts `onShowMore`, `onShowLess`, and `todoWindowDays` props — but they're currently hardcoded for the To Do column only. We need to **generalize** these props:
-
-- Rename `todoWindowDays` → `windowLabel` (string, used for button label like "Next 14d")
-- `onShowMore` / `onShowLess` already generic — just need to wire them up for all columns
-
-For In Progress, the "Show more" button label would be "Show 5 more" instead of "Next 14d".
-
-### Files to Modify
+### Files Modified
 
 ```
-src/types/task.ts                      → Add inProgressHasMore, doneHasMore to ActionBoardBuckets
-src/hooks/use-action-board.ts          → Accept doneWindowDays + inProgressLimit; compute new flags
-src/hooks/__tests__/use-action-board.test.ts → New test cases for done/in-progress pagination
-src/app/dashboard/page.tsx             → Add state for doneWindowDays, inProgressLimit; wire callbacks
-src/components/action-board.tsx        → Pass new props through to columns
-src/components/action-board-column.tsx → Generalize Show More/Less labels, render for all columns
+src/lib/task-mapper.ts               → NEW: mapRow extracted here for reuse
+src/hooks/use-tasks.ts               → imports mapRow from task-mapper
+src/hooks/use-action-board.ts        → unified display limits, hardcoded time windows
+src/hooks/__tests__/use-action-board.test.ts → updated for new signature/behavior (23 tests)
+src/app/dashboard/page.tsx           → remove time-window state, add display-limit state
+src/components/action-board.tsx      → remove window props, uniform showMoreLabel="Show 7 more"
 ```
 
 ### Implementation Steps
 
-1. Update `ActionBoardBuckets` type — add `inProgressHasMore: boolean` and `doneHasMore: boolean`.
-2. Update `computeActionBoardBuckets`:
-   - Add `doneWindowDays` parameter (default 7). Filter done tasks by effective `updatedAt` window. Set `doneHasMore`.
-   - Add `inProgressLimit` parameter (default 5). Slice in-progress array after sorting. Set `inProgressHasMore`.
-3. Update `useActionBoard` hook — accept and pass through the new parameters.
-4. Update `DashboardContent` in `page.tsx`:
-   - Add `doneWindowDays` state (sessionStorage-backed, same pattern as `todoWindowDays`).
-   - Add `inProgressLimit` state (sessionStorage-backed, default 5, increment/decrement by 5).
-   - Create `handleShowMoreDone`, `handleShowLessDone`, `handleShowMoreInProgress`, `handleShowLessInProgress`.
-5. Update `ActionBoard` props — pass through done/in-progress show more/less callbacks and window metadata.
-6. Update `ActionBoardColumn`:
-   - Make `Show more` / `Show less` buttons render for any column that provides `onShowMore` / `onShowLess`.
-   - Use a `windowLabel` string prop for the button text (e.g., "Next 14d" for time-based, "Show 5 more" for count-based).
-7. Add unit tests for new windowing logic in `use-action-board.test.ts`.
+1. [x] Extract `mapRow` to `src/lib/task-mapper.ts` for reuse across hooks.
+2. [x] Update `computeActionBoardBuckets`: remove `doneWindowDays` param; add `todoDisplayLimit`, `doneDisplayLimit`, `inProgressDisplayLimit` (all default 7); apply count cap after sorting each bucket.
+3. [x] Update `useActionBoard`: new signature `(tasks, todoDisplayLimit, doneDisplayLimit, inProgressDisplayLimit)`; todoWindowDays hardcoded to 7 internally.
+4. [x] Update `DashboardContent`: remove all time-window state; add three display-limit states; all Show More/Less handlers use +7/-7 increments.
+5. [x] Update `ActionBoard`: remove `todoWindowDays`/`doneWindowDays`/`inProgressLimit` props; all columns use `showMoreLabel="Show 7 more"`.
+6. [x] Update tests: done-window section rewritten for count-based semantics; inProgress tests updated to 6-arg signature; todoHasMore count-overflow test added (23 total, all passing).
+
+**Item 4 status:** Complete.
+
+---
+
+## Item 6 → (Build Order 6): Dismissed Tasks History Page
+
+### Problem
+
+Once a task is dismissed it disappears with no way to find it again. If a student accidentally dismisses a task they still need, they have to re-sync or search manually.
+
+### Design
+
+A new `/dashboard/history` route shows tasks dismissed in the last 24 hours with a **Restore** button. After 24 hours the task silently leaves the list.
+
+### Key Implementation Notes
+
+**Query strategy**: Must query from `task_overrides` (not `tasks`) so the `custom_status` and `updated_at` filters apply to the main table's columns. Using `.eq("task_overrides.custom_status", "dismissed")` on a `tasks`-based query is silently ignored by the Supabase JS client (embedded-resource column filters don't work via `.eq()`).
+
+```typescript
+supabase
+  .from("task_overrides")
+  .select("*, tasks!inner(*, courses(*))")
+  .eq("custom_status", "dismissed")
+  .gte("updated_at", cutoff)  // cutoff = now - 24h
+```
+
+The override row is then wrapped into the shape `mapRow` expects before mapping, so no separate mapper was needed.
+
+**Cache invalidation**: `setStatus` and `dismissAll` mutations now also invalidate `["history-tasks"]` on success so the history page updates immediately without a reload.
+
+### Files Created/Modified
+
+```
+src/hooks/use-history-tasks.ts          → NEW: dedicated query for dismissed tasks
+src/app/dashboard/history/page.tsx      → NEW: /dashboard/history route
+src/components/sidebar-nav.tsx          → add History nav link (History icon)
+src/hooks/use-task-actions.ts           → invalidate ["history-tasks"] on dismiss
+```
+
+### Implementation Steps
+
+1. [x] Create `use-history-tasks.ts` — queries `task_overrides` directly with `custom_status = 'dismissed'` and `updated_at >= cutoff`, reconstructs `mapRow`-compatible rows.
+2. [x] Create `dashboard/history/page.tsx` — lists dismissed tasks with title, course, due date, "dismissed X ago" timestamp; Restore button calls `setStatus({ taskId, status: 'pending' })` and invalidates `["history-tasks"]` on success.
+3. [x] Add History link to `sidebar-nav.tsx`.
+4. [x] Fix cache invalidation in `use-task-actions.ts` — both `setStatus` (when `status === 'dismissed'`) and `dismissAll` now invalidate `["history-tasks"]`.
+
+**Item 6 status:** Complete.
 
 ---
 
@@ -476,10 +496,10 @@ src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync co
 
 ### Unit Tests (New)
 
-| Test File                                        | Tests | What                                                                                                          |
-| ------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------- |
-| `src/hooks/__tests__/use-action-board.test.ts`   | +6    | Done window expansion (7d, 14d, 28d), `doneHasMore` flag, In Progress limit (5, 10), `inProgressHasMore` flag |
-| `src/lib/__tests__/first-sync-heuristic.test.ts` | +4    | Past-due detection: counts correctly, ignores GClassroom done tasks, handles null due dates, threshold of 3   |
+| Test File                                        | Tests | What                                                                                                                        |
+| ------------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------- |
+| `src/hooks/__tests__/use-action-board.test.ts`   | +7    | Unified 7-by-7 display limits: count-based doneHasMore, todoHasMore overflow, inProgressDisplayLimit — 23 tests total      |
+| `src/lib/__tests__/first-sync-heuristic.test.ts` | +4    | Past-due detection: counts correctly, ignores GClassroom done tasks, handles null due dates, threshold of 3 (not yet built) |
 
 ### Manual Test Checklist
 
@@ -489,9 +509,9 @@ src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync co
 - [ ] **Card hover:** No overlapping icons; background highlights on hover; no drag handle visible
 - [ ] **Card drag:** Cursor changes to grab/grabbing; card tilts while dragged; target column glows
 - [ ] **Drop animation:** Card smoothly slides to final position (no snap)
-- [ ] **Done pagination:** "Show more" expands to 14d, then 21d; "Show less" collapses back
-- [ ] **In Progress pagination:** Shows first 5; "Show 5 more" expands; "Show less" reduces
-- [ ] **First sync banner:** Appears on first visit with >3 past-due tasks; "Archive" clears them; banner never reappears
+- [ ] **Unified pagination:** All 3 columns show 7 by default; "Show 7 more" reveals +7; "Show less" collapses -7; persists in sessionStorage
+- [ ] **History page:** Dismiss a task → appears in /dashboard/history immediately (no reload); Restore → task back in To Do, gone from history; tasks older than 24h not shown
+- [ ] **First sync banner:** Appears on first visit with >3 past-due tasks; "Archive" clears them; banner never reappears (not yet built)
 - [ ] **Mobile:** All changes render correctly on 375px viewport; touch drag still works; theme toggle accessible
 
 ---

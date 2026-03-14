@@ -472,29 +472,38 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 - [x] Create `ThemeToggle` component — Sun/Moon button, stores preference in `localStorage["theme"]`
 - [x] Update sidebar logo: "TA" → "O(1)", "Task Aggregator" → "TapO(1)"
 - [x] Update mobile header, login page, landing page, `<title>`, `<meta>`, `manifest.json`
-- [ ] Verify WCAG AA contrast (≥4.5:1) for maroon-on-cream across all surfaces
+- [x] Verify WCAG AA contrast (≥4.5:1) for maroon-on-cream across all surfaces — palette refined: warmer cream background (hue 80), golden accent (hue 60), dark mode background shifted to warm hue 30 to harmonize with maroon brand; ThemeToggle also surfaced in mobile dashboard header
 
 **Item 2 — Task Card Hover Fix:**
 
-- [ ] Remove `GripVertical` drag handle (6 dots) — entire card is already the drag target
-- [ ] Reposition `SourceIcon` to bottom row to eliminate overlap with hover quick-actions
-- [ ] Add `hover:bg-accent/40 hover:shadow-sm` to card container
-- [ ] Add `cursor-grab` / `active:cursor-grabbing` to sortable wrapper
+- [x] Remove `GripVertical` drag handle (6 dots) — entire card is already the drag target
+- [x] Reposition `SourceIcon` to bottom row to eliminate overlap with hover quick-actions
+- [x] Add `hover:bg-accent/40 hover:shadow-sm` to card container
+- [x] Add `cursor-grab` / `active:cursor-grabbing` to sortable wrapper
 
 **Item 3 — Drag-and-Drop Animations:**
 
-- [ ] Add `dropAnimation` config to `DragOverlay` (200ms ease) — replaces `null` for smooth card landing
-- [ ] Enhance `isOver` column styling — add `ring-2 ring-primary/20 ring-inset` + stronger bg tint
-- [ ] Add `transition-transform duration-200` to sortable card wrapper for smooth gap creation
+- [x] Add `dropAnimation` config to `DragOverlay` (200ms ease) — replaces `null` for smooth card landing
+- [x] Enhance `isOver` column styling — add `ring-2 ring-primary/20 ring-inset` + stronger bg tint
+- [x] Add `transition-transform duration-200` to sortable card wrapper for smooth gap creation
 
-**Item 4 — Column Pagination (In Progress & Done):**
+**Item 4 — Unified Column Pagination (7-by-7):**
 
-- [ ] Extend `ActionBoardBuckets` type with `inProgressHasMore` and `doneHasMore` booleans
-- [ ] Add `doneWindowDays` param to `computeActionBoardBuckets` (default 7d, 7d increments)
-- [ ] Add `inProgressLimit` param to `computeActionBoardBuckets` (default 5, +5 per click)
-- [ ] Add `doneWindowDays` and `inProgressLimit` state to dashboard page (sessionStorage-backed)
-- [ ] Wire Show More / Show Less buttons for In Progress and Done columns in `ActionBoardColumn`
-- [ ] Add 6+ unit tests for new windowing logic
+- [x] Replace inconsistent time-window/count models with a single 7-by-7 display limit across all columns
+- [x] Extract `mapRow` to `src/lib/task-mapper.ts` for reuse
+- [x] `computeActionBoardBuckets`: remove `doneWindowDays` param (hardcoded); add `todoDisplayLimit`, `doneDisplayLimit`, `inProgressDisplayLimit` (all default 7)
+- [x] `useActionBoard`: updated signature; todoWindowDays/doneWindowDays hardcoded internally
+- [x] Dashboard: remove all time-window state; add three sessionStorage-backed display-limit states
+- [x] `ActionBoard`: remove window props; all columns use `showMoreLabel="Show 7 more"`
+- [x] 23 unit tests passing (updated for new signature and count-based semantics)
+
+**Item 6 — Dismissed Tasks History Page:**
+
+- [x] New `/dashboard/history` route — shows tasks dismissed in the last 24 hours
+- [x] `use-history-tasks.ts`: queries from `task_overrides` (not `tasks`) to avoid embedded-resource filter limitations in Supabase JS client
+- [x] Restore button: calls `setStatus({ taskId, status: 'pending' })`, invalidates `["history-tasks"]` cache
+- [x] `setStatus` and `dismissAll` mutations now invalidate `["history-tasks"]` on dismiss for instant reflection
+- [x] History link added to sidebar nav
 
 **Item 5 — Smart First-Sync Experience:**
 
@@ -506,33 +515,37 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 
 **Tests:**
 
-- [ ] 6+ new unit tests for done/in-progress windowing in `use-action-board.test.ts`
+- [x] 23 unit tests in `use-action-board.test.ts` (68 total passing across all files)
 - [ ] 4+ new tests for first-sync heuristic
 - [ ] Manual test checklist (see full plan)
 
-**Status:** In progress. Item 1 implementation is complete; WCAG verification is pending.
+**Status:** In progress. Items 1–4 and 6 complete. Item 5 (Smart First-Sync) remaining.
 
 **Files:**
 
 ```
-src/app/globals.css                      (UP Cebu palette)
-src/components/theme-toggle.tsx          (new)
-src/components/sidebar-nav.tsx           (branding + theme toggle)
-src/app/dashboard/dashboard-shell.tsx    (mobile header brand)
-src/app/layout.tsx                       (title, meta, theme script)
-src/app/login/login-card.tsx             (brand name)
-public/manifest.json                     (name, theme_color)
-src/components/task-card.tsx             (hover fix, remove drag handle)
-src/components/sortable-task-card.tsx    (cursor, transition)
-src/components/action-board.tsx          (drop animation, pass new props)
-src/components/action-board-column.tsx   (enhanced isOver, generalized pagination)
-src/types/task.ts                        (ActionBoardBuckets extension)
-src/hooks/use-action-board.ts            (new windowing params)
-src/app/dashboard/page.tsx               (done/inProgress state, FirstSyncBanner)
-src/components/first-sync-banner.tsx     (new)
-src/lib/actions/tasks.ts                 (bulkSetStatus)
-src/hooks/use-task-actions.ts            (archivePastDue mutation)
-src/hooks/__tests__/use-action-board.test.ts (new tests)
+src/app/globals.css                         (UP Cebu palette)
+src/components/theme-toggle.tsx             (new)
+src/components/sidebar-nav.tsx              (branding + theme toggle + history link)
+src/app/dashboard/dashboard-shell.tsx       (mobile header brand)
+src/app/layout.tsx                          (title, meta, theme script)
+src/app/login/login-card.tsx                (brand name)
+public/manifest.json                        (name, theme_color)
+src/components/task-card.tsx                (hover fix, remove drag handle)
+src/components/sortable-task-card.tsx       (cursor, transition)
+src/components/action-board.tsx             (drop animation, unified pagination props)
+src/components/action-board-column.tsx      (enhanced isOver, generalized pagination)
+src/types/task.ts                           (ActionBoardBuckets extension)
+src/lib/task-mapper.ts                      (new: shared mapRow)
+src/hooks/use-tasks.ts                      (imports mapRow from task-mapper)
+src/hooks/use-action-board.ts               (unified display limits)
+src/hooks/use-history-tasks.ts              (new: dismissed tasks query)
+src/hooks/use-task-actions.ts               (history-tasks cache invalidation)
+src/app/dashboard/page.tsx                  (display-limit state)
+src/app/dashboard/history/page.tsx          (new: history route)
+src/hooks/__tests__/use-action-board.test.ts (updated: 23 tests)
+src/components/first-sync-banner.tsx        (new — not yet built)
+src/lib/actions/tasks.ts                    (bulkSetStatus — not yet built)
 ```
 
 ### Phase 8: Stabilization & Launch (Size: L — ~6 hours)

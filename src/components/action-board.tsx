@@ -25,9 +25,12 @@ interface ActionBoardProps {
   todoTasks: TaskWithCourse[];
   inProgressTasks: TaskWithCourse[];
   doneTasks: TaskWithCourse[];
-  todoWindowDays: number;
   onShowMoreTodo?: () => void;
   onShowLessTodo?: () => void;
+  onShowMoreDone?: () => void;
+  onShowLessDone?: () => void;
+  onShowMoreInProgress?: () => void;
+  onShowLessInProgress?: () => void;
 }
 
 const statusMap: Record<ActionBoardColumn, "pending" | "in_progress" | "done"> =
@@ -69,9 +72,12 @@ export function ActionBoard({
   todoTasks,
   inProgressTasks,
   doneTasks,
-  todoWindowDays,
   onShowMoreTodo,
   onShowLessTodo,
+  onShowMoreDone,
+  onShowLessDone,
+  onShowMoreInProgress,
+  onShowLessInProgress,
 }: ActionBoardProps) {
   const [activeTask, setActiveTask] = useState<TaskWithCourse | null>(null);
   const { setStatus, dismissAll } = useTaskActions();
@@ -165,25 +171,36 @@ export function ActionBoard({
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
-          todoWindowDays={todoWindowDays}
+          showMoreLabel="Show 7 more"
         />
         <Column
           id="in_progress"
           title="In Progress"
           tasks={inProgressTasks}
           accentClass="text-warning"
+          onShowMore={onShowMoreInProgress}
+          onShowLess={onShowLessInProgress}
+          showMoreLabel="Show 7 more"
         />
         <Column
           id="done"
           title="Done"
           tasks={doneTasks}
           accentClass="text-success"
+          onShowMore={onShowMoreDone}
+          onShowLess={onShowLessDone}
+          showMoreLabel="Show 7 more"
           onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
           isDismissAllPending={dismissAll.isPending}
         />
       </div>
 
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay
+        dropAnimation={{
+          duration: 200,
+          easing: "cubic-bezier(0.25, 0.1, 0.25, 1)",
+        }}
+      >
         {activeTask ? <TaskCard task={activeTask} isDragging /> : null}
       </DragOverlay>
     </DndContext>

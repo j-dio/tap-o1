@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, Clock, GripVertical } from "lucide-react";
+import { CheckCircle2, Circle, Clock } from "lucide-react";
 import type { TaskWithCourse } from "@/types/task";
 import { getTaskUrgency, cn } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
@@ -46,18 +46,13 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
     <>
       <div
         className={cn(
-          "group bg-card relative rounded-lg border border-l-[3px] p-3 transition-all",
+          "group bg-card relative rounded-lg border border-l-[3px] p-3 transition-all hover:bg-accent/40 hover:shadow-sm",
           urgencyBorder[urgency],
           isDragging && "scale-105 rotate-2 opacity-50 shadow-lg",
           task.status === "done" && "opacity-60",
         )}
       >
-        {/* Drag handle - visible on hover (desktop) */}
-        <div className="absolute top-1/2 left-1 hidden -translate-y-1/2 cursor-grab opacity-0 transition-opacity group-hover:opacity-50 lg:block">
-          <GripVertical className="text-muted-foreground size-4" />
-        </div>
-
-        {/* Desktop quick actions - visible on hover */}
+        {/* Desktop quick actions - visible on hover, positioned top-right (no overlap since SourceIcon moved to bottom) */}
         <div className="absolute top-2 right-2 hidden gap-1 opacity-0 transition-opacity group-hover:opacity-100 lg:flex">
           <button
             type="button"
@@ -122,22 +117,22 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
           onClick={() => setOpen(true)}
           className="w-full pl-6 text-left lg:pl-0"
         >
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2">
             <span
               className={cn(
-                "line-clamp-2 text-sm leading-snug font-medium",
+                "line-clamp-2 flex-1 text-sm leading-snug font-medium",
                 task.status === "done" && "line-through",
               )}
             >
               {task.title}
             </span>
-            <SourceIcon source={task.source} />
           </div>
 
           {!compact && (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <CourseBadge course={task.course} />
-              <CountdownBadge dueDate={task.dueDate} className="ml-auto" />
+              <CountdownBadge dueDate={task.dueDate} />
+              <SourceIcon source={task.source} className="ml-auto" />
             </div>
           )}
         </button>

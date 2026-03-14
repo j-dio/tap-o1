@@ -25,7 +25,13 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="cursor-grab active:cursor-grabbing transition-transform duration-200"
+      {...attributes}
+      {...listeners}
+    >
       <TaskCard task={task} isDragging={isDragging} />
     </div>
   );

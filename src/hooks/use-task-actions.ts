@@ -124,6 +124,9 @@ export function useTaskActions() {
     },
     onSuccess: (_data, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      if (status === "dismissed") {
+        queryClient.invalidateQueries({ queryKey: ["history-tasks"] });
+      }
       const label =
         status === "done"
           ? "Marked as done"
@@ -336,6 +339,7 @@ export function useTaskActions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["history-tasks"] });
       toast.success("All done tasks dismissed");
     },
     onError: (err, _ids, context) => {
