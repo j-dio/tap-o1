@@ -36,6 +36,7 @@ import { useActionBoard } from "@/hooks/use-action-board";
 import { useUpNext } from "@/hooks/use-up-next";
 import { useFocusMode } from "@/hooks/use-focus-mode";
 import { ActionBoard } from "@/components/action-board";
+import { FirstSyncBanner } from "@/components/first-sync-banner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { TaskFilters as FilterBar } from "@/components/task-filters";
 import { TaskList } from "@/components/task-list";
@@ -48,10 +49,12 @@ import { CustomTaskModal } from "@/components/custom-task-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Plus } from "lucide-react";
+import { useTaskActions } from "@/hooks/use-task-actions";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
   const { mutate: sync, isPending: isSyncing } = useSync();
+  const { archivePastDue } = useTaskActions();
   const [focusMode, setFocusMode] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
 
@@ -157,6 +160,15 @@ function DashboardContent() {
               : ""}
         </p>
       </div>
+
+      {/* First-sync banner — only visible to new users with stale UVEC tasks */}
+      {tasks && tasks.length > 0 && (
+        <FirstSyncBanner
+          tasks={tasks}
+          onArchive={(taskIds) => archivePastDue.mutate(taskIds)}
+          isArchiving={archivePastDue.isPending}
+        />
+      )}
 
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
