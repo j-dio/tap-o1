@@ -406,35 +406,42 @@ When a new user syncs for the first time, **all** tasks — including those with
 
 ### Solution: Post-First-Sync Archive Banner
 
-Since we can't detect UVEC submission status, we use a **heuristic + user confirmation** approach:
+Since we can't detect UVEC submission status, we use a **heuristic + user confirmation** approach.
 
-**Heuristic:** If `dueDate < now`, the task has very likely been submitted by an active student. This is especially true for a brand-new user whose first sync pulls in an entire semester's worth of tasks.
+**Why `dueDate < now` is too aggressive:** A task due yesterday or even last week is ambiguous — it could be a late-but-unsubmitted assignment, or a cancelled activity whose date was never updated. We need a cushion.
+
+**Revised heuristic:**
+- Source: `source === 'uvec'` only (GClassroom already handled; custom tasks must never be auto-archived)
+- Status: `effectiveStatus === 'pending'`
+- Age: `dueDate < (now - cutoffDays)` where default cutoff is **7 days**
+- Count gate: candidates > 3 (avoids triggering on nearly-clean boards)
 
 **UX Flow:**
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  🎉 First sync complete!                            │
-│                                                     │
-│  We found 23 tasks with past due dates.             │
-│  These are likely already submitted.                 │
-│                                                     │
-│  [Archive all past tasks]   [I'll sort them myself] │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  🎉 First sync complete!                                    │
+│                                                             │
+│  Found 18 UVEC tasks overdue by at least  [7 days ▾]       │
+│  These are likely already submitted.                        │
+│                                                             │
+│  [Archive 18 tasks]   [I'll sort them myself]              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-1. After the sync mutation completes, check if this is the **first sync** for the user (zero tasks existed before sync → tasks exist now, OR a profile flag `first_sync_done`).
-2. Count tasks where `status = 'pending'` AND `dueDate < now`.
-3. If count > 0, show a **dismissible banner** (not a modal — don't block the user).
-4. **"Archive all past tasks"** → Bulk-upserts `task_overrides` with `custom_status = 'done'` for all past-due pending tasks. Uses the existing `dismissAll` pattern from `use-task-actions.ts` but with `'done'` instead of `'dismissed'`.
-5. **"I'll sort them myself"** → Dismisses the banner. Sets `localStorage["firstSyncHandled"] = "true"` so it never shows again.
+1. After the sync mutation completes, check the **first-sync guard** (see Detection below).
+2. Count UVEC pending tasks where `dueDate < (now - cutoffDays)`.
+3. If count > 3, show a **dismissible banner** (not a modal — don't block the user).
+4. The cutoff is a user-selectable inline dropdown: **7 days / 14 days / 30 days**. The count and button label update live as the user changes the dropdown.
+5. **"Archive N tasks"** → Bulk-upserts `task_overrides` with `custom_status = 'done'` for the candidate task IDs. Sets `localStorage["firstSyncHandled"] = "true"`.
+6. **"I'll sort them myself"** → Sets `localStorage["firstSyncHandled"] = "true"`. Banner hides immediately.
 
 ### Why Not Auto-Archive Silently?
 
 Tempting, but risky:
 
 - A student might have an **overdue but not-yet-submitted** late assignment. Auto-archiving would hide it.
-- The banner gives control while still making the right default action effortless (one click vs. manually moving 23 tasks).
+- The banner gives control while still making the right default action effortless (one click vs. manually moving 18 tasks).
 
 ### Why Not a Dialog/Modal?
 
@@ -443,52 +450,79 @@ Tempting, but risky:
 
 ### Detection: "Is This the First Sync?"
 
-**Option A — Profile flag:** Add a `first_sync_done` boolean column to `profiles` table. Set it to `true` after the first sync. Check it on subsequent syncs.
+**Client-side flag (no migration needed):** If `localStorage["firstSyncHandled"]` is not set AND candidates > 3, show the banner. The `localStorage` key persists per device — a user re-installing the PWA on a new device sees the banner again, which is correct behavior (new install = new triage).
 
-**Option B — Client-side heuristic (simpler, no migration):** After sync, if `localStorage["firstSyncHandled"]` is not set AND the number of past-due pending tasks > 3, show the banner. This avoids a schema change while being reliable enough.
-
-**Decision:** Go with **Option B** (client-side) for simplicity. No migration needed. The `localStorage` key persists per device, which is fine — a user re-installing the PWA on a new device would see the banner again (which is actually correct behavior since a new device = new install).
+> **Alternative considered (rejected):** Track "zero tasks before sync → tasks after sync" in the mutation's `onSuccess`. More reliable in theory, but requires storing a pre-sync count in component state and coordinating with the async mutation lifecycle. The localStorage approach is simpler and handles the real-world case equally well.
 
 ### Bulk Archive Implementation
 
-The existing `useTaskActions` hook has `dismissAll` which upserts overrides with `custom_status = 'dismissed'`. We need a similar `archivePastDue` mutation that sets `custom_status = 'done'` for a batch of task IDs.
-
-We can reuse the existing `dismissAllDone` server action pattern but with a different status:
+The existing `useTaskActions` hook has `dismissAll` which upserts overrides with `custom_status = 'dismissed'`. We generalize this:
 
 ```typescript
-// New server action: archivePastDueTasks(taskIds: string[])
-// Bulk upserts task_overrides with custom_status = 'done'
+// Generalized server action: bulkSetStatus(taskIds: string[], status: TaskStatus)
+// Bulk upserts task_overrides with the given status
 ```
 
-Or simply call `setStatus` in a loop — but a bulk action is more efficient.
+A dedicated `archivePastDue` mutation in `useTaskActions` calls this with `'done'` and the filtered UVEC task IDs.
+
+### Candidate Derivation (Pure Function)
+
+```typescript
+function getPastDueCandidates(tasks: TaskWithCourse[], cutoffDays: number): TaskWithCourse[] {
+  const cutoff = new Date(Date.now() - cutoffDays * 86_400_000);
+  return tasks.filter(
+    (t) =>
+      t.source === "uvec" &&
+      !t.isCustom &&
+      t.status === "pending" &&
+      t.dueDate !== null &&
+      new Date(t.dueDate) < cutoff
+  );
+}
+```
+
+This is a pure function — extract it to `src/lib/first-sync-heuristic.ts` so it can be unit-tested independently.
 
 ### Files to Create/Modify
 
 ```
-src/components/first-sync-banner.tsx    → NEW: Banner component with archive action
-src/lib/actions/tasks.ts                → Add bulkArchivePastDue server action (or reuse dismissAllDone with status param)
+src/lib/first-sync-heuristic.ts         → NEW: getPastDueCandidates pure function
+src/lib/__tests__/first-sync-heuristic.test.ts  → NEW: unit tests
+src/components/first-sync-banner.tsx    → NEW: Banner component with cutoff selector and archive action
+src/lib/actions/tasks.ts                → Add bulkSetStatus(taskIds, status) server action
 src/hooks/use-task-actions.ts           → Add archivePastDue mutation
 src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync completes
 ```
 
 ### Implementation Steps
 
-1. Add `bulkSetStatus(taskIds: string[], status: TaskStatus)` server action in `tasks.ts` — generalizes the existing `dismissAllDone` to accept any target status.
-2. Add `archivePastDue` mutation to `useTaskActions` — calls `bulkSetStatus` with `'done'`.
-3. Create `FirstSyncBanner` component:
-   - Receives `tasks: TaskWithCourse[]` and `onArchive: () => void`.
-   - Computes past-due pending count from tasks.
-   - Only renders if `localStorage["firstSyncHandled"]` is not set AND past-due count > 3.
-   - "Archive all past tasks" → calls `onArchive` → sets localStorage flag.
+1. Create `src/lib/first-sync-heuristic.ts` — export `getPastDueCandidates(tasks, cutoffDays)` pure function.
+2. Add `src/lib/__tests__/first-sync-heuristic.test.ts` — unit tests:
+   - Returns only `source === 'uvec'` tasks.
+   - Excludes `isCustom === true` tasks.
+   - Excludes tasks with `null` dueDate.
+   - Excludes tasks within the cutoff window.
+   - Correct count with cutoff=7 vs cutoff=14.
+3. Add `bulkSetStatus(taskIds: string[], status: TaskStatus)` server action in `tasks.ts` — generalizes the existing `dismissAllDone` to accept any target status.
+4. Add `archivePastDue` mutation to `useTaskActions` — calls `bulkSetStatus` with `'done'`, invalidates `["tasks", *]` and `["history-tasks"]`.
+5. Create `FirstSyncBanner` component:
+   - Props: `tasks: TaskWithCourse[]`, `onArchive: (taskIds: string[]) => void`.
+   - State: `cutoffDays: 7 | 14 | 30` (default 7).
+   - Derives candidates via `getPastDueCandidates(tasks, cutoffDays)` — recomputes on dropdown change.
+   - Only renders if `localStorage["firstSyncHandled"]` is not set AND `candidates.length > 3`.
+   - Cutoff selector: inline `<select>` with options "7 days / 14 days / 30 days"; count and button label update live.
+   - "Archive N tasks" → calls `onArchive(candidates.map(t => t.id))` → sets localStorage flag.
    - "I'll sort them myself" → sets localStorage flag → hides banner.
-   - Subtle animation (slide-down) on mount, slide-up on dismiss.
-4. In `DashboardContent` (`page.tsx`):
-   - After `useTasks` data loads, pass tasks to `<FirstSyncBanner>`.
-   - The `onArchive` callback calls `archivePastDue.mutate(pastDueTaskIds)`.
-5. Manual testing:
+   - Subtle slide-down animation on mount, slide-up on dismiss.
+6. In `DashboardContent` (`page.tsx`):
+   - After `useTasks` data loads, render `<FirstSyncBanner tasks={tasks} onArchive={...} />`.
+   - The `onArchive` callback calls `archivePastDue.mutate(taskIds)`.
+7. Manual testing:
    - Clear localStorage, sync, verify banner appears.
-   - Click "Archive" — verify all past-due tasks move to Done.
+   - Change dropdown from 7→14 days, verify count updates live.
+   - Click "Archive N tasks" — verify all candidate tasks move to Done.
    - Reload — banner should not reappear.
+   - Click "I'll sort them myself" — verify banner hides and does not reappear.
 
 ---
 
@@ -499,7 +533,7 @@ src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync co
 | Test File                                        | Tests | What                                                                                                                        |
 | ------------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------- |
 | `src/hooks/__tests__/use-action-board.test.ts`   | +7    | Unified 7-by-7 display limits: count-based doneHasMore, todoHasMore overflow, inProgressDisplayLimit — 23 tests total      |
-| `src/lib/__tests__/first-sync-heuristic.test.ts` | +4    | Past-due detection: counts correctly, ignores GClassroom done tasks, handles null due dates, threshold of 3 (not yet built) |
+| `src/lib/__tests__/first-sync-heuristic.test.ts` | +5    | `getPastDueCandidates`: UVEC-only filter, excludes custom tasks, excludes null dueDates, respects cutoff window, cutoff=7 vs 14 gives different counts |
 
 ### Manual Test Checklist
 
@@ -511,7 +545,7 @@ src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync co
 - [ ] **Drop animation:** Card smoothly slides to final position (no snap)
 - [ ] **Unified pagination:** All 3 columns show 7 by default; "Show 7 more" reveals +7; "Show less" collapses -7; persists in sessionStorage
 - [ ] **History page:** Dismiss a task → appears in /dashboard/history immediately (no reload); Restore → task back in To Do, gone from history; tasks older than 24h not shown
-- [ ] **First sync banner:** Appears on first visit with >3 past-due tasks; "Archive" clears them; banner never reappears (not yet built)
+- [ ] **First sync banner:** Appears on first visit with >3 UVEC tasks overdue by ≥7 days; cutoff dropdown updates count live; "Archive" clears them; banner never reappears; GClassroom/custom tasks unaffected (not yet built)
 - [ ] **Mobile:** All changes render correctly on 375px viewport; touch drag still works; theme toggle accessible
 
 ---
@@ -523,14 +557,14 @@ src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync co
 | Maroon/cream palette reduces readability in some components                         | Medium   | Run all screens through Chrome DevTools contrast checker after palette change. Can tweak lightness values per-token. |
 | Drop animation causes jitter on slow devices                                        | Low      | Use `will-change: transform` and keep duration ≤200ms. dnd-kit's default drop animation is battle-tested.            |
 | First-sync banner shows for returning users who clear localStorage                  | Low      | Acceptable UX — the banner is helpful, not annoying. One-click dismiss.                                              |
-| UVEC tasks have no submission state — heuristic may archive un-submitted late tasks | Medium   | This is why we use a banner (user-confirmed) rather than auto-archive. The user makes the final decision.            |
+| UVEC tasks have no submission state — heuristic may archive un-submitted late tasks | Medium   | 7-day cushion + UVEC-only filter reduces false positives. User-selectable cutoff (7/14/30 days) and mandatory confirmation mean no silent data loss.            |
 | In Progress count-based pagination may feel inconsistent with time-based To Do/Done | Low      | Label buttons clearly ("Show 5 more" vs "Next 14d") so users understand the different models.                        |
 
 ---
 
 ## Summary
 
-**Total new files:** 2 (`theme-toggle.tsx`, `first-sync-banner.tsx`)
+**Total new files:** 4 (`theme-toggle.tsx`, `first-sync-banner.tsx`, `first-sync-heuristic.ts`, `first-sync-heuristic.test.ts`)
 **Total modified files:** ~14
 **New unit tests:** ~10
 **No new dependencies.** All changes use existing dnd-kit, Tailwind, and shadcn/ui primitives.
