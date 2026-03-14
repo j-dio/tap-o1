@@ -21,6 +21,10 @@ export interface ActionBoardBuckets {
   done: TaskWithCourse[];
   /** True when pending tasks exist beyond the current To Do time window. */
   todoHasMore: boolean;
+  /** True when in-progress tasks exist beyond the current limit. */
+  inProgressHasMore: boolean;
+  /** True when done tasks exist beyond the current done window. */
+  doneHasMore: boolean;
 }
 
 export interface Task {

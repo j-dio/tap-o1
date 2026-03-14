@@ -236,4 +236,70 @@ describe("computeActionBoardBuckets", () => {
     expect(result.inProgress).toHaveLength(0);
     expect(result.done).toHaveLength(0);
   });
+
+  // ---- Done window expansion -------------------------------------------
+
+  it("includes done task within doneWindowDays and sets doneHasMore false", () => {
+    const task = makeTask({
+      id: "done-recent",
+      status: "done",
+      updatedAt: new Date(NOW - 3 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7, 7);
+    expect(result.done).toHaveLength(1);
+    expect(result.doneHasMore).toBe(false);
+  });
+
+  it("excludes done task beyond doneWindowDays and sets doneHasMore true", () => {
+    const task = makeTask({
+      id: "done-old",
+      status: "done",
+      updatedAt: new Date(NOW - 10 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7, 7);
+    expect(result.done).toHaveLength(0);
+    expect(result.doneHasMore).toBe(true);
+  });
+
+  it("includes done task at 10d when doneWindowDays is 14", () => {
+    const task = makeTask({
+      id: "done-14d",
+      status: "done",
+      updatedAt: new Date(NOW - 10 * DAY).toISOString(),
+    });
+    const result = computeActionBoardBuckets([task], NOW, 7, 14);
+    expect(result.done).toHaveLength(1);
+    expect(result.doneHasMore).toBe(false);
+  });
+
+  // ---- In Progress limit -----------------------------------------------
+
+  it("shows all tasks when in-progress count is within inProgressLimit", () => {
+    const tasks = [
+      makeTask({ id: "ip1", status: "in_progress" }),
+      makeTask({ id: "ip2", status: "in_progress" }),
+      makeTask({ id: "ip3", status: "in_progress" }),
+    ];
+    const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 5);
+    expect(result.inProgress).toHaveLength(3);
+    expect(result.inProgressHasMore).toBe(false);
+  });
+
+  it("limits in-progress to inProgressLimit and sets inProgressHasMore true", () => {
+    const tasks = Array.from({ length: 7 }, (_, i) =>
+      makeTask({ id: `ip${i}`, status: "in_progress" }),
+    );
+    const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 5);
+    expect(result.inProgress).toHaveLength(5);
+    expect(result.inProgressHasMore).toBe(true);
+  });
+
+  it("shows all 8 tasks when inProgressLimit is 10", () => {
+    const tasks = Array.from({ length: 8 }, (_, i) =>
+      makeTask({ id: `ip${i}`, status: "in_progress" }),
+    );
+    const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 10);
+    expect(result.inProgress).toHaveLength(8);
+    expect(result.inProgressHasMore).toBe(false);
+  });
 });
