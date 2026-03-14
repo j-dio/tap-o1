@@ -413,8 +413,10 @@ Since we can't detect UVEC submission status, we use a **heuristic + user confir
 **Revised heuristic:**
 - Source: `source === 'uvec'` only (GClassroom already handled; custom tasks must never be auto-archived)
 - Status: `effectiveStatus === 'pending'`
-- Age: `dueDate < (now - cutoffDays)` where default cutoff is **7 days**
+- Age: `dueDate < (now - cutoffDays * 86_400_000)` where default cutoff is **7 days** (widest net)
 - Count gate: candidates > 3 (avoids triggering on nearly-clean boards)
+
+> Note: larger cutoff = narrower net. "7 days" archives everything ≥7 days old (most tasks). "30 days" archives only tasks ≥30 days old (fewest tasks). Count in the banner decreases as the user selects a larger cutoff.
 
 **UX Flow:**
 
@@ -496,33 +498,14 @@ src/app/dashboard/page.tsx              → Render FirstSyncBanner after sync co
 
 ### Implementation Steps
 
-1. Create `src/lib/first-sync-heuristic.ts` — export `getPastDueCandidates(tasks, cutoffDays)` pure function.
-2. Add `src/lib/__tests__/first-sync-heuristic.test.ts` — unit tests:
-   - Returns only `source === 'uvec'` tasks.
-   - Excludes `isCustom === true` tasks.
-   - Excludes tasks with `null` dueDate.
-   - Excludes tasks within the cutoff window.
-   - Correct count with cutoff=7 vs cutoff=14.
-3. Add `bulkSetStatus(taskIds: string[], status: TaskStatus)` server action in `tasks.ts` — generalizes the existing `dismissAllDone` to accept any target status.
-4. Add `archivePastDue` mutation to `useTaskActions` — calls `bulkSetStatus` with `'done'`, invalidates `["tasks", *]` and `["history-tasks"]`.
-5. Create `FirstSyncBanner` component:
-   - Props: `tasks: TaskWithCourse[]`, `onArchive: (taskIds: string[]) => void`.
-   - State: `cutoffDays: 7 | 14 | 30` (default 7).
-   - Derives candidates via `getPastDueCandidates(tasks, cutoffDays)` — recomputes on dropdown change.
-   - Only renders if `localStorage["firstSyncHandled"]` is not set AND `candidates.length > 3`.
-   - Cutoff selector: inline `<select>` with options "7 days / 14 days / 30 days"; count and button label update live.
-   - "Archive N tasks" → calls `onArchive(candidates.map(t => t.id))` → sets localStorage flag.
-   - "I'll sort them myself" → sets localStorage flag → hides banner.
-   - Subtle slide-down animation on mount, slide-up on dismiss.
-6. In `DashboardContent` (`page.tsx`):
-   - After `useTasks` data loads, render `<FirstSyncBanner tasks={tasks} onArchive={...} />`.
-   - The `onArchive` callback calls `archivePastDue.mutate(taskIds)`.
-7. Manual testing:
-   - Clear localStorage, sync, verify banner appears.
-   - Change dropdown from 7→14 days, verify count updates live.
-   - Click "Archive N tasks" — verify all candidate tasks move to Done.
-   - Reload — banner should not reappear.
-   - Click "I'll sort them myself" — verify banner hides and does not reappear.
+1. [x] Create `src/lib/first-sync-heuristic.ts` — export `getPastDueCandidates(tasks, cutoffDays)` pure function.
+2. [x] Add `src/lib/__tests__/first-sync-heuristic.test.ts` — 9 unit tests: UVEC-only, excludes custom, excludes null dueDate, excludes non-pending, excludes within-window tasks, cutoff direction, empty list.
+3. [x] Add `bulkSetStatus(taskIds: string[], status: string)` server action in `tasks.ts`. `dismissAllDone` now delegates to it.
+4. [x] Add `archivePastDue` mutation to `useTaskActions` — calls `bulkSetStatus` with `'done'`; optimistic update sets status+displayStatus to `'done'`; invalidates `["tasks", *]`.
+5. [x] Create `FirstSyncBanner` — `visible` state via `useEffect` (safe localStorage read post-mount); `cutoffDays` state drives live `getPastDueCandidates` via `useMemo`; inline `<select>` updates count and button label; both actions call `markHandled()` before closing.
+6. [x] In `DashboardContent` (`page.tsx`) — render `<FirstSyncBanner>` above the page header when tasks are loaded.
+
+**Item 1 status:** Complete.
 
 ---
 
