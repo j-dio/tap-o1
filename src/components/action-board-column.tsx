@@ -103,12 +103,12 @@ export function ActionBoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex w-70 shrink-0 flex-col transition-colors lg:min-w-60 lg:flex-1",
-        isOver && "bg-accent/40 rounded-lg ring-2 ring-primary/20 ring-inset",
+        "flex w-70 shrink-0 flex-col rounded-2xl bg-muted/40 p-3 transition-colors lg:min-w-60 lg:flex-1",
+        isOver && "bg-accent/50 ring-2 ring-primary/20 ring-inset",
       )}
     >
       {/* Column header */}
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex min-h-8 items-center gap-2">
         <Icon className={cn("size-4", accentClass)} />
         <span className="text-sm font-semibold">{title}</span>
         {id === "done" && onDismissAll && (
@@ -138,7 +138,7 @@ export function ActionBoardColumn({
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="min-h-25 space-y-2">
+          <div className="min-h-25 space-y-3">
             {tasks.map((task) => (
               <SortableTaskCard key={task.id} task={task} />
             ))}

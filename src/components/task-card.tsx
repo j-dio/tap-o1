@@ -46,7 +46,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
     <>
       <div
         className={cn(
-          "group bg-card relative rounded-lg border border-l-[3px] p-3 transition-all hover:bg-accent/40 hover:shadow-sm",
+          "group bg-card relative rounded-[14px] border border-l-[3px] p-3.5 shadow-sm transition-all hover:bg-accent/40 hover:shadow-md",
           urgencyBorder[urgency],
           isDragging && "scale-105 rotate-2 opacity-50 shadow-lg",
           task.status === "done" && "opacity-60",
@@ -97,7 +97,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
           type="button"
           onClick={handleQuickDone}
           className={cn(
-            "absolute top-3 left-3 rounded-full transition-colors lg:hidden",
+            "absolute top-3.5 left-3.5 rounded-full transition-colors lg:hidden",
             task.status === "done" ? "text-success" : "text-muted-foreground",
           )}
           aria-label={
@@ -120,7 +120,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
           <div className="flex items-start gap-2">
             <span
               className={cn(
-                "line-clamp-2 flex-1 text-sm leading-snug font-medium",
+                "line-clamp-2 flex-1 text-[13px] leading-snug font-medium",
                 task.status === "done" && "line-through",
               )}
             >
