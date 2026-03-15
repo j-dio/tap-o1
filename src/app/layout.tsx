@@ -69,7 +69,7 @@ export default function RootLayout({
           <OfflineBanner />
           {children}
           <AddToHomescreenPrompt />
-          <Toaster position="bottom-right" richColors closeButton />
+          <Toaster position="bottom-right" closeButton />
         </QueryProvider>
       </body>
     </html>

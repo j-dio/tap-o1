@@ -345,3 +345,146 @@
     transform: translateY(1px);
   }
 }
+
+/* ── Sonner toast: skeuomorphic overrides ──────────────────────────────────
+   These rules live outside @layer so they sit in the un-layered cascade.
+   Sonner injects its own <style> tag at runtime (after this file loads),
+   so !important is used only on properties Sonner hardcodes without vars
+   (box-shadow, border-radius, description color).                         */
+
+/* ---- Base toast surface ------------------------------------------------- */
+[data-sonner-toast][data-styled=true] {
+  background: linear-gradient(158deg,
+    oklch(0.998 0.002 82) 0%,
+    oklch(0.990 0.005 79) 28%,
+    oklch(0.980 0.009 75) 65%,
+    oklch(0.972 0.013 71) 100%
+  ) !important;
+  border: none !important;
+  border-top: 1px solid oklch(0.832 0.018 68 / 72%) !important;
+  border-right: 1px solid oklch(0.822 0.018 66 / 68%) !important;
+  border-bottom: 1px solid oklch(0.775 0.022 62 / 60%) !important;
+  border-left: 4px solid oklch(0.798 0.010 65 / 42%) !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 90%) inset,
+    1px 0 0 oklch(1 0 0 / 52%) inset,
+    0 -1px 0 oklch(0 0 0 / 5%) inset,
+    0 4px 6px oklch(0 0 0 / 10%),
+    0 8px 18px oklch(0 0 0 / 7%),
+    0 16px 32px oklch(0 0 0 / 5%) !important;
+  color: oklch(0.16 0.025 30) !important;
+  font-size: 13px !important;
+}
+
+/* ---- Type-specific left border accent ----------------------------------- */
+[data-sonner-toast][data-styled=true][data-type=success] {
+  border-left: 4px solid oklch(0.60 0.17 155) !important;
+}
+[data-sonner-toast][data-styled=true][data-type=error] {
+  border-left: 4px solid oklch(0.58 0.24 27) !important;
+}
+[data-sonner-toast][data-styled=true][data-type=warning] {
+  border-left: 4px solid oklch(0.72 0.15 80) !important;
+}
+[data-sonner-toast][data-styled=true][data-type=info] {
+  border-left: 4px solid oklch(0.55 0.18 240) !important;
+}
+
+/* ---- Title -------------------------------------------------------------- */
+[data-sonner-toast][data-styled=true] [data-title] {
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  color: oklch(0.16 0.025 30) !important;
+}
+
+/* ---- Description -------------------------------------------------------- */
+[data-sonner-toast][data-styled=true] [data-description] {
+  font-size: 0.75rem !important;
+  color: oklch(0.44 0.022 30) !important;
+}
+
+/* ---- Close button: small raised pill ------------------------------------ */
+[data-sonner-toast][data-styled=true] [data-close-button] {
+  background: linear-gradient(145deg,
+    oklch(0.948 0.022 76) 0%,
+    oklch(0.920 0.028 70) 100%
+  ) !important;
+  border: 1px solid oklch(0.800 0.022 65 / 62%) !important;
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 60%) inset,
+    0 1px 3px oklch(0 0 0 / 10%) !important;
+  color: oklch(0.44 0.022 30) !important;
+  transition: box-shadow 150ms ease, background 150ms ease !important;
+}
+[data-sonner-toast][data-styled=true] [data-close-button]:hover {
+  background: linear-gradient(145deg,
+    oklch(0.935 0.026 76) 0%,
+    oklch(0.906 0.032 70) 100%
+  ) !important;
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 60%) inset,
+    0 2px 5px oklch(0 0 0 / 14%) !important;
+}
+
+/* ---- Icon sizing -------------------------------------------------------- */
+[data-sonner-toast][data-styled=true] [data-icon] {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* ── Dark mode ─────────────────────────────────────────────────────────────── */
+
+.dark [data-sonner-toast][data-styled=true] {
+  background: linear-gradient(158deg,
+    oklch(0.202 0 0) 0%,
+    oklch(0.188 0 0) 45%,
+    oklch(0.172 0 0) 100%
+  ) !important;
+  border-top: 1px solid oklch(1 0 0 / 10%) !important;
+  border-right: 1px solid oklch(1 0 0 / 9%) !important;
+  border-bottom: 1px solid oklch(0 0 0 / 22%) !important;
+  border-left: 4px solid oklch(1 0 0 / 14%) !important;
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 10%) inset,
+    0 -1px 0 oklch(0 0 0 / 28%) inset,
+    0 4px 6px oklch(0 0 0 / 28%),
+    0 8px 18px oklch(0 0 0 / 20%),
+    0 16px 32px oklch(0 0 0 / 14%) !important;
+  color: oklch(0.98 0 0) !important;
+}
+.dark [data-sonner-toast][data-styled=true][data-type=success] {
+  border-left: 4px solid oklch(0.65 0.17 155) !important;
+}
+.dark [data-sonner-toast][data-styled=true][data-type=error] {
+  border-left: 4px solid oklch(0.70 0.19 22) !important;
+}
+.dark [data-sonner-toast][data-styled=true][data-type=warning] {
+  border-left: 4px solid oklch(0.78 0.15 80) !important;
+}
+.dark [data-sonner-toast][data-styled=true][data-type=info] {
+  border-left: 4px solid oklch(0.60 0.18 240) !important;
+}
+.dark [data-sonner-toast][data-styled=true] [data-title] {
+  color: oklch(0.98 0 0) !important;
+}
+.dark [data-sonner-toast][data-styled=true] [data-description] {
+  color: oklch(0.60 0 0) !important;
+}
+.dark [data-sonner-toast][data-styled=true] [data-close-button] {
+  background: linear-gradient(145deg,
+    oklch(0.228 0 0) 0%,
+    oklch(0.195 0 0) 100%
+  ) !important;
+  border: 1px solid oklch(1 0 0 / 10%) !important;
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 8%) inset,
+    0 1px 3px oklch(0 0 0 / 28%) !important;
+  color: oklch(0.60 0 0) !important;
+}
+.dark [data-sonner-toast][data-styled=true] [data-close-button]:hover {
+  background: linear-gradient(145deg,
+    oklch(0.245 0 0) 0%,
+    oklch(0.210 0 0) 100%
+  ) !important;
+}
