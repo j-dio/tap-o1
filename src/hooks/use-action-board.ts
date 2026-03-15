@@ -49,8 +49,6 @@ export function computeActionBoardBuckets(
       const dueMs = task.dueDate ? new Date(task.dueDate).getTime() : null;
       if (dueMs === null || dueMs <= now + todoWindowMs) {
         buckets.todo.push(task);
-      } else {
-        buckets.todoHasMore = true;
       }
     }
   }
@@ -118,6 +116,12 @@ export function useActionBoard(
         doneDisplayLimit,
         inProgressDisplayLimit,
       ),
-    [tasks, snapNow, todoDisplayLimit, doneDisplayLimit, inProgressDisplayLimit],
+    [
+      tasks,
+      snapNow,
+      todoDisplayLimit,
+      doneDisplayLimit,
+      inProgressDisplayLimit,
+    ],
   );
 }

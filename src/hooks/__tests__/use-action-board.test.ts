@@ -85,14 +85,14 @@ describe("computeActionBoardBuckets", () => {
     expect(result.todoHasMore).toBe(false);
   });
 
-  it("excludes pending task due beyond window and sets todoHasMore", () => {
+  it("excludes pending task due beyond window and keeps todoHasMore false", () => {
     const task = makeTask({
       status: "pending",
       dueDate: new Date(NOW + 10 * DAY).toISOString(),
     });
     const result = computeActionBoardBuckets([task], NOW, 7);
     expect(result.todo).toHaveLength(0);
-    expect(result.todoHasMore).toBe(true);
+    expect(result.todoHasMore).toBe(false);
   });
 
   it("includes task beyond 7-day window when todoWindowDays is 14", () => {
@@ -115,16 +115,41 @@ describe("computeActionBoardBuckets", () => {
   });
 
   it("sets todoHasMore true when todo tasks in window exceed todoDisplayLimit", () => {
+    const TWELVE_HOURS = 12 * 60 * 60 * 1000;
     const tasks = Array.from({ length: 8 }, (_, i) =>
       makeTask({
         id: `todo${i}`,
         status: "pending",
-        dueDate: new Date(NOW + (i + 1) * DAY).toISOString(),
+        dueDate: new Date(NOW + (i + 1) * TWELVE_HOURS).toISOString(),
       }),
     );
     const result = computeActionBoardBuckets(tasks, NOW, 7);
     expect(result.todo).toHaveLength(7);
     expect(result.todoHasMore).toBe(true);
+  });
+
+  it("keeps todoHasMore false when in-window tasks are exactly at limit and only out-of-window tasks remain", () => {
+    const inWindowTasks = Array.from({ length: 7 }, (_, i) =>
+      makeTask({
+        id: `todo-in-window-${i}`,
+        status: "pending",
+        dueDate: new Date(NOW + (i + 1) * DAY).toISOString(),
+      }),
+    );
+    const outOfWindowTask = makeTask({
+      id: "todo-out-window",
+      status: "pending",
+      dueDate: new Date(NOW + 10 * DAY).toISOString(),
+    });
+
+    const result = computeActionBoardBuckets(
+      [...inWindowTasks, outOfWindowTask],
+      NOW,
+      7,
+    );
+
+    expect(result.todo).toHaveLength(7);
+    expect(result.todoHasMore).toBe(false);
   });
 
   // ---- Sorting ---------------------------------------------------------
@@ -203,7 +228,7 @@ describe("computeActionBoardBuckets", () => {
     expect(result.todo).toHaveLength(1);
     expect(result.inProgress).toHaveLength(1);
     expect(result.done).toHaveLength(1);
-    expect(result.todoHasMore).toBe(true);
+    expect(result.todoHasMore).toBe(false);
   });
 
   // ---- Custom tasks ----------------------------------------------------

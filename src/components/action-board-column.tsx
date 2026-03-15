@@ -103,8 +103,8 @@ export function ActionBoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex w-70 shrink-0 flex-col rounded-2xl bg-muted/40 p-3 transition-colors lg:min-w-60 lg:flex-1",
-        isOver && "bg-accent/50 ring-2 ring-primary/20 ring-inset",
+        "bg-muted/40 flex w-70 shrink-0 flex-col rounded-2xl p-3 transition-colors lg:min-w-60 lg:flex-1",
+        isOver && "bg-accent/50 ring-primary/20 ring-2 ring-inset",
       )}
     >
       {/* Column header */}
@@ -149,15 +149,15 @@ export function ActionBoardColumn({
         </SortableContext>
 
         {(onShowLess || onShowMore) && (
-          <div className="mt-2 flex gap-1">
+          <div className="mt-3 flex gap-2 pb-1">
             {onShowLess && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1 text-xs"
+                className="h-10 flex-1 justify-center rounded-md px-3 text-sm"
                 onClick={onShowLess}
               >
-                <ChevronUp className="mr-1 size-3" />
+                <ChevronUp className="mr-1.5 size-3.5" />
                 Show less
               </Button>
             )}
@@ -165,10 +165,10 @@ export function ActionBoardColumn({
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1 text-xs"
+                className="h-10 flex-1 justify-center rounded-md px-3 text-sm"
                 onClick={onShowMore}
               >
-                <ChevronDown className="mr-1 size-3" />
+                <ChevronDown className="mr-1.5 size-3.5" />
                 {showMoreLabel ?? "Show more"}
               </Button>
             )}

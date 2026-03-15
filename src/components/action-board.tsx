@@ -171,7 +171,6 @@ export function ActionBoard({
           accentClass="text-info"
           onShowMore={onShowMoreTodo}
           onShowLess={onShowLessTodo}
-          showMoreLabel="Show 7 more"
         />
         <Column
           id="in_progress"
@@ -180,7 +179,6 @@ export function ActionBoard({
           accentClass="text-warning"
           onShowMore={onShowMoreInProgress}
           onShowLess={onShowLessInProgress}
-          showMoreLabel="Show 7 more"
         />
         <Column
           id="done"
@@ -189,7 +187,6 @@ export function ActionBoard({
           accentClass="text-success"
           onShowMore={onShowMoreDone}
           onShowLess={onShowLessDone}
-          showMoreLabel="Show 7 more"
           onDismissAll={() => dismissAll.mutate(doneTasks.map((t) => t.id))}
           isDismissAllPending={dismissAll.isPending}
         />
