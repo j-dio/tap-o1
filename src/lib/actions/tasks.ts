@@ -202,9 +202,18 @@ export async function deleteCustomTask(id: string): Promise<ActionResult> {
 export async function dismissAllDone(
   doneTaskIds: string[],
 ): Promise<ActionResult> {
-  if (doneTaskIds.length === 0) {
-    return { success: true };
-  }
+  return bulkSetStatus(doneTaskIds, "dismissed");
+}
+
+/**
+ * Bulk-upsert `task_overrides` with the given `custom_status` for all
+ * provided task IDs. Used for batch operations like archive-on-first-sync.
+ */
+export async function bulkSetStatus(
+  taskIds: string[],
+  status: string,
+): Promise<ActionResult> {
+  if (taskIds.length === 0) return { success: true };
 
   const supabase = await createClient();
   const {
@@ -215,10 +224,10 @@ export async function dismissAllDone(
     return { success: false, error: "Not authenticated" };
   }
 
-  const rows = doneTaskIds.map((taskId) => ({
+  const rows = taskIds.map((taskId) => ({
     user_id: user.id,
     task_id: taskId,
-    custom_status: "dismissed",
+    custom_status: status,
   }));
 
   const { error } = await supabase.from("task_overrides").upsert(rows, {

@@ -13,6 +13,7 @@ import {
   updateCustomTask,
   deleteCustomTask,
   dismissAllDone,
+  bulkSetStatus,
 } from "@/lib/actions/tasks";
 import type {
   CreateCustomTaskInput,
@@ -352,6 +353,50 @@ export function useTaskActions() {
     },
   });
 
+  const archivePastDue = useMutation<
+    void,
+    Error,
+    string[],
+    { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
+  >({
+    mutationFn: async (taskIds) => {
+      const result = await bulkSetStatus(taskIds, "done");
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to archive tasks");
+    },
+    onMutate: async (taskIds) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks"] });
+      const previousQueries = queryClient.getQueriesData<TaskWithCourse[]>({
+        queryKey: ["tasks"],
+      });
+      const idSet = new Set(taskIds);
+      queryClient.setQueriesData<TaskWithCourse[]>(
+        { queryKey: ["tasks"] },
+        (old) => {
+          if (!old) return old;
+          return old.map((task) =>
+            idSet.has(task.id)
+              ? { ...task, status: "done" as const, displayStatus: "done" as const }
+              : task,
+          );
+        },
+      );
+      return { previousQueries };
+    },
+    onSuccess: (_data, taskIds) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success(`Archived ${taskIds.length} past tasks`);
+    },
+    onError: (err, _ids, context) => {
+      if (context?.previousQueries) {
+        for (const [key, data] of context.previousQueries) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      toast.error("Failed to archive tasks", { description: err.message });
+    },
+  });
+
   return {
     setStatus,
     setPriority,
@@ -360,5 +405,6 @@ export function useTaskActions() {
     editTask,
     deleteTask,
     dismissAll,
+    archivePastDue,
   };
 }

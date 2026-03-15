@@ -507,45 +507,47 @@ Addresses bugs and suggested improvements from the _TapO(1) Bugs and Suggested I
 
 **Item 5 — Smart First-Sync Experience:**
 
-- [ ] Create `FirstSyncBanner` component — detects >3 past-due pending tasks after first sync
-- [ ] Add `bulkSetStatus` server action (generalizes `dismissAllDone` for any target status)
-- [ ] Add `archivePastDue` mutation to `useTaskActions`
-- [ ] Detection via `localStorage["firstSyncHandled"]` (no migration needed)
-- [ ] "Archive all past tasks" one-click bulk action + "I'll sort them myself" dismiss
+- [x] `src/lib/first-sync-heuristic.ts` — pure `getPastDueCandidates(tasks, cutoffDays)`: UVEC-only, excludes custom tasks, excludes null dueDate, checks age against `now - cutoffDays * 86_400_000`
+- [x] `bulkSetStatus(taskIds, status)` server action — generalizes `dismissAllDone` (which now delegates to it)
+- [x] `archivePastDue` mutation in `useTaskActions` — optimistic update sets status/displayStatus to `'done'`; invalidates `["tasks", *]`
+- [x] `FirstSyncBanner` component — visibility latched once via `useEffect` at widest cutoff (7d); subsequent dropdown changes (7/14/30 days) update live count without dismissing the banner; both actions call `markHandled()` which sets `localStorage["firstSyncHandled"]` and flips `visible` to `false`
+- [x] Rendered above the page header in `DashboardContent` when tasks are loaded
 
 **Tests:**
 
-- [x] 23 unit tests in `use-action-board.test.ts` (68 total passing across all files)
-- [ ] 4+ new tests for first-sync heuristic
-- [ ] Manual test checklist (see full plan)
+- [x] 9 unit tests in `src/lib/__tests__/first-sync-heuristic.test.ts`
+- [x] 23 unit tests in `use-action-board.test.ts`
+- [x] **77 total tests passing** across 8 test files
 
-**Status:** In progress. Items 1–4 and 6 complete. Item 5 (Smart First-Sync) remaining.
+**Status:** Complete. All 6 items (branding, card hover, DnD animations, unified pagination, history page, smart first-sync) shipped on branch `polishes`. Zero TypeScript errors.
 
 **Files:**
 
 ```
-src/app/globals.css                         (UP Cebu palette)
-src/components/theme-toggle.tsx             (new)
-src/components/sidebar-nav.tsx              (branding + theme toggle + history link)
-src/app/dashboard/dashboard-shell.tsx       (mobile header brand)
-src/app/layout.tsx                          (title, meta, theme script)
-src/app/login/login-card.tsx                (brand name)
-public/manifest.json                        (name, theme_color)
-src/components/task-card.tsx                (hover fix, remove drag handle)
-src/components/sortable-task-card.tsx       (cursor, transition)
-src/components/action-board.tsx             (drop animation, unified pagination props)
-src/components/action-board-column.tsx      (enhanced isOver, generalized pagination)
-src/types/task.ts                           (ActionBoardBuckets extension)
-src/lib/task-mapper.ts                      (new: shared mapRow)
-src/hooks/use-tasks.ts                      (imports mapRow from task-mapper)
-src/hooks/use-action-board.ts               (unified display limits)
-src/hooks/use-history-tasks.ts              (new: dismissed tasks query)
-src/hooks/use-task-actions.ts               (history-tasks cache invalidation)
-src/app/dashboard/page.tsx                  (display-limit state)
-src/app/dashboard/history/page.tsx          (new: history route)
-src/hooks/__tests__/use-action-board.test.ts (updated: 23 tests)
-src/components/first-sync-banner.tsx        (new — not yet built)
-src/lib/actions/tasks.ts                    (bulkSetStatus — not yet built)
+src/app/globals.css                              (UP Cebu palette)
+src/components/theme-toggle.tsx                  (new)
+src/components/sidebar-nav.tsx                   (branding + theme toggle + history link)
+src/app/dashboard/dashboard-shell.tsx            (mobile header brand)
+src/app/layout.tsx                               (title, meta, theme script)
+src/app/login/login-card.tsx                     (brand name)
+public/manifest.json                             (name, theme_color)
+src/components/task-card.tsx                     (hover fix, remove drag handle)
+src/components/sortable-task-card.tsx            (cursor, transition)
+src/components/action-board.tsx                  (drop animation, unified pagination props)
+src/components/action-board-column.tsx           (enhanced isOver, generalized pagination)
+src/types/task.ts                                (ActionBoardBuckets extension)
+src/lib/task-mapper.ts                           (new: shared mapRow)
+src/hooks/use-tasks.ts                           (imports mapRow from task-mapper)
+src/hooks/use-action-board.ts                    (unified display limits)
+src/hooks/use-history-tasks.ts                   (new: dismissed tasks query)
+src/hooks/use-task-actions.ts                    (archivePastDue mutation + history-tasks invalidation)
+src/lib/actions/tasks.ts                         (bulkSetStatus + dismissAllDone delegation)
+src/app/dashboard/page.tsx                       (display-limit state + FirstSyncBanner)
+src/app/dashboard/history/page.tsx               (new: history route)
+src/lib/first-sync-heuristic.ts                  (new: getPastDueCandidates pure function)
+src/components/first-sync-banner.tsx             (new: first-sync banner with cutoff selector)
+src/hooks/__tests__/use-action-board.test.ts     (updated: 23 tests)
+src/lib/__tests__/first-sync-heuristic.test.ts   (new: 9 tests)
 ```
 
 ### Phase 8: Stabilization & Launch (Size: L — ~6 hours)
