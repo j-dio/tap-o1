@@ -48,11 +48,11 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
         className={cn(
           "group skeu-card relative rounded-[14px] border-l-[3px] p-3.5",
           urgencyBorder[urgency],
-          isDragging && "scale-105 rotate-2 opacity-50 !shadow-lg",
+          isDragging && "scale-105 rotate-2 opacity-50 shadow-lg!",
           task.status === "done" && "opacity-60",
         )}
       >
-        {/* Desktop quick actions - visible on hover, positioned top-right (no overlap since SourceIcon moved to bottom) */}
+        {/* Desktop quick actions - visible on hover, positioned top-right */}
         <div className="absolute top-2 right-2 hidden gap-1 opacity-0 transition-opacity group-hover:opacity-100 lg:flex">
           <button
             type="button"
@@ -115,7 +115,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="w-full pl-6 text-left lg:pl-0"
+          className="w-full pl-6 text-left lg:pr-16 lg:pl-0"
         >
           <div className="flex items-start gap-2">
             <span
