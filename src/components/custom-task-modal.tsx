@@ -299,6 +299,7 @@ function TaskFormContent({ isEdit, task, onClose }: TaskFormContentProps) {
         <Button
           type="submit"
           size="sm"
+          className="bg-[#6e1d2a] text-white hover:bg-[#5b1722]"
           disabled={isPending || !form.title.trim()}
         >
           {isPending ? "Saving..." : isEdit ? "Save changes" : "Create task"}

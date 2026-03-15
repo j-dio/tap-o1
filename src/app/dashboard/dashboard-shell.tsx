@@ -23,15 +23,15 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="bg-background flex min-h-screen">
+    <div className="skeu-bg flex h-dvh overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="bg-sidebar hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:border-r">
+      <aside className="skeu-sidebar hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:overflow-hidden">
         <SidebarNav displayName={displayName} email={email} hasUvec={hasUvec} />
       </aside>
 
       {/* Mobile sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="bg-sidebar w-60 p-0">
+        <SheetContent side="left" className="skeu-sidebar w-60 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarNav
             displayName={displayName}

@@ -48,8 +48,8 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
 
       <Separator />
 
-      {/* Nav links */}
-      <nav className="flex-1 space-y-1 px-3 py-3" aria-label="Dashboard">
+      {/* Nav links — scrollable when content overflows */}
+      <nav className="min-h-0 flex-1 overflow-y-auto space-y-1 px-3 py-3" aria-label="Dashboard">
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/dashboard"
@@ -60,10 +60,10 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                  ? "skeu-nav-active text-foreground"
+                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
               )}
             >
               <Icon className="size-4" />
@@ -73,9 +73,9 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
         })}
       </nav>
 
-      {/* UVEC status */}
+      {/* UVEC status — pinned above profile */}
       {!hasUvec && (
-        <div className="px-3 pb-2">
+        <div className="shrink-0 px-3 pb-2">
           <Link
             href="/onboarding"
             className="text-muted-foreground hover:border-primary hover:text-foreground block rounded-md border border-dashed px-3 py-2 text-xs transition-colors"
@@ -87,8 +87,8 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
 
       <Separator />
 
-      {/* User info + actions */}
-      <div className="px-3 py-3">
+      {/* User info + actions — always visible at bottom */}
+      <div className="shrink-0 px-3 py-3">
         <div className="flex items-center gap-2">
           <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium">
             {displayName.charAt(0).toUpperCase()}

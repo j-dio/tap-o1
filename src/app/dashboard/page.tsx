@@ -92,9 +92,11 @@ function DashboardContent() {
   const handleShowLessTodo = useCallback(() => {
     setTodoDisplayLimit((l) => {
       const next = Math.max(l - 7, 7);
-      next === 7
-        ? sessionStorage.removeItem(SESSION_KEY_TODO_DISPLAY)
-        : sessionStorage.setItem(SESSION_KEY_TODO_DISPLAY, String(next));
+      if (next === 7) {
+        sessionStorage.removeItem(SESSION_KEY_TODO_DISPLAY);
+      } else {
+        sessionStorage.setItem(SESSION_KEY_TODO_DISPLAY, String(next));
+      }
       return next;
     });
   }, []);
@@ -111,15 +113,18 @@ function DashboardContent() {
   const handleShowLessDone = useCallback(() => {
     setDoneDisplayLimit((l) => {
       const next = Math.max(l - 7, 7);
-      next === 7
-        ? sessionStorage.removeItem(SESSION_KEY_DONE_DISPLAY)
-        : sessionStorage.setItem(SESSION_KEY_DONE_DISPLAY, String(next));
+      if (next === 7) {
+        sessionStorage.removeItem(SESSION_KEY_DONE_DISPLAY);
+      } else {
+        sessionStorage.setItem(SESSION_KEY_DONE_DISPLAY, String(next));
+      }
       return next;
     });
   }, []);
 
-  const [inProgressDisplayLimit, setInProgressDisplayLimit] =
-    useState<number>(readInProgressDisplayLimit);
+  const [inProgressDisplayLimit, setInProgressDisplayLimit] = useState<number>(
+    readInProgressDisplayLimit,
+  );
   const handleShowMoreInProgress = useCallback(() => {
     setInProgressDisplayLimit((l) => {
       const next = l + 7;
@@ -130,20 +135,28 @@ function DashboardContent() {
   const handleShowLessInProgress = useCallback(() => {
     setInProgressDisplayLimit((l) => {
       const next = Math.max(l - 7, 7);
-      next === 7
-        ? sessionStorage.removeItem(SESSION_KEY_INPROGRESS_DISPLAY)
-        : sessionStorage.setItem(SESSION_KEY_INPROGRESS_DISPLAY, String(next));
+      if (next === 7) {
+        sessionStorage.removeItem(SESSION_KEY_INPROGRESS_DISPLAY);
+      } else {
+        sessionStorage.setItem(SESSION_KEY_INPROGRESS_DISPLAY, String(next));
+      }
       return next;
     });
   }, []);
 
-  const { todo, inProgress, done, todoHasMore, doneHasMore, inProgressHasMore } =
-    useActionBoard(
-      tasks ?? [],
-      todoDisplayLimit,
-      doneDisplayLimit,
-      inProgressDisplayLimit,
-    );
+  const {
+    todo,
+    inProgress,
+    done,
+    todoHasMore,
+    doneHasMore,
+    inProgressHasMore,
+  } = useActionBoard(
+    tasks ?? [],
+    todoDisplayLimit,
+    doneDisplayLimit,
+    inProgressDisplayLimit,
+  );
   const upNextTask = useUpNext(tasks ?? []);
   const focusTasks = useFocusMode(tasks ?? []);
 
@@ -181,7 +194,11 @@ function DashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={() => setNewTaskOpen(true)}>
+          <Button
+            size="sm"
+            className="bg-[#6e1d2a] text-white hover:bg-[#5b1722]"
+            onClick={() => setNewTaskOpen(true)}
+          >
             <Plus className="mr-1 size-4" />
             New task
           </Button>

@@ -46,13 +46,13 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
     <>
       <div
         className={cn(
-          "group bg-card relative rounded-lg border border-l-[3px] p-3 transition-all hover:bg-accent/40 hover:shadow-sm",
+          "group skeu-card relative rounded-[14px] border-l-[3px] p-3.5",
           urgencyBorder[urgency],
-          isDragging && "scale-105 rotate-2 opacity-50 shadow-lg",
+          isDragging && "scale-105 rotate-2 opacity-50 shadow-lg!",
           task.status === "done" && "opacity-60",
         )}
       >
-        {/* Desktop quick actions - visible on hover, positioned top-right (no overlap since SourceIcon moved to bottom) */}
+        {/* Desktop quick actions - visible on hover, positioned top-right */}
         <div className="absolute top-2 right-2 hidden gap-1 opacity-0 transition-opacity group-hover:opacity-100 lg:flex">
           <button
             type="button"
@@ -97,7 +97,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
           type="button"
           onClick={handleQuickDone}
           className={cn(
-            "absolute top-3 left-3 rounded-full transition-colors lg:hidden",
+            "absolute top-3.5 left-3.5 rounded-full transition-colors lg:hidden",
             task.status === "done" ? "text-success" : "text-muted-foreground",
           )}
           aria-label={
@@ -115,12 +115,12 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="w-full pl-6 text-left lg:pl-0"
+          className="w-full pl-6 text-left lg:pr-16 lg:pl-0"
         >
           <div className="flex items-start gap-2">
             <span
               className={cn(
-                "line-clamp-2 flex-1 text-sm leading-snug font-medium",
+                "line-clamp-2 flex-1 text-[13px] leading-snug font-medium",
                 task.status === "done" && "line-through",
               )}
             >
