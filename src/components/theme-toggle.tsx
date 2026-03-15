@@ -1,58 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Theme = "light" | "dark";
 
-function getStoredTheme(): Theme | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return null;
+// ── Minimal pub/sub so React re-renders when applyTheme fires ──────────────
+const themeListeners = new Set<() => void>();
+
+function subscribeToTheme(callback: () => void) {
+  themeListeners.add(callback);
+  return () => {
+    themeListeners.delete(callback);
+  };
 }
 
-function getSystemTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+// Client snapshot: reads localStorage first, falls back to the pre-hydration
+// class set by the blocking script in layout.tsx.
+function getThemeSnapshot(): Theme {
+  const stored = localStorage.getItem("theme");
+  if (stored === "light" || stored === "dark") return stored;
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+// Server snapshot: always "light" so SSR HTML is deterministic.
+function getServerTheme(): Theme {
+  return "light";
 }
 
 function applyTheme(theme: Theme) {
-  const root = document.documentElement;
   if (theme === "dark") {
-    root.classList.add("dark");
+    document.documentElement.classList.add("dark");
   } else {
-    root.classList.remove("dark");
+    document.documentElement.classList.remove("dark");
   }
+  localStorage.setItem("theme", theme);
+  themeListeners.forEach((l) => l());
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const stored = getStoredTheme();
-    if (stored) return stored;
-
-    // Align first client render with the pre-hydration class toggle in layout.tsx.
-    if (typeof document !== "undefined") {
-      return document.documentElement.classList.contains("dark")
-        ? "dark"
-        : "light";
-    }
-
-    return getSystemTheme();
-  });
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+  // useSyncExternalStore gives React the server/client split it needs:
+  // SSR uses getServerTheme ("light"), client uses getThemeSnapshot (real value).
+  // React reconciles the difference without a hydration error.
+  const theme = useSyncExternalStore(
+    subscribeToTheme,
+    getThemeSnapshot,
+    getServerTheme,
+  );
 
   function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    applyTheme(next);
-    localStorage.setItem("theme", next);
+    applyTheme(theme === "dark" ? "light" : "dark");
   }
 
   return (
@@ -60,9 +58,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon-sm"
       onClick={toggle}
-      aria-label={
-        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-      }
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
     >
       {theme === "dark" ? (
         <Sun className="size-4" />
