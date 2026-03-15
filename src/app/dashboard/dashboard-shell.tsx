@@ -23,9 +23,9 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="skeu-bg flex min-h-screen">
+    <div className="skeu-bg flex h-dvh overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="skeu-sidebar hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col">
+      <aside className="skeu-sidebar hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:overflow-hidden">
         <SidebarNav displayName={displayName} email={email} hasUvec={hasUvec} />
       </aside>
 
