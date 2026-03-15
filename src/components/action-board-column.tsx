@@ -103,8 +103,8 @@ export function ActionBoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "bg-muted/40 flex w-70 shrink-0 flex-col rounded-2xl p-3 transition-colors lg:min-w-60 lg:flex-1",
-        isOver && "bg-accent/50 ring-primary/20 ring-2 ring-inset",
+        "skeu-column flex w-70 shrink-0 flex-col rounded-2xl p-3 transition-all duration-200 lg:min-w-60 lg:flex-1",
+        isOver && "skeu-column-over",
       )}
     >
       {/* Column header */}

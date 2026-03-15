@@ -46,9 +46,9 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
     <>
       <div
         className={cn(
-          "group bg-card relative rounded-[14px] border border-l-[3px] p-3.5 shadow-sm transition-all hover:bg-accent/40 hover:shadow-md",
+          "group skeu-card relative rounded-[14px] border-l-[3px] p-3.5",
           urgencyBorder[urgency],
-          isDragging && "scale-105 rotate-2 opacity-50 shadow-lg",
+          isDragging && "scale-105 rotate-2 opacity-50 !shadow-lg",
           task.status === "done" && "opacity-60",
         )}
       >
