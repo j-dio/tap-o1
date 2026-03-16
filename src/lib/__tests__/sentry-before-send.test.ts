@@ -66,19 +66,18 @@ describe("sentryBeforeSend", () => {
   });
 
   // Test 7: redacts icalUrl param in breadcrumb data.url
+  // Note: Sentry v10 Event.breadcrumbs is Breadcrumb[] (flat array), not { values: [] }
   it("redacts icalUrl param value in breadcrumb data.url", () => {
     const event: Event = {
-      breadcrumbs: {
-        values: [
-          {
-            type: "http",
-            data: { url: "https://xyz.supabase.co/functions/v1/uvec-proxy?icalUrl=SECRET&method=GET" },
-          },
-        ],
-      },
+      breadcrumbs: [
+        {
+          type: "http",
+          data: { url: "https://xyz.supabase.co/functions/v1/uvec-proxy?icalUrl=SECRET&method=GET" },
+        },
+      ],
     };
     const result = sentryBeforeSend(event);
-    expect(result!.breadcrumbs!.values![0].data!.url).toBe(
+    expect(result!.breadcrumbs![0].data!.url).toBe(
       "https://xyz.supabase.co/functions/v1/uvec-proxy?icalUrl=REDACTED&method=GET"
     );
   });
@@ -86,17 +85,15 @@ describe("sentryBeforeSend", () => {
   // Test 8: leaves breadcrumb unchanged when data has no url key
   it("leaves breadcrumb unchanged when data has no url key", () => {
     const event: Event = {
-      breadcrumbs: {
-        values: [
-          {
-            type: "navigation",
-            data: { from: "/login", to: "/dashboard" },
-          },
-        ],
-      },
+      breadcrumbs: [
+        {
+          type: "navigation",
+          data: { from: "/login", to: "/dashboard" },
+        },
+      ],
     };
     const result = sentryBeforeSend(event);
-    expect(result!.breadcrumbs!.values![0].data).toEqual({
+    expect(result!.breadcrumbs![0].data).toEqual({
       from: "/login",
       to: "/dashboard",
     });
@@ -117,14 +114,12 @@ describe("sentryBeforeSend", () => {
       request: {
         url: "https://moodle.example.com/calendar/export_execute.php?token=supersecret&other=keep",
       },
-      breadcrumbs: {
-        values: [
-          {
-            type: "http",
-            data: { url: "https://proxy.supabase.co?icalUrl=TOPSECRET&page=1" },
-          },
-        ],
-      },
+      breadcrumbs: [
+        {
+          type: "http",
+          data: { url: "https://proxy.supabase.co?icalUrl=TOPSECRET&page=1" },
+        },
+      ],
     };
     const result = sentryBeforeSend(event);
     expect(result).not.toBeNull();
@@ -136,7 +131,7 @@ describe("sentryBeforeSend", () => {
       "https://moodle.example.com/calendar/export_execute.php?token=REDACTED&other=keep"
     );
     // breadcrumb icalUrl redacted
-    expect(result!.breadcrumbs!.values![0].data!.url).toBe(
+    expect(result!.breadcrumbs![0].data!.url).toBe(
       "https://proxy.supabase.co?icalUrl=REDACTED&page=1"
     );
   });
