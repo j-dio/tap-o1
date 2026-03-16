@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilization & Launch
 status: planning
-stopped_at: Completed 08-sentry-monitoring-02-PLAN.md
-last_updated: "2026-03-16T04:23:22.602Z"
+stopped_at: Completed 08-sentry-monitoring-03-PLAN.md
+last_updated: "2026-03-16T04:54:09.703Z"
 last_activity: 2026-03-16 — Roadmap created for v1.1 milestone; Phase 8 is next
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 50
 ---
 
@@ -51,6 +51,7 @@ Progress: [█████░░░░░] 50%
 | Phase 08-sentry-monitoring P01 | 7min | 2 tasks | 4 files |
 | Phase 08-sentry-monitoring P02 | 6min | 1 tasks | 6 files |
 | Phase 08-sentry-monitoring P02 | 6min | 2 tasks | 6 files |
+| Phase 08-sentry-monitoring P03 | 2min 22sec | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 08-sentry-monitoring]: sentryBeforeSend parameter type updated from Event to ErrorEvent to match BrowserOptions.beforeSend signature in Sentry v10
 - [Phase 08-sentry-monitoring]: captureReactException used in ErrorBoundary (not captureException) — preserves React component stack in Sentry event
 - [Phase 08-sentry-monitoring]: instrumentation-client.ts placed at src/ root — Next.js 15.3+ pre-hydration convention; replayIntegration intentionally absent per SNTY-04
+- [Phase 08-sentry-monitoring]: @sentry/nextjs kept (not reverted) — wizard added server/edge coverage; 2MB overhead accepted for full-stack error capture
+- [Phase 08-sentry-monitoring]: replaysSessionSampleRate:0 and replaysOnErrorSampleRate:0 added to all three configs as explicit guards against @sentry/nextjs auto-inclusion
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T04:23:22.599Z
-Stopped at: Completed 08-sentry-monitoring-02-PLAN.md
+Last session: 2026-03-16T04:54:09.699Z
+Stopped at: Completed 08-sentry-monitoring-03-PLAN.md
 Resume file: None
