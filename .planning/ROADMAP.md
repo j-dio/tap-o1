@@ -103,6 +103,6 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1–7.5 (v1.0) | v1.0 | — | Complete | 2026-03-16 |
 | 8. Sentry Monitoring | 3/3 | Complete   | 2026-03-16 | - |
-| 9. ICS Export | v1.1 | 0/2 | Not started | - |
+| 9. ICS Export | 1/2 | In Progress|  | - |
 | 10. Landing Page | v1.1 | 0/? | Not started | - |
 | 11. Self-Hosting README | v1.1 | 0/? | Not started | - |
