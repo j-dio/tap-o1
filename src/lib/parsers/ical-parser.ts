@@ -96,6 +96,7 @@ export function parseICal(ics: string): ICalParseResult {
       const description = ev.getFirstPropertyValue("description");
       const dtstart = ev.getFirstPropertyValue("dtstart");
       const category = ev.getFirstPropertyValue("categories");
+      const urlProp = ev.getFirstPropertyValue("url");
 
       if (!uid || !summary || !dtstart) {
         errors.push("Skipped event: missing uid/summary/dtstart");
@@ -129,7 +130,7 @@ export function parseICal(ics: string): ICalParseResult {
           type: parsed.data.type,
           source: "uvec",
           courseExternalId: courseId,
-          url: null,
+          url: urlProp ? String(urlProp) : null,
         });
       } else {
         errors.push(`Skipped event ${uid}: validation failed`);
