@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BookOpen, Bell, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { LucideIcon } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 
 const features: { icon: LucideIcon; title: string; desc: string }[] = [
   {
@@ -21,7 +23,15 @@ const features: { icon: LucideIcon; title: string; desc: string }[] = [
   },
 ];
 
-export default function Home() {
+export const metadata = { title: "TapO(1) — Academic Task Aggregator" };
+
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) redirect("/dashboard");
+
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4">
       <main className="flex max-w-lg flex-col items-center gap-8 text-center">
