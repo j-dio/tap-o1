@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
-const GITHUB_README_URL =
-  "https://github.com/[GITHUB_OWNER]/[GITHUB_REPO]#readme";
+const GITHUB_README_URL = "https://github.com/j-dio/task-aggregator#readme";
 
 const steps = [
   {

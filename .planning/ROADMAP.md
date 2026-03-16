@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 Core Product** - Phases 1–7.5 (shipped 2026-03-16)
-- 🚧 **v1.1 Stabilization & Launch** - Phases 8–11 (in progress)
+- ✅ **v1.1 Stabilization & Launch** - Phases 8–11 (completed 2026-03-16)
 
 ## Phases
 
@@ -30,7 +30,7 @@
 - [x] **Phase 8: Sentry Monitoring** - Client-side error monitoring with PII protection active in production (completed 2026-03-16)
 - [x] **Phase 9: ICS Export** - Students can download tasks as a calendar file for Apple/Google Calendar (completed 2026-03-16)
 - [x] **Phase 10: Landing Page** - Visitors understand what TapO(1) does and how to get started (completed 2026-03-16)
-- [ ] **Phase 11: Self-Hosting README** - External developers can deploy their own instance from README alone
+- [x] **Phase 11: Self-Hosting README** - External developers can deploy their own instance from README alone (completed 2026-03-16)
 
 ## Phase Details
 
@@ -94,7 +94,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 11-01: TBD
+- [x] 11-01-PLAN.md — Write README.md self-hosting guide and wire real GitHub URL (README-01–05)
 
 ## Progress
 
@@ -105,5 +105,5 @@ Plans:
 | 1–7.5 (v1.0) | v1.0 | — | Complete | 2026-03-16 |
 | 8. Sentry Monitoring | 3/3 | Complete   | 2026-03-16 | - |
 | 9. ICS Export | 2/2 | Complete    | 2026-03-16 | - |
-| 10. Landing Page | 2/2 | Complete   | 2026-03-16 | - |
-| 11. Self-Hosting README | v1.1 | 0/? | Not started | - |
+| 10. Landing Page | 2/2 | Complete    | 2026-03-16 | - |
+| 11. Self-Hosting README | v1.1 | 1/1 | Complete | 2026-03-16 |
