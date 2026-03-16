@@ -10,7 +10,7 @@
 - [x] **ICS-01**: User can download all pending and in-progress tasks as a `.ics` file from the dashboard
 - [x] **ICS-02**: Exported `.ics` file is RFC 5545 compliant with UTC timestamps (no floating times)
 - [x] **ICS-03**: Each exported task event has a globally unique UID prefixed by source (e.g., `uvec-{id}@tapo1.app`)
-- [ ] **ICS-04**: Export works in Safari PWA standalone mode (falls back to Web Share API when blob download is unavailable)
+- [x] **ICS-04**: Export works in Safari PWA standalone mode (falls back to Web Share API when blob download is unavailable)
 - [x] **ICS-05**: User sees a "No tasks to export" notification when all tasks are done or dismissed (no empty `.ics` download)
 
 ### Sentry Monitoring
@@ -68,7 +68,7 @@
 | ICS-01 | Phase 9 | Complete |
 | ICS-02 | Phase 9 | Complete |
 | ICS-03 | Phase 9 | Complete |
-| ICS-04 | Phase 9 | Pending |
+| ICS-04 | Phase 9 | Complete |
 | ICS-05 | Phase 9 | Complete |
 | SNTY-01 | Phase 8 | Complete |
 | SNTY-02 | Phase 8 | Complete |

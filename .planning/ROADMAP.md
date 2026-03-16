@@ -28,7 +28,7 @@
 **Milestone Goal:** Error monitoring active in production, ICS calendar export for students, landing page communicating core value, and self-hosting README enabling external developers.
 
 - [x] **Phase 8: Sentry Monitoring** - Client-side error monitoring with PII protection active in production (completed 2026-03-16)
-- [ ] **Phase 9: ICS Export** - Students can download tasks as a calendar file for Apple/Google Calendar
+- [x] **Phase 9: ICS Export** - Students can download tasks as a calendar file for Apple/Google Calendar (completed 2026-03-16)
 - [ ] **Phase 10: Landing Page** - Visitors understand what TapO(1) does and how to get started
 - [ ] **Phase 11: Self-Hosting README** - External developers can deploy their own instance from README alone
 
@@ -103,6 +103,6 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1–7.5 (v1.0) | v1.0 | — | Complete | 2026-03-16 |
 | 8. Sentry Monitoring | 3/3 | Complete   | 2026-03-16 | - |
-| 9. ICS Export | 1/2 | In Progress|  | - |
+| 9. ICS Export | 2/2 | Complete   | 2026-03-16 | - |
 | 10. Landing Page | v1.1 | 0/? | Not started | - |
 | 11. Self-Hosting README | v1.1 | 0/? | Not started | - |
