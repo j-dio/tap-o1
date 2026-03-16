@@ -29,7 +29,7 @@
 
 - [x] **Phase 8: Sentry Monitoring** - Client-side error monitoring with PII protection active in production (completed 2026-03-16)
 - [x] **Phase 9: ICS Export** - Students can download tasks as a calendar file for Apple/Google Calendar (completed 2026-03-16)
-- [ ] **Phase 10: Landing Page** - Visitors understand what TapO(1) does and how to get started
+- [x] **Phase 10: Landing Page** - Visitors understand what TapO(1) does and how to get started (completed 2026-03-16)
 - [ ] **Phase 11: Self-Hosting README** - External developers can deploy their own instance from README alone
 
 ## Phase Details
@@ -105,5 +105,5 @@ Plans:
 | 1–7.5 (v1.0) | v1.0 | — | Complete | 2026-03-16 |
 | 8. Sentry Monitoring | 3/3 | Complete   | 2026-03-16 | - |
 | 9. ICS Export | 2/2 | Complete    | 2026-03-16 | - |
-| 10. Landing Page | 1/2 | In Progress|  | - |
+| 10. Landing Page | 2/2 | Complete   | 2026-03-16 | - |
 | 11. Self-Hosting README | v1.1 | 0/? | Not started | - |
