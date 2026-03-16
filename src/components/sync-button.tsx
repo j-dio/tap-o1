@@ -37,11 +37,11 @@ export function SyncButton({ className }: SyncButtonProps) {
 
   const disabled = isPending || cooldown;
 
-  const hasWarnings = data && data.errors.length > 0 && data.synced > 0;
+  const hasWarnings = data && data.errors.length > 0;
   const title = error?.message
     ? `Sync failed: ${error.message}`
     : hasWarnings
-      ? `Synced ${data.synced} tasks (with warnings)`
+      ? "Synced with warnings"
       : cooldown
         ? `Sync available in ${formatCooldown(remaining)}`
         : "Sync tasks";

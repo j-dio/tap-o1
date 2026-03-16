@@ -57,14 +57,11 @@ export function useSync() {
       if (error) {
         toast.error("Sync failed", { description: error.message });
       } else if (_data) {
-        const { synced, errors: warnings } = _data;
-        if (synced > 0 && warnings.length === 0) {
-          toast.success(`Synced ${synced} task${synced !== 1 ? "s" : ""}`);
-        } else if (synced > 0 && warnings.length > 0) {
-          toast.warning(
-            `Synced ${synced} task${synced !== 1 ? "s" : ""} with warnings`,
-            { description: warnings[0] },
-          );
+        const { errors: warnings } = _data;
+        if (warnings.length === 0) {
+          toast.success("Synced successfully");
+        } else {
+          toast.warning("Synced with warnings", { description: warnings[0] });
         }
       }
     },
