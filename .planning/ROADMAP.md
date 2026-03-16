@@ -75,10 +75,11 @@ Plans:
   3. The primary "Sign in with Google" CTA navigates to /login; the secondary README link opens the GitHub README
   4. A logged-in user navigating to / is redirected to /dashboard without seeing the landing page
   5. The landing page renders correctly on a 375px mobile viewport with no horizontal overflow
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
+- [ ] 10-01-PLAN.md — Implement landing page: auth redirect + hero, how-it-works, features, CTAs (LAND-01–06)
+- [ ] 10-02-PLAN.md — Build regression check + human verify all 6 LAND requirements in browser
 
 ### Phase 11: Self-Hosting README
 **Goal**: An external developer can deploy a fully functional TapO(1) instance by following the README alone
@@ -103,6 +104,6 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1–7.5 (v1.0) | v1.0 | — | Complete | 2026-03-16 |
 | 8. Sentry Monitoring | 3/3 | Complete   | 2026-03-16 | - |
-| 9. ICS Export | 2/2 | Complete   | 2026-03-16 | - |
-| 10. Landing Page | v1.1 | 0/? | Not started | - |
+| 9. ICS Export | 2/2 | Complete    | 2026-03-16 | - |
+| 10. Landing Page | v1.1 | 0/2 | Not started | - |
 | 11. Self-Hosting README | v1.1 | 0/? | Not started | - |
