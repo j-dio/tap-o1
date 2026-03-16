@@ -1,4 +1,4 @@
-import type { Event } from "@sentry/react";
+import type { ErrorEvent } from "@sentry/react";
 
 // Regex matches these UVEC/Moodle token patterns:
 // - icalUrl= (confirmed param name in supabase/functions/uvec-proxy/index.ts)
@@ -7,7 +7,7 @@ import type { Event } from "@sentry/react";
 // - key= (generic token param)
 const TOKEN_PARAM_REGEX = /([?&])(icalUrl|token|feed|key)=[^&]*/gi;
 
-export function sentryBeforeSend(event: Event): Event | null {
+export function sentryBeforeSend(event: ErrorEvent): ErrorEvent | null {
   // SNTY-03: strip user email
   if (event.user) {
     const { email: _email, ...rest } = event.user;

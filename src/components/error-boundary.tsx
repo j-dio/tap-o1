@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import * as Sentry from "@sentry/react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +30,7 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // In production, this could report to an error tracking service
+    Sentry.captureReactException(error, errorInfo); // SNTY-02
     if (process.env.NODE_ENV === "development") {
       console.error("ErrorBoundary caught:", error, errorInfo);
     }
