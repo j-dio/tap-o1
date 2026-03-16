@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilization & Launch
 status: planning
-stopped_at: "Checkpoint: Task 2 human-verify in 08-sentry-monitoring-02-PLAN.md"
-last_updated: "2026-03-16T00:43:10.201Z"
+stopped_at: Completed 08-sentry-monitoring-02-PLAN.md
+last_updated: "2026-03-16T04:23:22.602Z"
 last_activity: 2026-03-16 — Roadmap created for v1.1 milestone; Phase 8 is next
 progress:
   total_phases: 4
@@ -50,6 +50,7 @@ Progress: [█████░░░░░] 50%
 *Updated after each plan completion*
 | Phase 08-sentry-monitoring P01 | 7min | 2 tasks | 4 files |
 | Phase 08-sentry-monitoring P02 | 6min | 1 tasks | 6 files |
+| Phase 08-sentry-monitoring P02 | 6min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [Phase 08-sentry-monitoring]: sentryBeforeSend: Sentry v10 Event.breadcrumbs is Breadcrumb[] flat array (not { values: [] })
 - [Phase 08-sentry-monitoring]: TOKEN_PARAM_REGEX covers icalUrl|token|feed|key with gi flags for PII scrubbing in sentryBeforeSend
 - [Phase 08-sentry-monitoring]: sentryBeforeSend parameter type updated from Event to ErrorEvent to match BrowserOptions.beforeSend signature in Sentry v10
+- [Phase 08-sentry-monitoring]: sentryBeforeSend parameter type updated from Event to ErrorEvent to match BrowserOptions.beforeSend signature in Sentry v10
+- [Phase 08-sentry-monitoring]: captureReactException used in ErrorBoundary (not captureException) — preserves React component stack in Sentry event
+- [Phase 08-sentry-monitoring]: instrumentation-client.ts placed at src/ root — Next.js 15.3+ pre-hydration convention; replayIntegration intentionally absent per SNTY-04
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T00:42:50.744Z
-Stopped at: Checkpoint: Task 2 human-verify in 08-sentry-monitoring-02-PLAN.md
+Last session: 2026-03-16T04:23:22.599Z
+Stopped at: Completed 08-sentry-monitoring-02-PLAN.md
 Resume file: None

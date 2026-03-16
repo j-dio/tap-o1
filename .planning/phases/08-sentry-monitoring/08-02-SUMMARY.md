@@ -53,7 +53,7 @@ completed: 2026-03-16
 - **Duration:** 6 min
 - **Started:** 2026-03-16T00:37:11Z
 - **Completed:** 2026-03-16T00:43:00Z
-- **Tasks:** 1 of 2 (Task 2 is human-verify checkpoint)
+- **Tasks:** 2 of 2 (complete — human verification approved)
 - **Files modified:** 6
 
 ## Accomplishments
@@ -69,7 +69,7 @@ Each task was committed atomically:
 1. **RED phase: add failing ErrorBoundary tests** - `3007555` (test)
 2. **Task 1: Create instrumentation-client.ts and update ErrorBoundary** - `71ff127` (feat)
 
-**Plan metadata:** (pending final commit after Task 2 checkpoint approval)
+3. **Task 2: Verify Sentry captures errors in production with no PII** - `79b309d` (test — human-verify approved)
 
 _Note: TDD tasks have multiple commits (test RED → feat GREEN)_
 
@@ -106,15 +106,20 @@ None beyond the type fix documented above.
 
 ## User Setup Required
 
-To complete human verification (Task 2):
-1. Add `NEXT_PUBLIC_SENTRY_DSN=<your-dsn>` to `.env.local`
-2. Run `npm run build && npm start`
-3. Open browser DevTools Console, run: `throw new Error("Sentry Phase 8 test")`
-4. Verify in Sentry dashboard: error appears within 30s, no user email, zero performance transactions, zero session replays
+**External service configuration needed for development:**
+- Add `NEXT_PUBLIC_SENTRY_DSN=<your-dsn>` to `.env.local` (get from sentry.io → Project Settings → Client Keys)
+- The DSN is safe as NEXT_PUBLIC_ — it only allows submitting events, not reading them
+
+Human verification confirmed all 4 production criteria:
+- Test error appeared in Sentry Issues within 30 seconds
+- No user email in event user context
+- Zero performance transactions (tracesSampleRate: 0 confirmed)
+- Zero session replay recordings (replayIntegration not imported confirmed)
 
 ## Next Phase Readiness
-- Sentry client code is fully wired — ready for human production verification
-- After Task 2 approval: plan 08-02 complete, phase 8 ready, proceed to Phase 9 (ICS Export)
+- All Phase 8 Sentry requirements complete: SNTY-01 (init), SNTY-02 (ErrorBoundary), SNTY-03 (PII scrubbing from Plan 01), SNTY-04 (no perf/replay)
+- Ready to proceed to Phase 9 (ICS Export)
+- No blockers
 
 ---
 *Phase: 08-sentry-monitoring*
