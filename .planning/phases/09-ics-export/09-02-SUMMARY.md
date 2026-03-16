@@ -34,6 +34,7 @@ key-decisions:
   - "Success toast fires before navigator.share resolves — avoids waiting on iOS share sheet to dismiss"
   - "AbortError from navigator.share is silently suppressed — user cancel is expected UX"
   - "No loading/disabled state on ExportButton — ICS generation is synchronous and instant"
+  - "Sidebar redesigned by user post-Task-2: profile section is now account dropdown trigger; logout moved from icon row to profile dropdown; bottom quick-actions row is Theme → Export → Sync only"
 
 patterns-established:
   - "ExportButton: useTasks({}) with empty filters to get all tasks regardless of active UI filters"
@@ -54,10 +55,10 @@ completed: 2026-03-16
 
 ## Performance
 
-- **Duration:** ~4 min
+- **Duration:** ~10 min (including human-verify checkpoint pause)
 - **Started:** 2026-03-16T06:42:14Z
-- **Completed:** 2026-03-16T06:46:00Z
-- **Tasks:** 2 of 3 (Task 3 is a human-verify checkpoint)
+- **Completed:** 2026-03-16 (post-checkpoint approval)
+- **Tasks:** 3 of 3
 - **Files modified:** 3
 
 ## Accomplishments
@@ -72,7 +73,7 @@ Each task was committed atomically:
 
 1. **Task 1: Create ExportButton component** - `4cda875` (feat)
 2. **Task 2: Wire ExportButton into sidebar and mobile header** - `b1caf6e` (feat)
-3. **Task 3: Verify export flow end-to-end** - awaiting human verification
+3. **Task 3: Verify export flow end-to-end** - human-verify checkpoint, approved by user
 
 ## Files Created/Modified
 - `src/components/export-button.tsx` - ExportButton client component using useTasks({}) and generateIcsContent
@@ -86,7 +87,17 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Notable Post-Task-2 Changes (User-Driven)
+
+**Sidebar profile section redesign (user enhancement after Task 2 commit)**
+- **What changed:** User redesigned the sidebar profile section after Task 2 was committed. The avatar + name/email row now acts as a dropdown trigger for account actions. The sign-out button was moved from the bottom icon row into the profile dropdown. The bottom quick-actions row now contains only three controls: Theme → Export → Sync.
+- **Impact:** The final layout differs from the plan's intended order (ThemeToggle → SyncButton → ExportButton → SignOut). The actual shipping order is ThemeToggle → ExportButton → SyncButton, with sign-out in the profile dropdown.
+- **Action:** These changes are user-committed and intentional. No revert needed.
+
+---
+
+**Total deviations:** 1 notable user-driven layout change (no auto-fix deviations)
+**Impact on plan:** ExportButton is present and functional in both sidebar and mobile header as specified. Layout differs slightly from plan spec per user preference.
 
 ## Issues Encountered
 None.
@@ -95,8 +106,10 @@ None.
 None - no external service configuration required.
 
 ## Next Phase Readiness
-- ExportButton is feature-complete pending human verification of desktop download and optional iOS PWA test
-- Task 3 (human-verify checkpoint) requires manual browser testing before phase is fully closed
+- ICS export feature is complete end-to-end: ICS-01, ICS-02, ICS-03, ICS-04, ICS-05 all satisfied
+- Plan 09-01 covered ICS-02 (DTSTART;VALUE=DATE), ICS-03 (source-prefixed UIDs), ICS-05 (empty state) via unit tests
+- Plan 09-02 delivered ICS-01 (user-facing export trigger) and ICS-04 (Safari PWA Share Sheet fallback), verified by user
+- Phase 09 is fully complete — ready to advance to next phase
 
 ---
 *Phase: 09-ics-export*

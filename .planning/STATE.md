@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilization & Launch
 status: planning
-stopped_at: "Checkpoint 09-02 Task 3: awaiting human verification of export flow"
-last_updated: "2026-03-16T06:46:47.328Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-16T07:19:25.546Z"
 last_activity: 2026-03-16 — Roadmap created for v1.1 milestone; Phase 8 is next
 progress:
   total_phases: 4
@@ -54,6 +54,7 @@ Progress: [█████░░░░░] 50%
 | Phase 08-sentry-monitoring P03 | 2min 22sec | 2 tasks | 3 files |
 | Phase 09-ics-export P01 | 4min | 2 tasks | 4 files |
 | Phase 09-ics-export P02 | 4min | 2 tasks | 3 files |
+| Phase 09-ics-export P02 | 10min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,7 @@ Recent decisions affecting current work:
 - [Phase 09-ics-export]: ics DateArray uses getUTCMonth()+1 (1-based) to emit DTSTART;VALUE=DATE: for all-day events per RFC 5545
 - [Phase 09-ics-export]: ExportButton: success toast fires before navigator.share resolves to avoid waiting on iOS share sheet
 - [Phase 09-ics-export]: ExportButton: AbortError from share sheet dismiss silently suppressed — user cancel is expected UX
+- [Phase 09-ics-export]: Sidebar redesigned by user post-Task-2: profile section is now account dropdown trigger; logout moved from icon row to profile dropdown; bottom quick-actions row is Theme → Export → Sync only
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T06:46:47.322Z
-Stopped at: Checkpoint 09-02 Task 3: awaiting human verification of export flow
+Last session: 2026-03-16T07:19:25.539Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
