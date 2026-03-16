@@ -28,7 +28,7 @@
 **Milestone Goal:** Error monitoring active in production, ICS calendar export for students, landing page communicating core value, and self-hosting README enabling external developers.
 
 - [x] **Phase 8: Sentry Monitoring** - Client-side error monitoring with PII protection active in production (completed 2026-03-16)
-- [ ] **Phase 9: ICS Export** - Students can download tasks as a calendar file for Apple/Google Calendar
+- [x] **Phase 9: ICS Export** - Students can download tasks as a calendar file for Apple/Google Calendar (completed 2026-03-16)
 - [ ] **Phase 10: Landing Page** - Visitors understand what TapO(1) does and how to get started
 - [ ] **Phase 11: Self-Hosting README** - External developers can deploy their own instance from README alone
 
@@ -59,10 +59,11 @@ Plans:
   3. UVEC and Google Classroom tasks each have distinct UIDs that do not collide when imported into the same calendar
   4. On an iPhone in Safari PWA standalone mode, the export triggers the iOS Share Sheet (not a silent failure)
   5. When all tasks are done or dismissed, clicking Export shows a "No tasks to export" toast and no file is downloaded
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
+- [ ] 09-01-PLAN.md — Install ics library and implement generateIcsContent pure function with TDD (ICS-01, ICS-02, ICS-03, ICS-05)
+- [ ] 09-02-PLAN.md — Create ExportButton component and wire into sidebar and mobile header (ICS-01, ICS-04)
 
 ### Phase 10: Landing Page
 **Goal**: New visitors immediately understand TapO(1)'s purpose for UP Cebu students and know how to start
@@ -102,6 +103,6 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1–7.5 (v1.0) | v1.0 | — | Complete | 2026-03-16 |
 | 8. Sentry Monitoring | 3/3 | Complete   | 2026-03-16 | - |
-| 9. ICS Export | v1.1 | 0/? | Not started | - |
+| 9. ICS Export | 2/2 | Complete   | 2026-03-16 | - |
 | 10. Landing Page | v1.1 | 0/? | Not started | - |
 | 11. Self-Hosting README | v1.1 | 0/? | Not started | - |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Stabilization & Launch
 status: planning
-stopped_at: Completed 08-sentry-monitoring-03-PLAN.md
-last_updated: "2026-03-16T05:20:55.615Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-16T07:19:25.546Z"
 last_activity: 2026-03-16 — Roadmap created for v1.1 milestone; Phase 8 is next
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
   percent: 50
 ---
 
@@ -52,6 +52,9 @@ Progress: [█████░░░░░] 50%
 | Phase 08-sentry-monitoring P02 | 6min | 1 tasks | 6 files |
 | Phase 08-sentry-monitoring P02 | 6min | 2 tasks | 6 files |
 | Phase 08-sentry-monitoring P03 | 2min 22sec | 2 tasks | 3 files |
+| Phase 09-ics-export P01 | 4min | 2 tasks | 4 files |
+| Phase 09-ics-export P02 | 4min | 2 tasks | 3 files |
+| Phase 09-ics-export P02 | 10min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +75,11 @@ Recent decisions affecting current work:
 - [Phase 08-sentry-monitoring]: instrumentation-client.ts placed at src/ root — Next.js 15.3+ pre-hydration convention; replayIntegration intentionally absent per SNTY-04
 - [Phase 08-sentry-monitoring]: @sentry/nextjs kept (not reverted) — wizard added server/edge coverage; 2MB overhead accepted for full-stack error capture
 - [Phase 08-sentry-monitoring]: replaysSessionSampleRate:0 and replaysOnErrorSampleRate:0 added to all three configs as explicit guards against @sentry/nextjs auto-inclusion
+- [Phase 09-ics-export]: generateIcsContent is pure function: testable in Vitest node environment following computeActionBoardBuckets pattern
+- [Phase 09-ics-export]: ics DateArray uses getUTCMonth()+1 (1-based) to emit DTSTART;VALUE=DATE: for all-day events per RFC 5545
+- [Phase 09-ics-export]: ExportButton: success toast fires before navigator.share resolves to avoid waiting on iOS share sheet
+- [Phase 09-ics-export]: ExportButton: AbortError from share sheet dismiss silently suppressed — user cancel is expected UX
+- [Phase 09-ics-export]: Sidebar redesigned by user post-Task-2: profile section is now account dropdown trigger; logout moved from icon row to profile dropdown; bottom quick-actions row is Theme → Export → Sync only
 
 ### Pending Todos
 
@@ -86,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T04:54:09.699Z
-Stopped at: Completed 08-sentry-monitoring-03-PLAN.md
+Last session: 2026-03-16T07:19:25.539Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None

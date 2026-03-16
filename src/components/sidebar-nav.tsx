@@ -2,11 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, History, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import {
+  Calendar,
+  ChevronsUpDown,
+  History,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import { useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
-import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { ExportButton } from "@/components/export-button";
 import { SyncButton } from "@/components/sync-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -49,7 +64,10 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
       <Separator />
 
       {/* Nav links — scrollable when content overflows */}
-      <nav className="min-h-0 flex-1 overflow-y-auto space-y-1 px-3 py-3" aria-label="Dashboard">
+      <nav
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-3"
+        aria-label="Dashboard"
+      >
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/dashboard"
@@ -89,26 +107,45 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
 
       {/* User info + actions — always visible at bottom */}
       <div className="shrink-0 px-3 py-3">
-        <div className="flex items-center gap-2">
-          <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{displayName}</p>
-            <p className="text-muted-foreground truncate text-xs">{email}</p>
-          </div>
-          <div className="flex items-center gap-0.5">
+        <div className="space-y-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="hover:bg-accent/40 focus-visible:ring-ring group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
+                aria-label="Open account menu"
+              >
+                <div className="bg-muted ring-border/50 group-hover:ring-primary/40 group-focus-visible:ring-primary/50 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ring-1 transition-colors">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{displayName}</p>
+                  <p className="text-muted-foreground truncate text-xs">
+                    {email}
+                  </p>
+                </div>
+                <ChevronsUpDown className="text-muted-foreground group-hover:text-foreground group-focus-visible:text-foreground size-3.5 shrink-0 transition-colors" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top" className="w-56">
+              <DropdownMenuLabel className="pb-0">
+                {displayName}
+              </DropdownMenuLabel>
+              <DropdownMenuLabel className="text-muted-foreground pt-0 text-xs font-normal">
+                {email}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={handleSignOut} disabled={isPending}>
+                <LogOut className="size-4" />
+                {isPending ? "Signing out..." : "Sign out"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="flex items-center gap-0.5 px-1">
             <ThemeToggle />
+            <ExportButton />
             <SyncButton />
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleSignOut}
-              disabled={isPending}
-              aria-label="Sign out"
-            >
-              <LogOut className="size-4" />
-            </Button>
           </div>
         </div>
       </div>
