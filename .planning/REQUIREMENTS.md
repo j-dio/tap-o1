@@ -22,12 +22,12 @@
 
 ### Landing Page
 
-- [ ] **LAND-01**: Landing page hero communicates the specific student problem (UVEC Moodle + Google Classroom aggregation) with UP Cebu context
-- [ ] **LAND-02**: "How it works" section shows the 3-step setup flow (sign in → connect UVEC → sync GClassroom)
-- [ ] **LAND-03**: Feature highlights section calls out drag-and-drop board, offline PWA capabilities, and custom task creation
-- [ ] **LAND-04**: Primary CTA links to `/login`; secondary CTA links to the self-hosting README (GitHub)
-- [ ] **LAND-05**: Authenticated users visiting `/` are redirected to `/dashboard` (no landing page shown to logged-in users)
-- [ ] **LAND-06**: Landing page is fully mobile-responsive and uses existing TapO(1) maroon/cream brand palette
+- [x] **LAND-01**: Landing page hero communicates the specific student problem (UVEC Moodle + Google Classroom aggregation) with UP Cebu context
+- [x] **LAND-02**: "How it works" section shows the 3-step setup flow (sign in → connect UVEC → sync GClassroom)
+- [x] **LAND-03**: Feature highlights section calls out drag-and-drop board, offline PWA capabilities, and custom task creation
+- [x] **LAND-04**: Primary CTA links to `/login`; secondary CTA links to the self-hosting README (GitHub)
+- [x] **LAND-05**: Authenticated users visiting `/` are redirected to `/dashboard` (no landing page shown to logged-in users)
+- [x] **LAND-06**: Landing page is fully mobile-responsive and uses existing TapO(1) maroon/cream brand palette
 
 ### Self-Hosting README
 
@@ -74,12 +74,12 @@
 | SNTY-02 | Phase 8 | Complete |
 | SNTY-03 | Phase 8 | Complete |
 | SNTY-04 | Phase 8 | Complete |
-| LAND-01 | Phase 10 | Pending |
-| LAND-02 | Phase 10 | Pending |
-| LAND-03 | Phase 10 | Pending |
-| LAND-04 | Phase 10 | Pending |
-| LAND-05 | Phase 10 | Pending |
-| LAND-06 | Phase 10 | Pending |
+| LAND-01 | Phase 10 | Complete |
+| LAND-02 | Phase 10 | Complete |
+| LAND-03 | Phase 10 | Complete |
+| LAND-04 | Phase 10 | Complete |
+| LAND-05 | Phase 10 | Complete |
+| LAND-06 | Phase 10 | Complete |
 | README-01 | Phase 11 | Pending |
 | README-02 | Phase 11 | Pending |
 | README-03 | Phase 11 | Pending |

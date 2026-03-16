@@ -18,10 +18,14 @@ import {
   Loader2,
   ExternalLink,
   ChevronDown,
+  Download,
+  Smartphone,
 } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
+import { usePwaInstall } from "@/components/add-to-homescreen-prompt";
 
 export default function SettingsPage() {
+  const { canInstall, install, isIos, isStandalone, wasDismissed, resetDismissed } = usePwaInstall();
   const [uvecUrl, setUvecUrl] = useState("");
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
   const [hasGoogleRefreshToken, setHasGoogleRefreshToken] = useState(false);
@@ -381,6 +385,48 @@ export default function SettingsPage() {
 
       {/* Push Notifications */}
       <NotificationSettings />
+
+      {/* Install App */}
+      {!isStandalone && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <CardTitle>Install App</CardTitle>
+              <Smartphone className="text-muted-foreground size-5" />
+            </div>
+            <CardDescription>
+              Add TapO(1) to your home screen for a faster, offline-capable experience.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {isIos ? (
+              <p className="text-muted-foreground text-sm">
+                On iPhone/iPad: tap the{" "}
+                <strong>Share</strong> button in Safari, then{" "}
+                <strong>Add to Home Screen</strong>.
+              </p>
+            ) : canInstall ? (
+              <Button size="sm" onClick={install}>
+                <Download className="mr-2 size-4" />
+                Install App
+              </Button>
+            ) : wasDismissed ? (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-sm">
+                  You dismissed the install prompt. Click below to enable it again.
+                </p>
+                <Button size="sm" variant="outline" onClick={resetDismissed}>
+                  Re-enable install prompt
+                </Button>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                Install option is not available in this browser, or the app is already installed.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
