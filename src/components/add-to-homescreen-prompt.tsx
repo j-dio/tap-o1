@@ -73,7 +73,52 @@ function getPromptServerSnapshot(): BeforeInstallPromptEvent | null {
   return null;
 }
 
-/* ─── Component ─── */
+/* ─── Shared hook ─── */
+
+export function usePwaInstall() {
+  const prompt = useSyncExternalStore(
+    subscribePrompt,
+    getPromptSnapshot,
+    getPromptServerSnapshot,
+  );
+
+  const isIos = getIsIos();
+  const isStandalone = getIsStandalone();
+  const wasDismissed =
+    typeof window !== "undefined" && localStorage.getItem(LS_KEY) === "1";
+
+  const canInstall = (!!prompt || isIos) && !isStandalone;
+
+  const install = useCallback(async () => {
+    if (!deferredPrompt) return;
+    // Clear dismissed flag so it can show again if needed
+    localStorage.removeItem(LS_KEY);
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted" || outcome === "dismissed") {
+      localStorage.setItem(LS_KEY, "1");
+    }
+    deferredPrompt = null;
+    notifyListeners();
+  }, []);
+
+  // Permanent dismiss — hides the floating banner everywhere
+  const dismiss = useCallback(() => {
+    localStorage.setItem(LS_KEY, "1");
+    deferredPrompt = null;
+    notifyListeners();
+  }, []);
+
+  // Reset dismissed flag — re-enables the floating banner
+  const resetDismissed = useCallback(() => {
+    localStorage.removeItem(LS_KEY);
+    notifyListeners();
+  }, []);
+
+  return { canInstall, install, dismiss, resetDismissed, isIos, isStandalone, wasDismissed };
+}
+
+/* ─── Floating banner component ─── */
 
 export function AddToHomescreenPrompt() {
   const prompt = useSyncExternalStore(
@@ -85,7 +130,6 @@ export function AddToHomescreenPrompt() {
   const isIos = getIsIos();
   const isStandalone = getIsStandalone();
 
-  // Determine if we've already dismissed
   const wasDismissed =
     typeof window !== "undefined" && localStorage.getItem(LS_KEY) === "1";
 
@@ -93,8 +137,16 @@ export function AddToHomescreenPrompt() {
   const showIos = isIos && !isStandalone && !wasDismissed;
   const visible = showAndroid || showIos;
 
+  // Permanent dismiss — used for X button and iOS "Got it"
   const handleDismiss = useCallback(() => {
     localStorage.setItem(LS_KEY, "1");
+    deferredPrompt = null;
+    notifyListeners();
+  }, []);
+
+  // Soft dismiss — "Not now" clears for this page load only; browser re-fires
+  // beforeinstallprompt on next navigation (e.g. dashboard after login).
+  const handleNotNow = useCallback(() => {
     deferredPrompt = null;
     notifyListeners();
   }, []);
@@ -182,7 +234,7 @@ export function AddToHomescreenPrompt() {
             <Button size="sm" onClick={handleInstall}>
               Install
             </Button>
-            <Button size="sm" variant="ghost" onClick={handleDismiss}>
+            <Button size="sm" variant="ghost" onClick={handleNotNow}>
               Not now
             </Button>
           </div>
