@@ -111,7 +111,7 @@ export function useActionBoard(
       computeActionBoardBuckets(
         tasks,
         snapNow,
-        7, // todoWindowDays hardcoded
+        14, // todoWindowDays — show tasks due within 2 weeks
         todoDisplayLimit,
         doneDisplayLimit,
         inProgressDisplayLimit,

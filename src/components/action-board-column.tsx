@@ -41,7 +41,7 @@ function ColumnEmptyState({ id, todoWindowDays }: ColumnEmptyStateProps) {
     todo: {
       icon: ListTodo,
       title: "All caught up!",
-      description: `No tasks due in the next ${todoWindowDays ?? 7} days.`,
+      description: `No tasks due in the next ${todoWindowDays ?? 14} days.`,
     },
     in_progress: {
       icon: Clock,
