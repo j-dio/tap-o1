@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { ExportButton } from "@/components/export-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface DashboardShellProps {
@@ -61,8 +62,9 @@ export function DashboardShell({
             </div>
             <span className="text-sm font-semibold">TapO(1)</span>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-0.5">
             <ThemeToggle />
+            <ExportButton />
           </div>
         </header>
 

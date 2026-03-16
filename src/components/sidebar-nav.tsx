@@ -7,6 +7,7 @@ import { useTransition } from "react";
 import { signOut } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ExportButton } from "@/components/export-button";
 import { SyncButton } from "@/components/sync-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -100,6 +101,7 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
           <div className="flex items-center gap-0.5">
             <ThemeToggle />
             <SyncButton />
+            <ExportButton />
             <Button
               variant="ghost"
               size="icon-sm"
