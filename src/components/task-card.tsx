@@ -92,6 +92,9 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
           </button>
         </div>
 
+        {/* Source type icon - bottom-right corner */}
+        <SourceIcon source={task.source} className="absolute right-2.5 bottom-2.5 opacity-40" />
+
         {/* Mobile quick action - always visible */}
         <button
           type="button"
@@ -115,7 +118,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="w-full pl-6 text-left lg:pr-16 lg:pl-0"
+          className="w-full pb-4 pl-6 text-left lg:pr-16 lg:pl-0"
         >
           <div className="flex items-start gap-2">
             <span
@@ -132,7 +135,6 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <CourseBadge course={task.course} />
               <CountdownBadge dueDate={task.dueDate} />
-              <SourceIcon source={task.source} className="ml-auto" />
             </div>
           )}
         </button>
