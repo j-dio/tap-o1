@@ -113,8 +113,8 @@ self.addEventListener("push", (event: PushEvent) => {
   const title = payload.title ?? "Task Aggregator";
   const options: NotificationOptions = {
     body: payload.body ?? "",
-    icon: payload.icon ?? "/icons/icon-192x192.png",
-    badge: payload.badge ?? "/icons/icon-72x72.png",
+    icon: payload.icon ?? "/Logo_png_ver.png",
+    badge: payload.badge ?? "/Logo_png_ver.png",
     tag: payload.tag ?? "task-reminder",
     timestamp: payload.timestamp ?? Date.now(),
     data: { url: payload.url ?? "/dashboard" },
