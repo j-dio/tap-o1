@@ -105,6 +105,7 @@ export function UpNextWidget({ task }: UpNextWidgetProps) {
               size="sm"
               variant="outline"
               className="gap-1"
+              aria-label="Start working on this task"
               onClick={() =>
                 setStatus.mutate({
                   taskId: task.id,
@@ -123,6 +124,7 @@ export function UpNextWidget({ task }: UpNextWidgetProps) {
               "gap-1",
               isInProgress && "bg-success text-success-foreground",
             )}
+            aria-label="Mark this task as done"
             onClick={() =>
               setStatus.mutate({ taskId: task.id, status: "done" })
             }
@@ -134,6 +136,7 @@ export function UpNextWidget({ task }: UpNextWidgetProps) {
             size="sm"
             variant="ghost"
             className="ml-auto gap-1"
+            aria-label="View task details"
             onClick={() => setModalOpen(true)}
           >
             View

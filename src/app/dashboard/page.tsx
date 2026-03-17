@@ -46,6 +46,7 @@ import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
 import { CustomTaskModal } from "@/components/custom-task-modal";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Plus } from "lucide-react";
@@ -282,6 +283,7 @@ function DashboardContent() {
       )}
 
       <CustomTaskModal open={newTaskOpen} onOpenChange={setNewTaskOpen} />
+      <OnboardingTour />
     </div>
   );
 }
