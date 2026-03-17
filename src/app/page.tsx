@@ -80,20 +80,44 @@ export default async function Home() {
           50%      { transform: translateY(-7px); }
         }
         @keyframes lp-pulse-glow {
-          0%, 100% { box-shadow: 0 0 0 0 oklch(0.178 0.022 265 / 30%), 0 8px 30px oklch(0.178 0.022 265 / 18%); }
-          50%      { box-shadow: 0 0 0 10px oklch(0.178 0.022 265 / 0%), 0 8px 30px oklch(0.178 0.022 265 / 30%); }
-        }
-        .dark .lp-logo {
-          animation: lp-float 3.5s ease-in-out infinite, lp-pulse-glow-dark 3s ease-in-out infinite;
+          0%, 100% {
+            filter:
+              drop-shadow(0 18px 44px oklch(0.178 0.022 265 / 28%))
+              drop-shadow(0 0 24px oklch(0.178 0.022 265 / 24%));
+          }
+          50% {
+            filter:
+              drop-shadow(0 24px 58px oklch(0.178 0.022 265 / 42%))
+              drop-shadow(0 0 40px oklch(0.178 0.022 265 / 36%));
+          }
         }
         @keyframes lp-pulse-glow-dark {
-          0%, 100% { box-shadow: 0 0 0 0 oklch(0.68 0.18 25 / 30%), 0 8px 30px oklch(0.68 0.18 25 / 18%); }
-          50%      { box-shadow: 0 0 0 10px oklch(0.68 0.18 25 / 0%), 0 8px 30px oklch(0.68 0.18 25 / 30%); }
+          0%, 100% {
+            filter:
+              drop-shadow(0 18px 44px oklch(0.68 0.18 25 / 30%))
+              drop-shadow(0 0 26px oklch(0.68 0.18 25 / 26%));
+          }
+          50% {
+            filter:
+              drop-shadow(0 24px 58px oklch(0.68 0.18 25 / 46%))
+              drop-shadow(0 0 44px oklch(0.68 0.18 25 / 38%));
+          }
         }
         .lp-logo {
-          animation: lp-float 3.5s ease-in-out infinite, lp-pulse-glow 3s ease-in-out infinite;
+          animation: lp-float 3.5s ease-in-out infinite;
+          will-change: transform;
+        }
+        .lp-logo > img {
+          animation: lp-pulse-glow 3s ease-in-out infinite;
+          will-change: filter;
+        }
+        .dark .lp-logo > img {
+          animation-name: lp-pulse-glow-dark;
         }
         .lp-s1 { animation: lp-fade-up 0.6s ease-out 0.05s both; }
+        .lp-s1.lp-logo {
+          animation: lp-fade-up 0.6s ease-out 0.05s both, lp-float 3.5s ease-in-out 0.65s infinite;
+        }
         .lp-s2 { animation: lp-fade-up 0.6s ease-out 0.18s both; }
         .lp-s3 { animation: lp-fade-up 0.6s ease-out 0.30s both; }
         .lp-s4 { animation: lp-fade-up 0.6s ease-out 0.42s both; }
@@ -144,7 +168,7 @@ export default async function Home() {
           animation: lp-fade-in 0.5s ease-out 0.8s both;
         }
         @media (prefers-reduced-motion: reduce) {
-          .lp-logo { animation: none; }
+          .lp-logo, .lp-logo > img { animation: none; }
           .lp-s1, .lp-s2, .lp-s3, .lp-s4, .lp-s5, .lp-s6, .lp-badge {
             animation: none; opacity: 1;
           }
@@ -164,7 +188,7 @@ export default async function Home() {
           {/* ── Hero ──────────────────────────────────────────────────── */}
           <section className="flex flex-col items-center gap-6 pt-20 pb-16 text-center">
             {/* Logo badge */}
-            <AppLogo className="lp-s1 lp-logo size-24" />
+            <AppLogo className="lp-s1 lp-logo size-24 overflow-visible rounded-full sm:size-28" />
 
             {/* Headline */}
             <div className="lp-s2 flex flex-col gap-2">
@@ -178,8 +202,8 @@ export default async function Home() {
 
             {/* Sub-text */}
             <p className="lp-s3 text-muted-foreground mx-auto max-w-md text-base leading-relaxed">
-              TapO(1) pulls your tasks from UVEC and Google
-              Classroom into a single drag-and-drop board. Maximum laziness, constant efficiency!
+              TapO(1) pulls your tasks from UVEC and Google Classroom into a
+              single drag-and-drop board. Maximum laziness, constant efficiency!
             </p>
 
             {/* CTA buttons */}
@@ -202,7 +226,7 @@ export default async function Home() {
             </div>
 
             {/* Complexity pill */}
-            <div className="lp-badge bg-muted border-border text-muted-foreground rounded-full border px-4 py-1.5 text-xs font-mono">
+            <div className="lp-badge bg-muted border-border text-muted-foreground rounded-full border px-4 py-1.5 font-mono text-xs">
               <Zap className="mr-1.5 mb-px inline size-3 text-yellow-500" />
               O(1) access · no context-switching · always in sync
             </div>
