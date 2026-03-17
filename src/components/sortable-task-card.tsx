@@ -31,6 +31,13 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
       className="cursor-grab active:cursor-grabbing transition-transform duration-200"
       {...attributes}
       {...listeners}
+      // Override dnd-kit's default tabIndex={0} so the drag wrapper is not
+      // reachable via keyboard Tab. This prevents the KeyboardSensor from
+      // activating drag when the user presses Enter/Space (e.g. after closing
+      // the task detail modal, focus returns to this element and a subsequent
+      // Enter would incorrectly start a drag). Pointer and touch drag continue
+      // to work normally via {...listeners}.
+      tabIndex={-1}
     >
       <TaskCard task={task} isDragging={isDragging} />
     </div>
