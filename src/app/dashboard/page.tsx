@@ -46,6 +46,7 @@ import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
 import { CustomTaskModal } from "@/components/custom-task-modal";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Plus } from "lucide-react";
@@ -186,20 +187,20 @@ function DashboardContent() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-xl font-bold tracking-[-0.03em]">Dashboard</h1>
+          <p className="text-muted-foreground mt-0.5 text-[13px]">
             {focusMode
               ? "Tasks due within 24 hours."
               : "Manage your tasks by workflow status."}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             size="sm"
-            className="bg-[#6e1d2a] text-white hover:bg-[#5b1722]"
+            className="skeu-btn h-8 gap-1.5 px-3 text-[13px] font-medium text-white"
             onClick={() => setNewTaskOpen(true)}
           >
-            <Plus className="mr-1 size-4" />
+            <Plus className="size-3.5" />
             New task
           </Button>
           <FocusModeToggle
@@ -282,6 +283,7 @@ function DashboardContent() {
       )}
 
       <CustomTaskModal open={newTaskOpen} onOpenChange={setNewTaskOpen} />
+      <OnboardingTour />
     </div>
   );
 }

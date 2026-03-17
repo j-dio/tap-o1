@@ -15,6 +15,7 @@ export function FocusModeToggle({ enabled, onToggle }: FocusModeToggleProps) {
       variant={enabled ? "default" : "outline"}
       size="sm"
       onClick={onToggle}
+      aria-label={enabled ? "Disable focus mode" : "Enable focus mode"}
       className={cn(
         "gap-2",
         enabled && "bg-warning text-warning-foreground hover:bg-warning/90",

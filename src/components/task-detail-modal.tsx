@@ -1,10 +1,12 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import type { TaskWithCourse } from "@/types/task";
 import { formatRelativeDate, getTaskUrgency, cn } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
 import { SourceIcon } from "@/components/source-icon";
 import { TaskActions } from "@/components/task-actions";
+import { useTaskActions } from "@/hooks/use-task-actions";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -36,10 +38,83 @@ export function TaskDetailModal({
   onOpenChange,
 }: TaskDetailModalProps) {
   const urgency = getTaskUrgency(task.dueDate);
+  const { setNotes } = useTaskActions();
+
+  // Notes draft is owned here so the modal can detect pending changes and
+  // handle Enter: save if notes changed, close otherwise.
+  const [notesDraft, setNotesDraft] = useState(task.notes ?? "");
+
+  // Reset draft when the modal opens with a (possibly updated) task.
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        setNotesDraft(task.notes ?? "");
+      }
+      onOpenChange(nextOpen);
+    },
+    [task.notes, onOpenChange],
+  );
+
+  const hasPendingNotes = notesDraft.trim() !== (task.notes ?? "").trim();
+
+  const handleSaveNotes = useCallback(() => {
+    const trimmedNotes = notesDraft.trim();
+    setNotes.mutate(
+      { taskId: task.id, notes: trimmedNotes || null },
+      { onSuccess: () => onOpenChange(false) },
+    );
+  }, [notesDraft, setNotes, task.id, onOpenChange]);
+
+  // Enter inside the modal: save notes if changed, otherwise close.
+  // - <textarea>: Ctrl/Cmd+Enter saves; plain Enter inserts newline normally
+  // - <button>, <a>: let native activation proceed
+  // - <select>: blur so dropdown closes, then close the modal
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Enter") return;
+      const target = event.target as HTMLElement;
+
+      if (target instanceof HTMLTextAreaElement) {
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          handleSaveNotes();
+        }
+        // plain Enter → let textarea insert newline
+        return;
+      }
+
+      if (
+        target instanceof HTMLButtonElement ||
+        target instanceof HTMLAnchorElement
+      ) {
+        return;
+      }
+
+      if (target instanceof HTMLSelectElement) {
+        event.preventDefault();
+        target.blur();
+        onOpenChange(false);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (hasPendingNotes) {
+        handleSaveNotes();
+      } else {
+        onOpenChange(false);
+      }
+    },
+    [hasPendingNotes, handleSaveNotes, onOpenChange],
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-md"
+        onKeyDown={handleKeyDown}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="text-muted-foreground mb-1 flex items-center gap-2">
             <SourceIcon source={task.source} />
@@ -114,7 +189,12 @@ export function TaskDetailModal({
         )}
 
         <Separator />
-        <TaskActions task={task} />
+        <TaskActions
+          task={task}
+          notesDraft={notesDraft}
+          onNotesDraftChange={setNotesDraft}
+          onSaveNotes={handleSaveNotes}
+        />
       </DialogContent>
     </Dialog>
   );

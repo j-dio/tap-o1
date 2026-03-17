@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useState } from "react";
 import type { TaskWithCourse } from "@/types/task";
 import { useTaskActions } from "@/hooks/use-task-actions";
 import { Button } from "@/components/ui/button";
@@ -10,11 +9,18 @@ import { ExternalLink, Trash2 } from "lucide-react";
 
 interface TaskActionsProps {
   task: TaskWithCourse;
+  notesDraft: string;
+  onNotesDraftChange: (value: string) => void;
+  onSaveNotes: () => void;
 }
 
-export function TaskActions({ task }: TaskActionsProps) {
+export function TaskActions({
+  task,
+  notesDraft,
+  onNotesDraftChange,
+  onSaveNotes,
+}: TaskActionsProps) {
   const { setStatus, setPriority, setNotes, deleteTask } = useTaskActions();
-  const [notesDraft, setNotesDraft] = useState(task.notes ?? "");
 
   const isSavingStatus = useMemo(
     () => setStatus.isPending && setStatus.variables?.taskId === task.id,
@@ -149,23 +155,21 @@ export function TaskActions({ task }: TaskActionsProps) {
           className="border-input bg-background min-h-20 w-full rounded-md border p-2 text-sm"
           value={notesDraft}
           onChange={(event) => {
-            setNotesDraft(event.target.value);
+            onNotesDraftChange(event.target.value);
           }}
           placeholder="Add your notes for this task..."
         />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground/60 hidden text-xs sm:inline">
+            <kbd className="font-sans">Ctrl</kbd>+
+            <kbd className="font-sans">Enter</kbd> to save
+          </span>
           <Button
             type="button"
             size="sm"
             variant="outline"
             disabled={isSavingNotes}
-            onClick={() => {
-              const trimmedNotes = notesDraft.trim();
-              setNotes.mutate({
-                taskId: task.id,
-                notes: trimmedNotes || null,
-              });
-            }}
+            onClick={onSaveNotes}
           >
             Save notes
           </Button>

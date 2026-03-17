@@ -29,6 +29,12 @@ const columnIcons: Record<ColumnId, LucideIcon> = {
   done: CheckCircle2,
 };
 
+const columnAccentBg: Record<ColumnId, string> = {
+  todo: "bg-info/10 text-info",
+  in_progress: "bg-warning/10 text-warning",
+  done: "bg-success/10 text-success",
+};
+
 // ---- Per-column empty state ------------------------------------------------
 
 interface ColumnEmptyStateProps {
@@ -57,10 +63,14 @@ function ColumnEmptyState({ id, todoWindowDays }: ColumnEmptyStateProps) {
   const Icon = config.icon;
 
   return (
-    <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center">
-      <Icon className="size-6 opacity-40" />
-      <p className="text-xs font-medium">{config.title}</p>
-      <p className="text-xs opacity-70">{config.description}</p>
+    <div className="flex flex-col items-center gap-2.5 rounded-xl border border-dashed border-border/60 p-6 text-center">
+      <div className={cn("flex size-9 items-center justify-center rounded-full", columnAccentBg[id])}>
+        <Icon className="size-4" />
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-foreground/70">{config.title}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground/70">{config.description}</p>
+      </div>
     </div>
   );
 }
@@ -108,14 +118,16 @@ export function ActionBoardColumn({
       )}
     >
       {/* Column header */}
-      <div className="mb-3 flex min-h-8 items-center gap-2">
-        <Icon className={cn("size-4", accentClass)} />
-        <span className="text-sm font-semibold">{title}</span>
+      <div className="mb-3 flex min-h-8 items-center gap-2 px-0.5">
+        <div className={cn("flex size-6 shrink-0 items-center justify-center rounded-md", columnAccentBg[id])}>
+          <Icon className="size-3.5" />
+        </div>
+        <span className="text-[13px] font-semibold tracking-[-0.01em]">{title}</span>
         {id === "done" && onDismissAll && (
           <Button
             variant="ghost"
             size="sm"
-            className="ml-auto text-xs"
+            className="ml-auto h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
             disabled={tasks.length === 0 || isDismissAllPending}
             onClick={onDismissAll}
           >
@@ -124,7 +136,8 @@ export function ActionBoardColumn({
         )}
         <span
           className={cn(
-            "bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium",
+            "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+            columnAccentBg[id],
             !(id === "done" && onDismissAll) && "ml-auto",
           )}
         >
@@ -138,7 +151,7 @@ export function ActionBoardColumn({
           items={tasks.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="min-h-25 space-y-3">
+          <div className="min-h-25 space-y-2.5">
             {tasks.map((task) => (
               <SortableTaskCard key={task.id} task={task} />
             ))}
@@ -149,15 +162,15 @@ export function ActionBoardColumn({
         </SortableContext>
 
         {(onShowLess || onShowMore) && (
-          <div className="mt-3 flex gap-2 pb-1">
+          <div className="mt-3 flex gap-1.5 pb-1">
             {onShowLess && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-10 flex-1 justify-center rounded-md px-3 text-sm"
+                className="h-8 flex-1 justify-center rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground"
                 onClick={onShowLess}
               >
-                <ChevronUp className="mr-1.5 size-3.5" />
+                <ChevronUp className="mr-1 size-3" />
                 Show less
               </Button>
             )}
@@ -165,10 +178,10 @@ export function ActionBoardColumn({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-10 flex-1 justify-center rounded-md px-3 text-sm"
+                className="h-8 flex-1 justify-center rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground"
                 onClick={onShowMore}
               >
-                <ChevronDown className="mr-1.5 size-3.5" />
+                <ChevronDown className="mr-1 size-3" />
                 {showMoreLabel ?? "Show more"}
               </Button>
             )}

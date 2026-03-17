@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AppLogo } from "@/components/app-logo";
 
 const ERROR_MESSAGES: Record<string, string> = {
   missing_code: "Authentication was cancelled. Please try again.",
@@ -62,11 +63,7 @@ export function LoginCard({ error }: { error?: string }) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <div className="bg-primary mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl">
-          <span className="text-primary-foreground text-xl font-bold">
-            O(1)
-          </span>
-        </div>
+        <AppLogo className="mx-auto mb-4 size-16" />
         <CardTitle className="text-2xl font-bold">TapO(1)</CardTitle>
         <CardDescription className="text-base">
           Academic tracking in constant time.

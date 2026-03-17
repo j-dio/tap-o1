@@ -89,8 +89,17 @@ export function ActionBoard({
     useSensor(TouchSensor, {
       activationConstraint: { delay: 250, tolerance: 5 },
     }),
+    // Keyboard drag is disabled (keyboardCodes.start is empty) because the
+    // activatorNode guard in dnd-kit's KeyboardSensor only fires when
+    // activatorNode.current is non-null. SortableTaskCard does not set
+    // setActivatorNodeRef, so the guard is bypassed and any Enter/Space keydown
+    // reaching the wrapper — including events bubbled from inner buttons and
+    // Radix Dialog focus-return — incorrectly activates drag. Pointer and touch
+    // drag continue to work. Keyboard navigation within the board is not
+    // implemented, so no functionality is lost.
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      keyboardCodes: { start: [], cancel: [], end: [] },
     }),
   );
 
