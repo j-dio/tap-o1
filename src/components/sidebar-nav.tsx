@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import {
+  AlertCircle,
   Calendar,
   ChevronsUpDown,
   History,
@@ -50,19 +51,21 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
     });
   }
 
+  const initials = displayName.charAt(0).toUpperCase();
+
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5">
         <AppLogo className="size-8 shrink-0" />
-        <span className="text-sm font-semibold">TapO(1)</span>
+        <span className="text-sm font-bold tracking-[-0.02em]">TapO(1)</span>
       </div>
 
       <Separator />
 
-      {/* Nav links — scrollable when content overflows */}
+      {/* Nav links */}
       <nav
-        className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-3"
+        className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3"
         aria-label="Dashboard"
       >
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -75,13 +78,18 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                 isActive
                   ? "skeu-nav-active text-foreground"
-                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
               )}
             >
-              <Icon className="size-4" />
+              <Icon
+                className={cn(
+                  "size-4 shrink-0 transition-colors",
+                  isActive ? "text-foreground" : "text-muted-foreground",
+                )}
+              />
               {label}
             </Link>
           );
@@ -90,11 +98,12 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
 
       {/* UVEC status — pinned above profile */}
       {!hasUvec && (
-        <div className="shrink-0 px-3 pb-2">
+        <div className="shrink-0 px-2.5 pb-2">
           <Link
             href="/onboarding"
-            className="text-muted-foreground hover:border-primary hover:text-foreground block rounded-md border border-dashed px-3 py-2 text-xs transition-colors"
+            className="flex items-center gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/5 px-3 py-2 text-xs font-medium text-warning/80 transition-colors hover:border-warning/60 hover:bg-warning/10 hover:text-warning"
           >
+            <AlertCircle className="size-3.5 shrink-0" />
             Connect UVEC to sync tasks
           </Link>
         </div>
@@ -102,26 +111,27 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
 
       <Separator />
 
-      {/* User info + actions — always visible at bottom */}
-      <div className="shrink-0 px-3 py-3">
-        <div className="space-y-2">
+      {/* User info + actions */}
+      <div className="shrink-0 px-2.5 py-3">
+        <div className="space-y-1.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="hover:bg-accent/40 focus-visible:ring-ring group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors outline-none focus-visible:ring-2"
+                className="hover:bg-accent/50 focus-visible:ring-ring group flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors outline-none focus-visible:ring-2"
                 aria-label="Open account menu"
               >
-                <div className="bg-muted ring-border/50 group-hover:ring-primary/40 group-focus-visible:ring-primary/50 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ring-1 transition-colors">
-                  {displayName.charAt(0).toUpperCase()}
+                {/* Avatar */}
+                <div className="relative flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-bold ring-1 ring-border/30 transition-shadow group-hover:ring-border/60">
+                  {initials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{displayName}</p>
-                  <p className="text-muted-foreground truncate text-xs">
+                  <p className="truncate text-[13px] font-semibold leading-tight">{displayName}</p>
+                  <p className="text-muted-foreground truncate text-[11px] leading-tight">
                     {email}
                   </p>
                 </div>
-                <ChevronsUpDown className="text-muted-foreground group-hover:text-foreground group-focus-visible:text-foreground size-3.5 shrink-0 transition-colors" />
+                <ChevronsUpDown className="text-muted-foreground/60 group-hover:text-muted-foreground size-3 shrink-0 transition-colors" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" side="top" className="w-56">

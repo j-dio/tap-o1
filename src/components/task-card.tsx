@@ -25,6 +25,15 @@ const urgencyBorder: Record<string, string> = {
   none: "border-l-border",
 };
 
+const urgencyGlow: Record<string, string> = {
+  overdue: "before:bg-destructive/5",
+  urgent: "before:bg-warning/5",
+  soon: "before:bg-info/5",
+  upcoming: "",
+  later: "",
+  none: "",
+};
+
 export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
   const [open, setOpen] = useState(false);
   const { setStatus } = useTaskActions();
@@ -46,22 +55,32 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
     <>
       <div
         className={cn(
-          "group skeu-card relative rounded-[14px] border-l-[3px] p-3.5",
+          "group skeu-card relative rounded-[14px] border-l-[3px] overflow-hidden",
           urgencyBorder[urgency],
           isDragging && "scale-105 rotate-2 opacity-50 shadow-lg!",
           task.status === "done" && "opacity-60",
         )}
       >
-        {/* Desktop quick actions - visible on hover, positioned top-right */}
-        <div className="absolute top-2 right-2 hidden gap-1 opacity-0 transition-opacity group-hover:opacity-100 lg:flex">
+        {/* Subtle urgency tint strip */}
+        {(urgency === "overdue" || urgency === "urgent" || urgency === "soon") && (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 opacity-100",
+              urgencyGlow[urgency],
+            )}
+          />
+        )}
+
+        {/* Desktop quick actions — top-right, appear on hover */}
+        <div className="absolute top-2.5 right-2.5 hidden items-center gap-0.5 opacity-0 transition-all duration-150 group-hover:opacity-100 lg:flex">
           <button
             type="button"
             onClick={handleQuickInProgress}
             className={cn(
-              "rounded-full p-1 transition-colors",
+              "flex size-6 items-center justify-center rounded-md transition-all duration-150",
               task.status === "in_progress"
-                ? "bg-warning/10 text-warning"
-                : "text-muted-foreground hover:bg-warning/10 hover:text-warning",
+                ? "bg-warning/15 text-warning"
+                : "text-muted-foreground hover:bg-warning/12 hover:text-warning",
             )}
             aria-label={
               task.status === "in_progress"
@@ -69,70 +88,68 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
                 : "Mark as in progress"
             }
           >
-            <Clock className="size-4" />
+            <Clock className="size-3.5" />
           </button>
           <button
             type="button"
             onClick={handleQuickDone}
             className={cn(
-              "rounded-full p-1 transition-colors",
+              "flex size-6 items-center justify-center rounded-md transition-all duration-150",
               task.status === "done"
-                ? "bg-success/10 text-success"
-                : "text-muted-foreground hover:bg-success/10 hover:text-success",
+                ? "bg-success/15 text-success"
+                : "text-muted-foreground hover:bg-success/12 hover:text-success",
             )}
             aria-label={
               task.status === "done" ? "Mark as not done" : "Mark as done"
             }
           >
             {task.status === "done" ? (
-              <CheckCircle2 className="size-4" />
+              <CheckCircle2 className="size-3.5" />
             ) : (
-              <Circle className="size-4" />
+              <Circle className="size-3.5" />
             )}
           </button>
         </div>
 
-        {/* Source type icon - bottom-right corner */}
-        <SourceIcon source={task.source} className="absolute right-2.5 bottom-2.5 opacity-40" />
+        {/* Source type icon — bottom-right, very subtle */}
+        <SourceIcon source={task.source} className="absolute right-2.5 bottom-2.5 opacity-30" />
 
-        {/* Mobile quick action - always visible */}
+        {/* Mobile quick action — always visible */}
         <button
           type="button"
           onClick={handleQuickDone}
           className={cn(
             "absolute top-3.5 left-3.5 rounded-full transition-colors lg:hidden",
-            task.status === "done" ? "text-success" : "text-muted-foreground",
+            task.status === "done" ? "text-success" : "text-muted-foreground/60",
           )}
           aria-label={
             task.status === "done" ? "Mark as not done" : "Mark as done"
           }
         >
           {task.status === "done" ? (
-            <CheckCircle2 className="size-5" />
+            <CheckCircle2 className="size-4.5" />
           ) : (
-            <Circle className="size-5" />
+            <Circle className="size-4.5" />
           )}
         </button>
 
-        {/* Card content - clickable to open modal */}
+        {/* Card content — clickable to open modal */}
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="w-full pb-4 pl-6 text-left lg:pr-16 lg:pl-0"
+          className="w-full px-3.5 pt-3 pb-3.5 pl-6 text-left lg:pr-14 lg:pl-3.5"
         >
-          <div className="flex items-start gap-2">
-            <span
-              className={cn(
-                "line-clamp-2 flex-1 text-[13px] leading-snug font-medium",
-                task.status === "done" && "line-through",
-              )}
-            >
-              {task.title}
-            </span>
-          </div>
+          <span
+            className={cn(
+              "line-clamp-2 block text-[13px] leading-[1.45] font-medium tracking-[-0.01em]",
+              task.status === "done" && "line-through text-muted-foreground",
+            )}
+          >
+            {task.title}
+          </span>
 
           {!compact && (
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
               <CourseBadge course={task.course} />
               <CountdownBadge dueDate={task.dueDate} />
             </div>

@@ -46,7 +46,7 @@ export function DashboardShell({
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile header */}
-        <header className="flex h-14 items-center gap-3 border-b px-4 lg:hidden">
+        <header className="flex h-13 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-sm lg:hidden">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -57,7 +57,7 @@ export function DashboardShell({
           </Button>
           <div className="flex items-center gap-2">
             <AppLogo className="size-7 shrink-0" />
-            <span className="text-sm font-semibold">TapO(1)</span>
+            <span className="text-[13px] font-bold tracking-[-0.02em]">TapO(1)</span>
           </div>
           <div className="ml-auto flex items-center gap-0.5">
             <ThemeToggle />
@@ -67,7 +67,7 @@ export function DashboardShell({
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8">
+          <div className="mx-auto w-full max-w-6xl px-4 py-5 lg:px-8 lg:py-7">
             {children}
           </div>
         </main>
