@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/onboarding";
@@ -10,7 +10,32 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=missing_code`);
   }
 
-  const supabase = await createClient();
+  // We must set auth cookies on the SAME response object we return.
+  // Using `createClient()` (which goes through `cookies()` from next/headers)
+  // writes cookies to an implicit response, but `NextResponse.redirect()`
+  // creates a *different* response — so the cookies are lost and the user
+  // ends up in an infinite login loop.
+  //
+  // Instead, create a single redirect response upfront and attach cookies to it.
+  const redirectResponse = NextResponse.redirect(`${origin}/onboarding`);
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            redirectResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
@@ -48,18 +73,23 @@ export async function GET(request: Request) {
         email: user.email,
         google_refresh_token: session?.provider_refresh_token ?? null,
       });
-      return NextResponse.redirect(`${origin}/onboarding`);
+      // redirectResponse already points to /onboarding — return as-is
+      return redirectResponse;
     }
 
     // If profile exists and has UVEC URL, go to requested destination
     if (profile.uvec_ical_url) {
-      // If `next` was explicitly set (e.g. from settings reconnect), honor it
-      return NextResponse.redirect(
-        `${origin}${next === "/onboarding" ? "/dashboard" : next}`,
+      const destination =
+        next === "/onboarding" ? "/dashboard" : next;
+      redirectResponse.headers.set(
+        "Location",
+        `${origin}${destination}`,
       );
+      return redirectResponse;
     }
   }
 
-  // Otherwise, go to onboarding
-  return NextResponse.redirect(`${origin}${next}`);
+  // Otherwise, go to onboarding (already the default redirect target)
+  redirectResponse.headers.set("Location", `${origin}${next}`);
+  return redirectResponse;
 }
