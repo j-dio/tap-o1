@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { AppLogo } from "@/components/app-logo";
 
 const GITHUB_README_URL = "https://github.com/j-dio/task-aggregator#readme";
 
@@ -163,11 +164,7 @@ export default async function Home() {
           {/* ── Hero ──────────────────────────────────────────────────── */}
           <section className="flex flex-col items-center gap-6 pt-20 pb-16 text-center">
             {/* Logo badge */}
-            <div className="lp-s1 lp-logo bg-primary flex size-24 items-center justify-center rounded-3xl">
-              <span className="text-primary-foreground text-3xl font-bold tracking-tight">
-                O(1)
-              </span>
-            </div>
+            <AppLogo className="lp-s1 lp-logo size-24" />
 
             {/* Headline */}
             <div className="lp-s2 flex flex-col gap-2">
@@ -219,7 +216,7 @@ export default async function Home() {
             <div className="mb-10 text-center">
               <h2 className="text-2xl font-bold">Up in under a minute</h2>
               <p className="text-muted-foreground mt-1.5 text-sm">
-                Three steps and you&apos;re done — no setup fatigue.
+                Three steps and you&apos;re done.
               </p>
             </div>
 
@@ -280,11 +277,7 @@ export default async function Home() {
           {/* ── Final CTA ─────────────────────────────────────────────── */}
           <section className="lp-s6 w-full pb-24">
             <div className="skeu-card bg-card rounded-2xl border p-8 text-center">
-              <div className="bg-primary mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl">
-                <span className="text-primary-foreground text-lg font-bold">
-                  O(1)
-                </span>
-              </div>
+              <AppLogo className="mx-auto mb-4 size-14" />
               <h2 className="text-xl font-bold">
                 Ready to simplify your academics?
               </h2>

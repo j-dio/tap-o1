@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { AppLogo } from "@/components/app-logo";
 import { ExportButton } from "@/components/export-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -55,11 +56,7 @@ export function DashboardShell({
             <Menu className="size-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="bg-primary flex size-7 items-center justify-center rounded-md">
-              <span className="text-primary-foreground text-[9px] font-bold">
-                O(1)
-              </span>
-            </div>
+            <AppLogo className="size-7 shrink-0" />
             <span className="text-sm font-semibold">TapO(1)</span>
           </div>
           <div className="ml-auto flex items-center gap-0.5">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppLogo } from "@/components/app-logo";
 import {
   Calendar,
   ChevronsUpDown,
@@ -53,11 +54,7 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5">
-        <div className="bg-primary flex size-8 items-center justify-center rounded-lg">
-          <span className="text-primary-foreground text-[9px] font-bold">
-            O(1)
-          </span>
-        </div>
+        <AppLogo className="size-8 shrink-0" />
         <span className="text-sm font-semibold">TapO(1)</span>
       </div>
 
