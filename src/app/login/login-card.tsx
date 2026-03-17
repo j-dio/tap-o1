@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { signInWithGoogle } from "@/lib/actions/auth";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,18 +46,40 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export function LoginCard({ error }: { error?: string }) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
   const errorMessage = error ? (ERROR_MESSAGES[error] ?? error) : null;
 
-  function handleSignIn() {
-    startTransition(async () => {
-      const result = await signInWithGoogle();
+  async function handleSignIn() {
+    setIsPending(true);
 
-      if (result?.error) {
-        // Server action handles redirect; error is displayed via URL params
-      }
+    // Use the BROWSER Supabase client so the PKCE code verifier is stored
+    // directly in browser cookies via document.cookie. Using a server action
+    // with redirect() can lose the code verifier cookie on production hosts.
+    const supabase = createClient();
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: [
+          "openid",
+          "email",
+          "profile",
+          "https://www.googleapis.com/auth/classroom.courses.readonly",
+          "https://www.googleapis.com/auth/classroom.coursework.me.readonly",
+          "https://www.googleapis.com/auth/classroom.announcements.readonly",
+        ].join(" "),
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
     });
+
+    // If we reach here, the redirect didn't happen (error occurred)
+    if (oauthError) {
+      setIsPending(false);
+    }
   }
 
   return (
