@@ -111,7 +111,7 @@ export function TaskDetailModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-md"
+        className="max-w-md max-h-[90svh] overflow-y-auto"
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
