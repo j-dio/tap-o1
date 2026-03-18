@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { TaskWithCourse } from "@/types/task";
@@ -10,6 +11,11 @@ interface SortableTaskCardProps {
 }
 
 export function SortableTaskCard({ task }: SortableTaskCardProps) {
+  // Track whether the task detail modal is open so we can suspend drag
+  // listeners while it is — otherwise touch events inside the modal bleed
+  // through to the dnd-kit sensor and trigger unwanted drags.
+  const [modalOpen, setModalOpen] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -28,9 +34,11 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="cursor-grab active:cursor-grabbing transition-transform duration-200"
+      className={modalOpen ? "transition-transform duration-200" : "cursor-grab active:cursor-grabbing transition-transform duration-200"}
       {...attributes}
-      {...listeners}
+      // Listeners are suspended while the modal is open so that holds/touches
+      // inside the dialog don't activate the drag sensor on the card behind it.
+      {...(modalOpen ? {} : listeners)}
       // Override dnd-kit's default tabIndex={0} so the drag wrapper is not
       // reachable via keyboard Tab. This prevents the KeyboardSensor from
       // activating drag when the user presses Enter/Space (e.g. after closing
@@ -39,7 +47,7 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
       // to work normally via {...listeners}.
       tabIndex={-1}
     >
-      <TaskCard task={task} isDragging={isDragging} />
+      <TaskCard task={task} isDragging={isDragging} onModalOpenChange={setModalOpen} />
     </div>
   );
 }
