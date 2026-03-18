@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -62,13 +62,9 @@ const tourSteps: TourStep[] = [
 
 export function OnboardingTour() {
   const [step, setStep] = useState(0);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem(TOUR_COMPLETED_KEY) === null) {
-      setVisible(true);
-    }
-  }, []);
+  const [visible, setVisible] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(TOUR_COMPLETED_KEY) === null,
+  );
 
   if (!visible) return null;
 

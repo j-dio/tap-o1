@@ -55,13 +55,13 @@ export function useSync() {
 
       // Surface toast notifications
       if (error) {
-        toast.error("Sync failed", { description: error.message });
+        toast.error("Sync failed", { id: "sync", description: error.message });
       } else if (_data) {
         const { errors: warnings } = _data;
         if (warnings.length === 0) {
-          toast.success("Synced successfully");
+          toast.success("Synced successfully", { id: "sync" });
         } else {
-          toast.warning("Synced with warnings", { description: warnings[0] });
+          toast.warning("Synced with warnings", { id: "sync", description: warnings[0] });
         }
       }
     },

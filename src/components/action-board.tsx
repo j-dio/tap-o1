@@ -87,7 +87,11 @@ export function ActionBoard({
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
+      // delay: 250ms hold required before drag activates.
+      // tolerance: 20px — how much the finger can move during the hold before
+      // the drag is cancelled. 8px was too tight for typical mobile finger
+      // jitter and caused drag to cancel before activation.
+      activationConstraint: { delay: 250, tolerance: 20 },
     }),
     // Keyboard drag is disabled (keyboardCodes.start is empty) because the
     // activatorNode guard in dnd-kit's KeyboardSensor only fires when

@@ -9,6 +9,33 @@ interface UsePullToRefreshOptions {
   disabled?: boolean;
 }
 
+interface PullToRefreshActivationArgs {
+  disabled: boolean;
+  scrollY: number;
+  touchInsideDragRegion: boolean;
+}
+
+const DRAG_REGION_SELECTOR = "[data-dnd-drag-region='true']";
+
+export function shouldActivatePullToRefresh({
+  disabled,
+  scrollY,
+  touchInsideDragRegion,
+}: PullToRefreshActivationArgs): boolean {
+  if (disabled) return false;
+  if (scrollY > 0) return false;
+  if (touchInsideDragRegion) return false;
+
+  return true;
+}
+
+function isTouchInsideDragRegion(target: EventTarget | null): boolean {
+  if (typeof Element === "undefined") return false;
+  if (!(target instanceof Element)) return false;
+
+  return target.closest(DRAG_REGION_SELECTOR) !== null;
+}
+
 export function usePullToRefresh({
   onRefresh,
   threshold = 60,
@@ -22,7 +49,13 @@ export function usePullToRefresh({
 
   const onTouchStart = useCallback(
     (event: React.TouchEvent<HTMLElement>) => {
-      if (disabled || window.scrollY > 0) {
+      const canActivate = shouldActivatePullToRefresh({
+        disabled,
+        scrollY: window.scrollY,
+        touchInsideDragRegion: isTouchInsideDragRegion(event.target),
+      });
+
+      if (!canActivate) {
         startYRef.current = null;
         activeRef.current = false;
         return;

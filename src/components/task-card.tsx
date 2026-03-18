@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, Clock } from "lucide-react";
+import { CheckCircle2, Circle, Clock, MoreVertical } from "lucide-react";
 import type { TaskWithCourse } from "@/types/task";
 import { getTaskUrgency, cn } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
@@ -9,11 +9,18 @@ import { CountdownBadge } from "@/components/countdown-badge";
 import { SourceIcon } from "@/components/source-icon";
 import { TaskDetailModal } from "@/components/task-detail-modal";
 import { useTaskActions } from "@/hooks/use-task-actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TaskCardProps {
   task: TaskWithCourse;
   isDragging?: boolean;
   compact?: boolean;
+  onModalOpenChange?: (open: boolean) => void;
 }
 
 const urgencyBorder: Record<string, string> = {
@@ -34,8 +41,39 @@ const urgencyGlow: Record<string, string> = {
   none: "",
 };
 
-export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
+type StatusOption = { label: string; status: "pending" | "in_progress" | "done" };
+
+function getMobileStatusOptions(
+  current: "pending" | "in_progress" | "done" | "dismissed",
+): StatusOption[] {
+  switch (current) {
+    case "pending":
+      return [
+        { label: "Mark in progress", status: "in_progress" },
+        { label: "Mark as done", status: "done" },
+      ];
+    case "in_progress":
+      return [
+        { label: "Move back to To Do", status: "pending" },
+        { label: "Mark as done", status: "done" },
+      ];
+    case "done":
+      return [
+        { label: "Move back to To Do", status: "pending" },
+        { label: "Mark in progress", status: "in_progress" },
+      ];
+    default:
+      return [{ label: "Move back to To Do", status: "pending" }];
+  }
+}
+
+export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskCardProps) {
   const [open, setOpen] = useState(false);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    onModalOpenChange?.(nextOpen);
+  };
   const { setStatus } = useTaskActions();
   const urgency = getTaskUrgency(task.dueDate);
 
@@ -50,6 +88,8 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
     const newStatus = task.status === "in_progress" ? "pending" : "in_progress";
     setStatus.mutate({ taskId: task.id, status: newStatus });
   };
+
+  const mobileOptions = getMobileStatusOptions(task.status);
 
   return (
     <>
@@ -111,33 +151,57 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
           </button>
         </div>
 
+        {/* Mobile quick actions — top-right dropdown, always visible */}
+        <div
+          className="absolute top-2 right-2 lg:hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-md transition-colors",
+                  task.status === "done"
+                    ? "text-success"
+                    : task.status === "in_progress"
+                      ? "text-warning"
+                      : "text-muted-foreground/60",
+                )}
+                aria-label="Task actions"
+              >
+                {task.status === "done" ? (
+                  <CheckCircle2 className="size-4" />
+                ) : task.status === "in_progress" ? (
+                  <Clock className="size-4" />
+                ) : (
+                  <MoreVertical className="size-4" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              {mobileOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.status}
+                  onSelect={() =>
+                    setStatus.mutate({ taskId: task.id, status: opt.status })
+                  }
+                >
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         {/* Source type icon — bottom-right, very subtle */}
         <SourceIcon source={task.source} className="absolute right-2.5 bottom-2.5 opacity-30" />
-
-        {/* Mobile quick action — always visible */}
-        <button
-          type="button"
-          onClick={handleQuickDone}
-          className={cn(
-            "absolute top-3.5 left-3.5 rounded-full transition-colors lg:hidden",
-            task.status === "done" ? "text-success" : "text-muted-foreground/60",
-          )}
-          aria-label={
-            task.status === "done" ? "Mark as not done" : "Mark as done"
-          }
-        >
-          {task.status === "done" ? (
-            <CheckCircle2 className="size-4.5" />
-          ) : (
-            <Circle className="size-4.5" />
-          )}
-        </button>
 
         {/* Card content — clickable to open modal */}
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          className="w-full px-3.5 pt-3 pb-3.5 pl-6 text-left lg:pr-14 lg:pl-3.5"
+          onClick={() => handleOpenChange(true)}
+            className="w-full pl-3.5 pr-8 pt-3 pb-3.5 text-left lg:pr-14"
         >
           <span
             className={cn(
@@ -157,7 +221,7 @@ export function TaskCard({ task, isDragging, compact }: TaskCardProps) {
         </button>
       </div>
 
-      <TaskDetailModal task={task} open={open} onOpenChange={setOpen} />
+      <TaskDetailModal task={task} open={open} onOpenChange={handleOpenChange} />
     </>
   );
 }
