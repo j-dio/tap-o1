@@ -28,13 +28,22 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    // Required for dnd-kit TouchSensor to receive touch events on mobile.
+    // Without this, the browser claims all touch gestures as scroll/pan and
+    // the TouchSensor never fires, making drag-and-drop silently non-functional.
+    touchAction: "none" as const,
   };
 
   return (
     <div
       ref={setNodeRef}
+      data-dnd-drag-region="true"
       style={style}
-      className={modalOpen ? "transition-transform duration-200" : "cursor-grab active:cursor-grabbing transition-transform duration-200"}
+      className={
+        modalOpen
+          ? "transition-transform duration-200"
+          : "cursor-grab transition-transform duration-200 active:cursor-grabbing"
+      }
       {...attributes}
       // Listeners are suspended while the modal is open so that holds/touches
       // inside the dialog don't activate the drag sensor on the card behind it.
@@ -47,7 +56,11 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
       // to work normally via {...listeners}.
       tabIndex={-1}
     >
-      <TaskCard task={task} isDragging={isDragging} onModalOpenChange={setModalOpen} />
+      <TaskCard
+        task={task}
+        isDragging={isDragging}
+        onModalOpenChange={setModalOpen}
+      />
     </div>
   );
 }
