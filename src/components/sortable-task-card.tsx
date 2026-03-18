@@ -28,16 +28,11 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    // Required for dnd-kit TouchSensor to receive touch events on mobile.
-    // Without this, the browser claims all touch gestures as scroll/pan and
-    // the TouchSensor never fires, making drag-and-drop silently non-functional.
-    touchAction: "none" as const,
   };
 
   return (
     <div
       ref={setNodeRef}
-      data-dnd-drag-region="true"
       style={style}
       className={
         modalOpen

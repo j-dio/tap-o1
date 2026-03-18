@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, Clock, MoreVertical } from "lucide-react";
+import { CheckCircle2, Circle, Clock, GripVertical } from "lucide-react";
 import type { TaskWithCourse } from "@/types/task";
 import { getTaskUrgency, cn } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
@@ -9,12 +9,6 @@ import { CountdownBadge } from "@/components/countdown-badge";
 import { SourceIcon } from "@/components/source-icon";
 import { TaskDetailModal } from "@/components/task-detail-modal";
 import { useTaskActions } from "@/hooks/use-task-actions";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface TaskCardProps {
   task: TaskWithCourse;
@@ -41,31 +35,6 @@ const urgencyGlow: Record<string, string> = {
   none: "",
 };
 
-type StatusOption = { label: string; status: "pending" | "in_progress" | "done" };
-
-function getMobileStatusOptions(
-  current: "pending" | "in_progress" | "done" | "dismissed",
-): StatusOption[] {
-  switch (current) {
-    case "pending":
-      return [
-        { label: "Mark in progress", status: "in_progress" },
-        { label: "Mark as done", status: "done" },
-      ];
-    case "in_progress":
-      return [
-        { label: "Move back to To Do", status: "pending" },
-        { label: "Mark as done", status: "done" },
-      ];
-    case "done":
-      return [
-        { label: "Move back to To Do", status: "pending" },
-        { label: "Mark in progress", status: "in_progress" },
-      ];
-    default:
-      return [{ label: "Move back to To Do", status: "pending" }];
-  }
-}
 
 export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskCardProps) {
   const [open, setOpen] = useState(false);
@@ -88,8 +57,6 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskC
     const newStatus = task.status === "in_progress" ? "pending" : "in_progress";
     setStatus.mutate({ taskId: task.id, status: newStatus });
   };
-
-  const mobileOptions = getMobileStatusOptions(task.status);
 
   return (
     <>
@@ -151,47 +118,17 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskC
           </button>
         </div>
 
-        {/* Mobile quick actions — top-right dropdown, always visible */}
+        {/* Mobile drag handle — touch-action:none confines scroll-blocking to
+            this element only, so the rest of the card remains freely scrollable.
+            Hidden on desktop where the whole card is pointer-draggable. */}
         <div
-          className="absolute top-2 right-2 lg:hidden"
+          className="absolute top-2 right-2 flex size-6 items-center justify-center lg:hidden"
+          style={{ touchAction: "none" }}
+          data-dnd-drag-region="true"
           onClick={(e) => e.stopPropagation()}
+          aria-label="Drag to reorder"
         >
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "flex size-6 items-center justify-center rounded-md transition-colors",
-                  task.status === "done"
-                    ? "text-success"
-                    : task.status === "in_progress"
-                      ? "text-warning"
-                      : "text-muted-foreground/60",
-                )}
-                aria-label="Task actions"
-              >
-                {task.status === "done" ? (
-                  <CheckCircle2 className="size-4" />
-                ) : task.status === "in_progress" ? (
-                  <Clock className="size-4" />
-                ) : (
-                  <MoreVertical className="size-4" />
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-40">
-              {mobileOptions.map((opt) => (
-                <DropdownMenuItem
-                  key={opt.status}
-                  onSelect={() =>
-                    setStatus.mutate({ taskId: task.id, status: opt.status })
-                  }
-                >
-                  {opt.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <GripVertical className="size-4 text-muted-foreground/40" />
         </div>
 
         {/* Source type icon — bottom-right, very subtle */}
