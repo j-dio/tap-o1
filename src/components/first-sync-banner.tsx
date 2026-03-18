@@ -37,6 +37,7 @@ export function FirstSyncBanner({
     // time `tasks` changes (empty → loaded), so the banner appears as soon
     // as enough stale UVEC tasks are available.
     if (getPastDueCandidates(tasks, 7).length > FIRST_SYNC_BANNER_THRESHOLD) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
     }
   }, [tasks, visible]);

@@ -98,7 +98,6 @@ export function ActionBoardColumn({
   id,
   title,
   tasks,
-  accentClass,
   onShowMore,
   onShowLess,
   showMoreLabel,

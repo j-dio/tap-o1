@@ -5,9 +5,7 @@ import {
   GClassroomCourseSchema,
   GClassroomCourseWorkSchema,
   GClassroomAnnouncementSchema,
-  parseGClassroomResponse,
 } from "../lib/parsers/gclassroom-parser";
-import type { ParsedTask } from "../types/task";
 
 type GClassroomCourse = z.infer<typeof GClassroomCourseSchema>;
 type GClassroomCourseWork = z.infer<typeof GClassroomCourseWorkSchema>;

@@ -10,6 +10,7 @@ const TOKEN_PARAM_REGEX = /([?&])(icalUrl|token|feed|key)=[^&]*/gi;
 export function sentryBeforeSend(event: ErrorEvent): ErrorEvent | null {
   // SNTY-03: strip user email
   if (event.user) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { email: _email, ...rest } = event.user;
     event = { ...event, user: rest };
   }
