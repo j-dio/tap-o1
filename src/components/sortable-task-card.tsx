@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { TaskWithCourse } from "@/types/task";
 import { TaskCard } from "@/components/task-card";
 
@@ -15,6 +16,18 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
   // listeners while it is — otherwise touch events inside the modal bleed
   // through to the dnd-kit sensor and trigger unwanted drags.
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Detect mobile so we can route listeners to the grip handle only.
+  // Lazy init reads matchMedia on first client render (SSR-safe).
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   const {
     attributes,
@@ -30,31 +43,35 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
     transition,
   };
 
+  // On desktop: spread listeners on the whole wrapper so the full card is
+  // pointer-draggable (existing behaviour).
+  // On mobile: listeners go only on the grip handle inside TaskCard so that
+  // touching the card body never starts the drag timer.
+  const activeListeners = modalOpen ? undefined : listeners;
+  const wrapperListeners: SyntheticListenerMap | undefined = isMobile ? undefined : activeListeners;
+  const handleListeners: SyntheticListenerMap | undefined = isMobile ? activeListeners : undefined;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={
-        modalOpen
+        modalOpen || isMobile
           ? "transition-transform duration-200"
           : "cursor-grab transition-transform duration-200 active:cursor-grabbing"
       }
       {...attributes}
-      // Listeners are suspended while the modal is open so that holds/touches
-      // inside the dialog don't activate the drag sensor on the card behind it.
-      {...(modalOpen ? {} : listeners)}
       // Override dnd-kit's default tabIndex={0} so the drag wrapper is not
-      // reachable via keyboard Tab. This prevents the KeyboardSensor from
-      // activating drag when the user presses Enter/Space (e.g. after closing
-      // the task detail modal, focus returns to this element and a subsequent
-      // Enter would incorrectly start a drag). Pointer and touch drag continue
-      // to work normally via {...listeners}.
+      // reachable via keyboard Tab. Pointer and touch drag continue to work
+      // normally via listeners on wrapper (desktop) or grip handle (mobile).
       tabIndex={-1}
+      {...(wrapperListeners ?? {})}
     >
       <TaskCard
         task={task}
         isDragging={isDragging}
         onModalOpenChange={setModalOpen}
+        dragHandleListeners={handleListeners}
       />
     </div>
   );
