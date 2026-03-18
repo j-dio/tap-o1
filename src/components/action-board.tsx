@@ -87,7 +87,7 @@ export function ActionBoard({
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
+      activationConstraint: { delay: 250, tolerance: 8 },
     }),
     // Keyboard drag is disabled (keyboardCodes.start is empty) because the
     // activatorNode guard in dnd-kit's KeyboardSensor only fires when
