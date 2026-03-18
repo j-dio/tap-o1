@@ -86,7 +86,7 @@ export default function RootLayout({
           <OfflineBanner />
           {children}
           <AddToHomescreenPrompt />
-          <Toaster position="bottom-right" closeButton />
+          <Toaster position="bottom-right" closeButton visibleToasts={3} />
         </QueryProvider>
       </body>
     </html>

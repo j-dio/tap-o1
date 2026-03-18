@@ -123,7 +123,7 @@ export function useTaskActions() {
       );
       return { previousQueries };
     },
-    onSuccess: (_data, { status }) => {
+    onSuccess: (_data, { taskId, status }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       if (status === "dismissed") {
         queryClient.invalidateQueries({ queryKey: ["history-tasks"] });
@@ -136,15 +136,15 @@ export function useTaskActions() {
             : status === "in_progress"
               ? "Marked as in progress"
               : "Status updated";
-      toast.success(label);
+      toast.success(label, { id: `status-${taskId}` });
     },
-    onError: (err, _vars, context) => {
+    onError: (err, { taskId }, context) => {
       if (context?.previousQueries) {
         for (const [key, data] of context.previousQueries) {
           queryClient.setQueryData(key, data);
         }
       }
-      toast.error("Failed to update status", { description: err.message });
+      toast.error("Failed to update status", { id: `status-${taskId}`, description: err.message });
     },
   });
 
@@ -173,19 +173,20 @@ export function useTaskActions() {
       );
       return { previousQueries };
     },
-    onSuccess: (_data, { priority }) => {
+    onSuccess: (_data, { taskId, priority }) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success(
         priority ? `Priority set to ${priority}` : "Priority cleared",
+        { id: `priority-${taskId}` },
       );
     },
-    onError: (err, _vars, context) => {
+    onError: (err, { taskId }, context) => {
       if (context?.previousQueries) {
         for (const [key, data] of context.previousQueries) {
           queryClient.setQueryData(key, data);
         }
       }
-      toast.error("Failed to update priority", { description: err.message });
+      toast.error("Failed to update priority", { id: `priority-${taskId}`, description: err.message });
     },
   });
 
