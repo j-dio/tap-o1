@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, Circle, Clock, GripVertical } from "lucide-react";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { TaskWithCourse } from "@/types/task";
 import { getTaskUrgency, cn } from "@/lib/utils";
 import { CourseBadge } from "@/components/course-badge";
@@ -15,6 +16,7 @@ interface TaskCardProps {
   isDragging?: boolean;
   compact?: boolean;
   onModalOpenChange?: (open: boolean) => void;
+  dragHandleListeners?: SyntheticListenerMap;
 }
 
 const urgencyBorder: Record<string, string> = {
@@ -36,7 +38,7 @@ const urgencyGlow: Record<string, string> = {
 };
 
 
-export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskCardProps) {
+export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHandleListeners }: TaskCardProps) {
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (nextOpen: boolean) => {
@@ -118,8 +120,9 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskC
           </button>
         </div>
 
-        {/* Mobile drag handle — touch-action:none confines scroll-blocking to
-            this element only, so the rest of the card remains freely scrollable.
+        {/* Mobile drag handle — listeners are scoped here so the TouchSensor
+            only activates from this element. touch-action:none confines
+            scroll-blocking to the handle; the rest of the card scrolls freely.
             Hidden on desktop where the whole card is pointer-draggable. */}
         <div
           className="absolute top-2 right-2 flex size-6 items-center justify-center lg:hidden"
@@ -127,6 +130,7 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange }: TaskC
           data-dnd-drag-region="true"
           onClick={(e) => e.stopPropagation()}
           aria-label="Drag to reorder"
+          {...(dragHandleListeners ?? {})}
         >
           <GripVertical className="size-4 text-muted-foreground/40" />
         </div>
