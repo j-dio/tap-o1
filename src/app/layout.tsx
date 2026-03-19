@@ -22,6 +22,9 @@ const APP_DESCRIPTION =
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
+  verification: {
+    google: "N_WuCh9aHNylrYSpeViT5auaEM935SclfOFG5zK0r0U",
+  },
   title: {
     default: APP_NAME,
     template: `%s | ${APP_NAME}`,
