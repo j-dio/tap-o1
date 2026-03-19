@@ -299,7 +299,7 @@ export default async function Home() {
           </section>
 
           {/* ── Final CTA ─────────────────────────────────────────────── */}
-          <section className="lp-s6 w-full pb-24">
+          <section className="lp-s6 w-full pb-16">
             <div className="skeu-card bg-card rounded-2xl border p-8 text-center">
               <AppLogo className="mx-auto mb-4 size-14" />
               <h2 className="text-xl font-bold">
@@ -316,6 +316,19 @@ export default async function Home() {
               </Button>
             </div>
           </section>
+
+          {/* ── Footer ────────────────────────────────────────────────── */}
+          <footer className="lp-s6 border-border w-full border-t pb-10 pt-8 text-center">
+            <p className="text-muted-foreground text-xs">
+              &copy; {new Date().getFullYear()} TapO(1) &mdash;{" "}
+              <Link
+                href="/privacy"
+                className="hover:text-foreground underline underline-offset-4 transition-colors"
+              >
+                Privacy Policy
+              </Link>
+            </p>
+          </footer>
         </div>
       </div>
     </>
