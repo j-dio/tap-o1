@@ -44,12 +44,32 @@ export async function GET(request: NextRequest) {
 
   const { session } = data;
 
-  // Persist Google refresh token so sync works across sessions
+  // Persist Google refresh token so sync works across sessions.
+  // Without this, subsequent syncs cannot refresh an expired access token.
   if (session?.provider_refresh_token && session.user) {
-    await supabase
+    const { error: updateError } = await supabase
       .from("profiles")
       .update({ google_refresh_token: session.provider_refresh_token })
       .eq("id", session.user.id);
+
+    if (updateError) {
+      console.error(
+        "Failed to persist Google refresh token:",
+        updateError.message,
+      );
+      // Redirect to settings with an error flag so the user knows reconnect
+      // didn't fully succeed and they should try again.
+      const dest = next === "/onboarding" ? next : `${next}?google_reconnect=failed`;
+      redirectResponse.headers.set("Location", `${origin}${dest}`);
+      return redirectResponse;
+    }
+  } else if (session?.user && !session.provider_refresh_token) {
+    // Google didn't return a refresh token — the stored one (if any) may be
+    // stale.  This can happen when Supabase doesn't propagate provider tokens
+    // or when Google omits the refresh token despite prompt=consent.
+    console.warn(
+      "OAuth callback completed but provider_refresh_token is null — Google refresh token was NOT updated.",
+    );
   }
 
   // Check if user has completed onboarding (has UVEC URL set)

@@ -3,7 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { syncTasks, type SyncResult } from "@/lib/sync-engine";
 import { generateCourseColor } from "@/lib/utils";
-import { syncErrorRequiresGoogleReconnect, GOOGLE_RECONNECT_USER_MESSAGE } from "@/lib/google-sync-errors";
+import {
+  syncErrorRequiresGoogleReconnect,
+  GOOGLE_RECONNECT_USER_MESSAGE,
+} from "@/lib/google-sync-errors";
 
 /** Sanitize error messages before sending to the client to prevent leaking server internals. */
 function sanitizeErrors(errors: string[]): string[] {
@@ -102,8 +105,18 @@ export async function syncAllTasks(): Promise<SyncResponse> {
     };
   }
 
+  // If Google returned invalid_grant (or the error was already normalized to
+  // the reconnect message by the sync engine), the stored refresh token is
+  // permanently invalid.  Clear it so Settings shows "not connected".
+  if (result.errors.some((e) => syncErrorRequiresGoogleReconnect(e))) {
+    await supabase
+      .from("profiles")
+      .update({ google_refresh_token: null })
+      .eq("id", user.id);
+  }
+
   if (result.tasks.length === 0) {
-    return { synced: 0, errors: result.errors };
+    return { synced: 0, errors: sanitizeErrors(result.errors) };
   }
 
   // Upsert courses first (collect unique course external IDs)
