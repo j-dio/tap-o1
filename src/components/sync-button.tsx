@@ -17,6 +17,10 @@ interface SyncButtonProps {
 }
 
 function formatCooldown(ms: number): string {
+  if (ms < 60_000) {
+    const secs = Math.ceil(ms / 1_000);
+    return `${secs}s`;
+  }
   const mins = Math.ceil(ms / 60_000);
   return `${mins}m`;
 }
@@ -26,15 +30,20 @@ export function SyncButton({ className }: SyncButtonProps) {
   const [cooldown, setCooldown] = useState(false);
   const [remaining, setRemaining] = useState(0);
 
-  // Poll cooldown state every second
+  // Poll cooldown state every second while on cooldown
   useEffect(() => {
-    const id = setInterval(() => {
+    const check = () => {
       const onCooldown = isSyncOnCooldown();
       setCooldown(onCooldown);
       setRemaining(onCooldown ? cooldownRemainingMs() : 0);
+      return onCooldown;
+    };
+    if (!check()) return;
+    const id = setInterval(() => {
+      if (!check()) clearInterval(id);
     }, 1_000);
     return () => clearInterval(id);
-  }, []);
+  }, [data, error]);
 
   const disabled = isPending || cooldown;
 
@@ -42,17 +51,20 @@ export function SyncButton({ className }: SyncButtonProps) {
   const reconnect =
     (error?.message && syncErrorRequiresGoogleReconnect(error.message)) ||
     (data && warningsNeedGoogleReconnect(data.errors));
-  const title = error?.message
-    ? reconnect
-      ? "Reconnect Google — Classroom tasks may be out of date"
-      : `Sync failed: ${error.message}`
-    : hasWarnings
+
+  const title = isPending
+    ? "Syncing..."
+    : error?.message
       ? reconnect
-        ? "Reconnect Google — Classroom tasks may be out of date"
-        : "Synced with warnings"
-      : cooldown
-        ? `Sync available in ${formatCooldown(remaining)}`
-        : "Sync tasks";
+        ? "Reconnect Google in Settings — Classroom tasks may be out of date"
+        : `Sync failed: ${error.message}`
+      : hasWarnings
+        ? reconnect
+          ? "Reconnect Google in Settings — Classroom tasks may be out of date"
+          : "Synced with warnings"
+        : cooldown
+          ? `Sync available in ${formatCooldown(remaining)}`
+          : "Sync tasks";
 
   return (
     <div className="flex items-center gap-2">
@@ -69,12 +81,13 @@ export function SyncButton({ className }: SyncButtonProps) {
           className={cn(
             "size-4",
             isPending && "animate-spin",
-            error && "text-destructive",
+            (error || reconnect) && "text-destructive",
+            hasWarnings && !reconnect && "text-yellow-500",
           )}
         />
       </Button>
       {error && (
-        <span className="text-destructive max-w-xs truncate text-xs">
+        <span className="text-destructive max-w-[20rem] text-xs line-clamp-2">
           {error.message}
         </span>
       )}
