@@ -6,6 +6,10 @@ import { GClassroomService } from "../services/gclassroom-service";
 import { refreshGoogleAccessToken } from "../services/gclassroom-service";
 import { parseGClassroomResponse } from "./parsers/gclassroom-parser";
 import { ingestUvecTasks } from "../services/uvec-service";
+import {
+  messageForGoogleClassroomAuthFailure,
+  messageForGoogleRefreshFailure,
+} from "./google-sync-errors";
 
 export interface SyncConfig {
   /** Google OAuth access token (may be null after first session) */
@@ -70,9 +74,7 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
       );
       googleToken = refreshed.access_token;
     } catch (err) {
-      errors.push(
-        `Google token refresh failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-      );
+      errors.push(messageForGoogleRefreshFailure(err));
     }
   }
 
@@ -155,9 +157,7 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
               allSubmissions,
             );
           } catch (retryErr) {
-            errors.push(
-              `GClassroom sync failed after token refresh: ${retryErr instanceof Error ? retryErr.message : "Unknown error"}`,
-            );
+            errors.push(messageForGoogleClassroomAuthFailure(retryErr));
           }
         } else {
           errors.push(

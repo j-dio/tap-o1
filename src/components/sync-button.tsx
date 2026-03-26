@@ -9,6 +9,7 @@ import {
   cooldownRemainingMs,
   getLastSyncAt,
 } from "@/hooks/use-sync";
+import { syncErrorRequiresGoogleReconnect, warningsNeedGoogleReconnect } from "@/lib/google-sync-errors";
 import { cn } from "@/lib/utils";
 
 interface SyncButtonProps {
@@ -38,10 +39,17 @@ export function SyncButton({ className }: SyncButtonProps) {
   const disabled = isPending || cooldown;
 
   const hasWarnings = data && data.errors.length > 0;
+  const reconnect =
+    (error?.message && syncErrorRequiresGoogleReconnect(error.message)) ||
+    (data && warningsNeedGoogleReconnect(data.errors));
   const title = error?.message
-    ? `Sync failed: ${error.message}`
+    ? reconnect
+      ? "Reconnect Google — Classroom tasks may be out of date"
+      : `Sync failed: ${error.message}`
     : hasWarnings
-      ? "Synced with warnings"
+      ? reconnect
+        ? "Reconnect Google — Classroom tasks may be out of date"
+        : "Synced with warnings"
       : cooldown
         ? `Sync available in ${formatCooldown(remaining)}`
         : "Sync tasks";

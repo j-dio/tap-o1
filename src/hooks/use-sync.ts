@@ -2,6 +2,11 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { syncAllTasks, type SyncResponse } from "@/lib/actions/sync";
+import {
+  GOOGLE_RECONNECT_USER_MESSAGE,
+  syncErrorRequiresGoogleReconnect,
+  warningsNeedGoogleReconnect,
+} from "@/lib/google-sync-errors";
 import { toast } from "sonner";
 
 /** Minimum interval between syncs (5 minutes) */
@@ -55,13 +60,35 @@ export function useSync() {
 
       // Surface toast notifications
       if (error) {
-        toast.error("Sync failed", { id: "sync", description: error.message });
+        const msg = error.message;
+        if (syncErrorRequiresGoogleReconnect(msg)) {
+          toast.error("Reconnect Google", {
+            id: "sync",
+            description: GOOGLE_RECONNECT_USER_MESSAGE,
+            duration: 12_000,
+          });
+        } else {
+          toast.error("Sync failed", { id: "sync", description: msg });
+        }
       } else if (_data) {
         const { errors: warnings } = _data;
         if (warnings.length === 0) {
           toast.success("Synced successfully", { id: "sync" });
+        } else if (warningsNeedGoogleReconnect(warnings)) {
+          const desc =
+            warnings.find((w) =>
+              w.includes("Google Classroom disconnected"),
+            ) ?? GOOGLE_RECONNECT_USER_MESSAGE;
+          toast.error("Reconnect Google to update Classroom", {
+            id: "sync",
+            description: desc,
+            duration: 12_000,
+          });
         } else {
-          toast.warning("Synced with warnings", { id: "sync", description: warnings[0] });
+          toast.warning("Synced with warnings", {
+            id: "sync",
+            description: warnings[0],
+          });
         }
       }
     },
