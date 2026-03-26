@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -62,9 +62,15 @@ const tourSteps: TourStep[] = [
 
 export function OnboardingTour() {
   const [step, setStep] = useState(0);
-  const [visible, setVisible] = useState(
-    () => typeof window !== "undefined" && localStorage.getItem(TOUR_COMPLETED_KEY) === null,
-  );
+  const [visible, setVisible] = useState(false);
+
+  // Defer localStorage read to an effect so server and client initial render
+  // both produce the same output (null), avoiding a hydration mismatch.
+  useEffect(() => {
+    if (localStorage.getItem(TOUR_COMPLETED_KEY) === null) {
+      setVisible(true);
+    }
+  }, []);
 
   if (!visible) return null;
 
