@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uvecIcalUrlSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
@@ -43,11 +44,20 @@ export default function SettingsPage() {
   const [showHelp, setShowHelp] = useState(false);
 
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const initialized = useRef(false);
 
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
+
+    // Surface reconnect failure from the OAuth callback
+    if (searchParams.get("google_reconnect") === "failed") {
+      setSaveMessage({
+        ok: false,
+        text: "Google reconnect did not complete — the refresh token could not be saved. Please try again.",
+      });
+    }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -69,7 +79,7 @@ export default function SettingsPage() {
           setLoading(false);
         });
     });
-  }, [supabase]);
+  }, [supabase, searchParams]);
 
   async function handleSaveUvec() {
     setSaving(true);
