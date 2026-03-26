@@ -3,6 +3,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { syncTasks, type SyncResult } from "@/lib/sync-engine";
 import { generateCourseColor } from "@/lib/utils";
+import { syncErrorRequiresGoogleReconnect, GOOGLE_RECONNECT_USER_MESSAGE } from "@/lib/google-sync-errors";
+
+/** Sanitize error messages before sending to the client to prevent leaking server internals. */
+function sanitizeErrors(errors: string[]): string[] {
+  return errors.map((e) => {
+    if (syncErrorRequiresGoogleReconnect(e)) return GOOGLE_RECONNECT_USER_MESSAGE;
+    if (e.startsWith("UVEC sync failed")) return "UVEC sync failed. Please check your iCal URL in Settings.";
+    if (e.startsWith("GClassroom sync failed")) return "Google Classroom sync encountered an error. Please try again.";
+    if (e.startsWith("Google token refresh failed")) return "Google token refresh failed. Try reconnecting in Settings.";
+    if (e.startsWith("Failed to fetch courseWork")) return "Failed to fetch some course data. Please try again.";
+    if (e.startsWith("Task upsert failed")) return "Failed to save tasks. Please try again.";
+    if (e.startsWith("No data sources configured")) return e;
+    if (e.startsWith("Google Classroom token expired")) return e;
+    return "An unexpected sync error occurred.";
+  });
+}
 
 export interface SyncResponse {
   synced: number;
@@ -160,12 +176,14 @@ export async function syncAllTasks(): Promise<SyncResponse> {
       .is("color", null);
 
     if (coursesWithoutColor && coursesWithoutColor.length > 0) {
-      for (const row of coursesWithoutColor) {
-        await supabase
-          .from("courses")
-          .update({ color: generateCourseColor(row.id) })
-          .eq("id", row.id);
-      }
+      await Promise.all(
+        coursesWithoutColor.map((row) =>
+          supabase
+            .from("courses")
+            .update({ color: generateCourseColor(row.id) })
+            .eq("id", row.id),
+        ),
+      );
     }
   }
 
@@ -206,6 +224,6 @@ export async function syncAllTasks(): Promise<SyncResponse> {
 
   return {
     synced: taskError ? 0 : result.tasks.length,
-    errors: result.errors,
+    errors: sanitizeErrors(result.errors),
   };
 }

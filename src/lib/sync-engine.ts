@@ -27,6 +27,47 @@ export interface SyncResult {
   courseNames: Map<string, string>;
 }
 
+/** Fetch all courseWork and submissions for the given GClassroom service. */
+async function fetchGoogleClassroomData(
+  gclassroom: GClassroomService,
+  courseNames: Map<string, string>,
+  errors: string[],
+): Promise<ParsedTask[]> {
+  const courses = await gclassroom.getCourses();
+  for (const course of courses) {
+    courseNames.set(course.id, course.name);
+  }
+
+  const results = await Promise.allSettled(
+    courses.map(async (course) => {
+      const [courseWork, submissions] = await Promise.all([
+        gclassroom.getCourseWork(course.id),
+        gclassroom.getStudentSubmissions(course.id),
+      ]);
+      return { courseWork, submissions };
+    }),
+  );
+
+  const allCourseWork: unknown[] = [];
+  const allSubmissions = new Map<string, string>();
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      allCourseWork.push(...result.value.courseWork);
+      for (const [cwId, state] of result.value.submissions) {
+        allSubmissions.set(cwId, state);
+      }
+    } else {
+      const reason =
+        result.reason instanceof Error
+          ? result.reason.message
+          : String(result.reason);
+      errors.push(`Failed to fetch courseWork: ${reason}`);
+    }
+  }
+
+  return parseGClassroomResponse({ courseWork: allCourseWork }, allSubmissions);
+}
+
 export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
   const errors: string[] = [];
   const courseNames = new Map<string, string>();
@@ -83,40 +124,10 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
       const gclassroom = new GClassroomService({
         accessToken: googleToken,
       });
-      const courses = await gclassroom.getCourses();
-
-      // Collect course names for later upsert
-      for (const course of courses) {
-        courseNames.set(course.id, course.name);
-      }
-
-      // Fetch courseWork and submissions in parallel per course
-      const results = await Promise.allSettled(
-        courses.map(async (course) => {
-          const [courseWork, submissions] = await Promise.all([
-            gclassroom.getCourseWork(course.id),
-            gclassroom.getStudentSubmissions(course.id),
-          ]);
-          return { courseWork, submissions };
-        }),
-      );
-
-      const allCourseWork: unknown[] = [];
-      const allSubmissions = new Map<string, string>();
-      for (const result of results) {
-        if (result.status === "fulfilled") {
-          allCourseWork.push(...result.value.courseWork);
-          for (const [cwId, state] of result.value.submissions) {
-            allSubmissions.set(cwId, state);
-          }
-        } else {
-          errors.push(`Failed to fetch courseWork: ${result.reason}`);
-        }
-      }
-
-      gclassroomTasks = parseGClassroomResponse(
-        { courseWork: allCourseWork },
-        allSubmissions,
+      gclassroomTasks = await fetchGoogleClassroomData(
+        gclassroom,
+        courseNames,
+        errors,
       );
     } catch (err) {
       if (err instanceof Error && err.message === "GOOGLE_TOKEN_EXPIRED") {
@@ -129,32 +140,10 @@ export async function syncTasks(config: SyncConfig): Promise<SyncResult> {
             const gclassroom = new GClassroomService({
               accessToken: refreshed.access_token,
             });
-            const courses = await gclassroom.getCourses();
-            for (const course of courses) {
-              courseNames.set(course.id, course.name);
-            }
-            const results = await Promise.allSettled(
-              courses.map(async (course) => {
-                const [courseWork, submissions] = await Promise.all([
-                  gclassroom.getCourseWork(course.id),
-                  gclassroom.getStudentSubmissions(course.id),
-                ]);
-                return { courseWork, submissions };
-              }),
-            );
-            const allCourseWork: unknown[] = [];
-            const allSubmissions = new Map<string, string>();
-            for (const result of results) {
-              if (result.status === "fulfilled") {
-                allCourseWork.push(...result.value.courseWork);
-                for (const [cwId, state] of result.value.submissions) {
-                  allSubmissions.set(cwId, state);
-                }
-              }
-            }
-            gclassroomTasks = parseGClassroomResponse(
-              { courseWork: allCourseWork },
-              allSubmissions,
+            gclassroomTasks = await fetchGoogleClassroomData(
+              gclassroom,
+              courseNames,
+              errors,
             );
           } catch (retryErr) {
             errors.push(messageForGoogleClassroomAuthFailure(retryErr));

@@ -14,15 +14,31 @@ const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 /** Auto-sync threshold (1 hour since last sync) */
 export const AUTO_SYNC_STALE_MS = 60 * 60 * 1000;
 
+const STORAGE_KEY = "task-agg:lastSyncAtMs";
+
+function readLastSyncAt(): number {
+  if (typeof window === "undefined") return 0;
+  const stored = sessionStorage.getItem(STORAGE_KEY);
+  return stored ? Number(stored) : 0;
+}
+
+function writeLastSyncAt(ms: number): void {
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem(STORAGE_KEY, String(ms));
+  }
+}
+
 let lastSyncAtMs = 0;
 
 export function getLastSyncAt(): number {
+  if (lastSyncAtMs === 0) lastSyncAtMs = readLastSyncAt();
   return lastSyncAtMs;
 }
 
 export function timeSinceLastSync(): number {
-  if (lastSyncAtMs === 0) return Infinity;
-  return Date.now() - lastSyncAtMs;
+  const ts = getLastSyncAt();
+  if (ts === 0) return Infinity;
+  return Date.now() - ts;
 }
 
 export function isSyncOnCooldown(): boolean {
@@ -32,6 +48,11 @@ export function isSyncOnCooldown(): boolean {
 export function cooldownRemainingMs(): number {
   if (!isSyncOnCooldown()) return 0;
   return SYNC_COOLDOWN_MS - timeSinceLastSync();
+}
+
+function recordSyncAttempt(): void {
+  lastSyncAtMs = Date.now();
+  writeLastSyncAt(lastSyncAtMs);
 }
 
 export function useSync() {
@@ -45,15 +66,16 @@ export function useSync() {
       if (result.synced === 0 && result.errors.length > 0) {
         const msg =
           result.errors.length === 1
-            ? result.errors[0]
-            : `${result.errors[0]} (+${result.errors.length - 1} more)`;
+            ? result.errors[0] || "Sync failed"
+            : `${result.errors[0] || "Unknown error"} (+${result.errors.length - 1} more)`;
         throw new Error(msg);
       }
-      // Record successful sync time
-      lastSyncAtMs = Date.now();
       return result;
     },
     onSettled: (_data, error) => {
+      // Always record the attempt so cooldown is enforced on both success and failure
+      recordSyncAttempt();
+
       // Always invalidate caches — even on failure, the DB state may have changed
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["courses"] });
