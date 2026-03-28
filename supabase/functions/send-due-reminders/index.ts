@@ -77,11 +77,12 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // 1. Find tasks due within 24 hours that haven't been notified yet
+  // 1. Find tasks due within 24 hours that haven't been notified yet,
+  //    excluding tasks the user has already marked done/dismissed via overrides.
   const now = new Date();
   const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-  const { data: dueTasks, error: taskError } = await supabase
+  const { data: allDueTasks } = await supabase
     .from("tasks")
     .select(
       `
@@ -89,72 +90,42 @@ Deno.serve(async (req: Request) => {
       user_id,
       title,
       due_date,
-      courses ( name )
+      courses ( name ),
+      task_overrides ( custom_status )
     `,
     )
     .gte("due_date", now.toISOString())
     .lte("due_date", in24Hours.toISOString())
-    .in("status", ["pending", "in_progress"])
-    .not(
-      "id",
-      "in",
-      supabase
-        .from("notification_log")
-        .select("task_id")
-        .eq("type", "due_reminder"),
-    );
+    .in("status", ["pending", "in_progress"]);
 
-  // Fallback: if the subquery in `.not()` doesn't work with PostgREST,
-  // we fetch tasks and filter out already-notified ones manually.
   let tasksToNotify: TaskRow[] = [];
 
-  if (taskError) {
-    // Fallback approach: fetch tasks, then filter
-    const { data: allDueTasks } = await supabase
-      .from("tasks")
-      .select(
-        `
-        id,
-        user_id,
-        title,
-        due_date,
-        courses ( name )
-      `,
-      )
-      .gte("due_date", now.toISOString())
-      .lte("due_date", in24Hours.toISOString())
-      .in("status", ["pending", "in_progress"]);
+  if (allDueTasks && allDueTasks.length > 0) {
+    const taskIds = allDueTasks.map((t: { id: string }) => t.id);
+    const { data: existingLogs } = await supabase
+      .from("notification_log")
+      .select("task_id")
+      .in("task_id", taskIds)
+      .eq("type", "due_reminder");
 
-    if (allDueTasks && allDueTasks.length > 0) {
-      const taskIds = allDueTasks.map((t: { id: string }) => t.id);
-      const { data: existingLogs } = await supabase
-        .from("notification_log")
-        .select("task_id")
-        .in("task_id", taskIds)
-        .eq("type", "due_reminder");
+    const notifiedTaskIds = new Set(
+      (existingLogs ?? []).map((l: { task_id: string }) => l.task_id),
+    );
 
-      const notifiedTaskIds = new Set(
-        (existingLogs ?? []).map((l: { task_id: string }) => l.task_id),
-      );
-
-      tasksToNotify = allDueTasks
-        .filter((t: { id: string }) => !notifiedTaskIds.has(t.id))
-        .map((t: Record<string, unknown>) => ({
-          id: t.id as string,
-          user_id: t.user_id as string,
-          title: t.title as string,
-          due_date: t.due_date as string,
-          course_name: (t.courses as { name?: string } | null)?.name,
-        }));
-    }
-  } else {
-    tasksToNotify = (dueTasks ?? []).map((t: Record<string, unknown>) => ({
-      id: t.id as string,
-      user_id: t.user_id as string,
-      title: t.title as string,
-      due_date: t.due_date as string,
-      course_name: (t.courses as { name?: string } | null)?.name,
-    }));
+    tasksToNotify = allDueTasks
+      .filter((t: { id: string; task_overrides?: { custom_status: string | null }[] }) => {
+        if (notifiedTaskIds.has(t.id)) return false;
+        // Exclude tasks the user has already resolved via an override
+        const customStatus = t.task_overrides?.[0]?.custom_status;
+        return customStatus !== "done" && customStatus !== "dismissed";
+      })
+      .map((t: Record<string, unknown>) => ({
+        id: t.id as string,
+        user_id: t.user_id as string,
+        title: t.title as string,
+        due_date: t.due_date as string,
+        course_name: (t.courses as { name?: string } | null)?.name,
+      }));
   }
 
   if (tasksToNotify.length === 0) {
