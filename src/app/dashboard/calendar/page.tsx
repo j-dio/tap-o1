@@ -17,6 +17,13 @@ import type { TaskWithCourse } from "@/types/task";
 
 /* ─── Date helpers ─── */
 
+type DayStatusSummary = {
+  todoCount: number;
+  inProgressCount: number;
+  doneCount: number;
+  totalCount: number;
+};
+
 function getMonthGrid(year: number, month: number): (Date | null)[][] {
   const firstDay = new Date(year, month, 1);
   const startDow = (firstDay.getDay() + 6) % 7; // Monday = 0
@@ -57,6 +64,44 @@ function getTaskCountForDay(
   tasks: TaskWithCourse[],
 ): TaskWithCourse[] {
   return tasks.filter((t) => t.dueDate && isSameDay(new Date(t.dueDate), day));
+}
+
+function summarizeDayTasks(tasks: TaskWithCourse[]): DayStatusSummary {
+  let todoCount = 0;
+  let inProgressCount = 0;
+  let doneCount = 0;
+
+  for (const task of tasks) {
+    // Treat "overdue" as a To Do task for summary purposes.
+    if (task.displayStatus === "overdue") {
+      todoCount += 1;
+      continue;
+    }
+    if (task.status === "in_progress") inProgressCount += 1;
+    else if (task.status === "done" || task.status === "dismissed")
+      doneCount += 1;
+    else todoCount += 1;
+  }
+
+  return {
+    todoCount,
+    inProgressCount,
+    doneCount,
+    totalCount: todoCount + inProgressCount + doneCount,
+  };
+}
+
+function getDayChipClasses(task: TaskWithCourse): string {
+  if (task.status === "done" || task.status === "dismissed") {
+    return "bg-success/12 text-success line-through opacity-60 decoration-success/70 decoration-2";
+  }
+  if (task.status === "in_progress") {
+    return "bg-warning/15 text-warning";
+  }
+  if (task.displayStatus === "overdue") {
+    return "bg-destructive/12 text-destructive";
+  }
+  return "bg-info/15 text-info";
 }
 
 const DAY_HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -201,6 +246,7 @@ function CalendarContent() {
                   }
 
                   const dayTasks = getTaskCountForDay(day, tasks ?? []);
+                  const summary = summarizeDayTasks(dayTasks);
                   const isToday = isSameDay(day, today);
                   const isSelected =
                     selectedDate !== null && isSameDay(day, selectedDate);
@@ -210,6 +256,12 @@ function CalendarContent() {
                       key={day.toISOString()}
                       type="button"
                       onClick={() => setSelectedDate(day)}
+                      aria-label={`${day.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}: ${summary.todoCount} to do, ${summary.inProgressCount} in progress, ${summary.doneCount} done`}
                       className={cn(
                         "hover:bg-accent/50 min-h-16 border-b p-1 text-left transition-colors",
                         isSelected && "bg-accent",
@@ -224,12 +276,47 @@ function CalendarContent() {
                       >
                         {day.getDate()}
                       </span>
+                      {summary.totalCount > 0 && (
+                        <div className="mt-1 flex items-center gap-1">
+                          <span
+                            className={cn(
+                              "h-1.5 rounded-full bg-info/70",
+                              summary.todoCount > 0 ? "w-3" : "w-1.5 opacity-30",
+                            )}
+                            title={`${summary.todoCount} to do`}
+                          />
+                          <span
+                            className={cn(
+                              "h-1.5 rounded-full bg-warning/70",
+                              summary.inProgressCount > 0
+                                ? "w-3"
+                                : "w-1.5 opacity-30",
+                            )}
+                            title={`${summary.inProgressCount} in progress`}
+                          />
+                          <span
+                            className={cn(
+                              "h-1.5 rounded-full bg-success/70",
+                              summary.doneCount > 0 ? "w-3" : "w-1.5 opacity-30",
+                            )}
+                            title={`${summary.doneCount} done`}
+                          />
+                          {summary.totalCount > 3 && (
+                            <span className="text-muted-foreground text-[10px]">
+                              {summary.totalCount}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {dayTasks.length > 0 && (
                         <div className="mt-0.5 flex flex-wrap gap-0.5">
                           {dayTasks.slice(0, 3).map((t) => (
                             <span
                               key={t.id}
-                              className="bg-primary/10 text-primary block truncate rounded px-1 text-[10px] leading-4"
+                              className={cn(
+                                "block truncate rounded px-1 text-[10px] leading-4",
+                                getDayChipClasses(t),
+                              )}
                               title={t.title}
                             >
                               {t.title}
