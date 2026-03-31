@@ -67,7 +67,7 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHan
           "group skeu-card relative rounded-[14px] border-l-[3px] overflow-hidden",
           urgencyBorder[urgency],
           isDragging && "scale-105 rotate-2 opacity-50 shadow-lg!",
-          task.status === "done" && "opacity-60",
+          (task.status === "done" || task.status === "dismissed") && "opacity-60",
         )}
       >
         {/* Subtle urgency tint strip */}
@@ -147,7 +147,8 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHan
           <span
             className={cn(
               "line-clamp-2 block text-[13px] leading-[1.45] font-medium tracking-[-0.01em]",
-              task.status === "done" && "line-through text-muted-foreground",
+              (task.status === "done" || task.status === "dismissed") &&
+                "line-through text-muted-foreground decoration-muted-foreground/70 decoration-2",
             )}
           >
             {task.title}
