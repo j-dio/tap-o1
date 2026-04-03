@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uvecIcalUrlSchema } from "@/lib/validations/auth";
@@ -25,8 +25,72 @@ import {
 import { NotificationSettings } from "@/components/notification-settings";
 import { usePwaInstall } from "@/components/add-to-homescreen-prompt";
 
+type SettingsProfileHydrationResult =
+  | { kind: "no_session" }
+  | {
+      kind: "profile";
+      uvecIcalUrl: string | null;
+      hasGoogleRefreshToken: boolean;
+    };
+
+/**
+ * Isolated mount-only fetch so React Fast Refresh never compares this effect’s
+ * deps array to a different-length array on the parent page (which triggers
+ * “useEffect changed size between renders” during HMR).
+ */
+function SettingsProfileHydration({
+  onHydrated,
+}: {
+  onHydrated: (result: SettingsProfileHydrationResult) => void;
+}) {
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!session) {
+          onHydrated({ kind: "no_session" });
+          return;
+        }
+
+        return supabase
+          .from("profiles")
+          .select("uvec_ical_url, google_refresh_token")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data: profile, error }) => {
+            if (error) {
+              onHydrated({
+                kind: "profile",
+                uvecIcalUrl: null,
+                hasGoogleRefreshToken: false,
+              });
+              return;
+            }
+            onHydrated({
+              kind: "profile",
+              uvecIcalUrl: profile?.uvec_ical_url ?? null,
+              hasGoogleRefreshToken: !!profile?.google_refresh_token,
+            });
+          });
+      })
+      .catch(() => {
+        onHydrated({ kind: "no_session" });
+      });
+  }, [onHydrated]);
+
+  return null;
+}
+
 export default function SettingsPage() {
-  const { canInstall, install, isIos, isStandalone, wasDismissed, resetDismissed } = usePwaInstall();
+  const {
+    canInstall,
+    install,
+    isIos,
+    isStandalone,
+    wasDismissed,
+    resetDismissed,
+  } = usePwaInstall();
   const [uvecUrl, setUvecUrl] = useState("");
   const [savedUrl, setSavedUrl] = useState<string | null>(null);
   const [hasGoogleRefreshToken, setHasGoogleRefreshToken] = useState(false);
@@ -41,45 +105,38 @@ export default function SettingsPage() {
     ok: boolean;
     text: string;
   } | null>(null);
+  /** Hides the URL-driven reconnect error after the user edits the UVEC field. */
+  const [reconnectBannerDismissed, setReconnectBannerDismissed] =
+    useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
-  const initialized = useRef(false);
 
-  useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+  const googleReconnectFailed =
+    searchParams.get("google_reconnect") === "failed";
+  const reconnectFromUrl =
+    googleReconnectFailed && !reconnectBannerDismissed
+      ? ({
+          ok: false as const,
+          text: "Google reconnect did not complete — the refresh token could not be saved. Please try again.",
+        } as const)
+      : null;
+  const displaySaveMessage = saveMessage ?? reconnectFromUrl;
 
-    // Surface reconnect failure from the OAuth callback
-    if (searchParams.get("google_reconnect") === "failed") {
-      setSaveMessage({
-        ok: false,
-        text: "Google reconnect did not complete — the refresh token could not be saved. Please try again.",
-      });
-    }
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+  const onProfileHydrated = useCallback(
+    (result: SettingsProfileHydrationResult) => {
+      if (result.kind === "no_session") {
         setLoading(false);
         return;
       }
-
-      supabase
-        .from("profiles")
-        .select("uvec_ical_url, google_refresh_token")
-        .eq("id", session.user.id)
-        .single()
-        .then(({ data: profile }) => {
-          if (profile) {
-            setUvecUrl(profile.uvec_ical_url ?? "");
-            setSavedUrl(profile.uvec_ical_url ?? null);
-            setHasGoogleRefreshToken(!!profile.google_refresh_token);
-          }
-          setLoading(false);
-        });
-    });
-  }, [supabase, searchParams]);
+      setUvecUrl(result.uvecIcalUrl ?? "");
+      setSavedUrl(result.uvecIcalUrl ?? null);
+      setHasGoogleRefreshToken(result.hasGoogleRefreshToken);
+      setLoading(false);
+    },
+    [],
+  );
 
   async function handleSaveUvec() {
     setSaving(true);
@@ -231,212 +288,223 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground text-sm">
-          Manage your data sources and sync configuration.
-        </p>
-      </div>
-
-      {/* UVEC Connection */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>UVEC (Moodle Calendar)</CardTitle>
-            {savedUrl ? (
-              <CheckCircle2 className="size-5 text-green-500" />
-            ) : (
-              <XCircle className="text-muted-foreground size-5" />
-            )}
+    <>
+      <SettingsProfileHydration onHydrated={onProfileHydrated} />
+      {loading ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="text-muted-foreground size-6 animate-spin" />
+        </div>
+      ) : (
+        <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground text-sm">
+              Manage your data sources and sync configuration.
+            </p>
           </div>
-          <CardDescription>
-            Paste your UVEC iCal export URL to sync Moodle calendar events.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <Input
-              placeholder="https://uvec.upcebu.edu.ph/calendar/export_execute.php?..."
-              value={uvecUrl}
-              onChange={(e) => {
-                setUvecUrl(e.target.value);
-                setTestResult(null);
-                setSaveMessage(null);
-              }}
-            />
-            <div className="flex gap-2">
-              <Button onClick={handleSaveUvec} disabled={saving} size="sm">
-                {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Save URL
-              </Button>
+
+          {/* UVEC Connection */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardTitle>UVEC (Moodle Calendar)</CardTitle>
+                {savedUrl ? (
+                  <CheckCircle2 className="size-5 text-green-500" />
+                ) : (
+                  <XCircle className="text-muted-foreground size-5" />
+                )}
+              </div>
+              <CardDescription>
+                Paste your UVEC iCal export URL to sync Moodle calendar events.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <Input
+                  placeholder="https://uvec.upcebu.edu.ph/calendar/export_execute.php?..."
+                  value={uvecUrl}
+                  onChange={(e) => {
+                    setUvecUrl(e.target.value);
+                    setTestResult(null);
+                    setSaveMessage(null);
+                    setReconnectBannerDismissed(true);
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveUvec} disabled={saving} size="sm">
+                    {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                    Save URL
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleTestUvec}
+                    disabled={testing || !uvecUrl.trim()}
+                    size="sm"
+                  >
+                    {testing && (
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                    )}
+                    Test Connection
+                  </Button>
+                </div>
+              </div>
+
+              {displaySaveMessage && (
+                <p
+                  className={`text-sm ${displaySaveMessage.ok ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
+                >
+                  {displaySaveMessage.text}
+                </p>
+              )}
+
+              {testResult && (
+                <div
+                  className={`flex items-start gap-2 rounded-md p-3 text-sm ${
+                    testResult.ok
+                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                      : "bg-destructive/10 text-destructive"
+                  }`}
+                >
+                  {testResult.ok ? (
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+                  ) : (
+                    <XCircle className="mt-0.5 size-4 shrink-0" />
+                  )}
+                  <span>{testResult.message}</span>
+                </div>
+              )}
+
+              {/* How-to collapsible */}
+              <button
+                type="button"
+                onClick={() => setShowHelp((h) => !h)}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
+              >
+                <ChevronDown
+                  className={`size-4 transition-transform ${showHelp ? "rotate-180" : ""}`}
+                />
+                How to get your UVEC iCal URL
+              </button>
+              {showHelp && (
+                <ol className="text-muted-foreground list-inside list-decimal space-y-1 pl-1 text-sm">
+                  <li>
+                    Go to{" "}
+                    <a
+                      href="https://uvec.upcebu.edu.ph/calendar/export.php"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      UVEC Calendar Export
+                    </a>
+                  </li>
+                  <li>
+                    Select <strong>All events</strong> and{" "}
+                    <strong>This month</strong> (or your preferred range)
+                  </li>
+                  <li>
+                    Click <strong>Export</strong>
+                  </li>
+                  <li>
+                    Copy the URL from the download link (right-click → Copy
+                    Link)
+                  </li>
+                  <li>Paste the full URL above</li>
+                </ol>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Google Classroom Connection */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardTitle>Google Classroom</CardTitle>
+                {hasGoogleRefreshToken ? (
+                  <CheckCircle2 className="size-5 text-green-500" />
+                ) : (
+                  <XCircle className="text-muted-foreground size-5" />
+                )}
+              </div>
+              <CardDescription>
+                {hasGoogleRefreshToken
+                  ? "Google Classroom is connected. Tasks will sync automatically."
+                  : "Google Classroom is not connected. Click below to authorize."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <Button
-                variant="outline"
-                onClick={handleTestUvec}
-                disabled={testing || !uvecUrl.trim()}
+                variant={hasGoogleRefreshToken ? "outline" : "default"}
+                onClick={handleReconnectGoogle}
                 size="sm"
               >
-                {testing && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Test Connection
+                <ExternalLink className="mr-2 size-4" />
+                {hasGoogleRefreshToken
+                  ? "Reconnect Google"
+                  : "Connect Google Classroom"}
               </Button>
-            </div>
-          </div>
-
-          {saveMessage && (
-            <p
-              className={`text-sm ${saveMessage.ok ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
-            >
-              {saveMessage.text}
-            </p>
-          )}
-
-          {testResult && (
-            <div
-              className={`flex items-start gap-2 rounded-md p-3 text-sm ${
-                testResult.ok
-                  ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                  : "bg-destructive/10 text-destructive"
-              }`}
-            >
-              {testResult.ok ? (
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-              ) : (
-                <XCircle className="mt-0.5 size-4 shrink-0" />
-              )}
-              <span>{testResult.message}</span>
-            </div>
-          )}
-
-          {/* How-to collapsible */}
-          <button
-            type="button"
-            onClick={() => setShowHelp((h) => !h)}
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
-          >
-            <ChevronDown
-              className={`size-4 transition-transform ${showHelp ? "rotate-180" : ""}`}
-            />
-            How to get your UVEC iCal URL
-          </button>
-          {showHelp && (
-            <ol className="text-muted-foreground list-inside list-decimal space-y-1 pl-1 text-sm">
-              <li>
-                Go to{" "}
-                <a
-                  href="https://uvec.upcebu.edu.ph/calendar/export.php"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline"
-                >
-                  UVEC Calendar Export
-                </a>
-              </li>
-              <li>
-                Select <strong>All events</strong> and{" "}
-                <strong>This month</strong> (or your preferred range)
-              </li>
-              <li>
-                Click <strong>Export</strong>
-              </li>
-              <li>
-                Copy the URL from the download link (right-click → Copy Link)
-              </li>
-              <li>Paste the full URL above</li>
-            </ol>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Google Classroom Connection */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle>Google Classroom</CardTitle>
-            {hasGoogleRefreshToken ? (
-              <CheckCircle2 className="size-5 text-green-500" />
-            ) : (
-              <XCircle className="text-muted-foreground size-5" />
-            )}
-          </div>
-          <CardDescription>
-            {hasGoogleRefreshToken
-              ? "Google Classroom is connected. Tasks will sync automatically."
-              : "Google Classroom is not connected. Click below to authorize."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant={hasGoogleRefreshToken ? "outline" : "default"}
-            onClick={handleReconnectGoogle}
-            size="sm"
-          >
-            <ExternalLink className="mr-2 size-4" />
-            {hasGoogleRefreshToken
-              ? "Reconnect Google"
-              : "Connect Google Classroom"}
-          </Button>
-          {hasGoogleRefreshToken && (
-            <p className="text-muted-foreground mt-2 text-xs">
-              Reconnecting will refresh your authorization. Use this if sync
-              stops working.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Push Notifications */}
-      <NotificationSettings />
-
-      {/* Install App */}
-      {!isStandalone && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle>Install App</CardTitle>
-              <Smartphone className="text-muted-foreground size-5" />
-            </div>
-            <CardDescription>
-              Add TapO(1) to your home screen for a faster, offline-capable experience.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {isIos ? (
-              <p className="text-muted-foreground text-sm">
-                On iPhone/iPad: tap the{" "}
-                <strong>Share</strong> button in Safari, then{" "}
-                <strong>Add to Home Screen</strong>.
-              </p>
-            ) : canInstall ? (
-              <Button size="sm" onClick={install}>
-                <Download className="mr-2 size-4" />
-                Install App
-              </Button>
-            ) : wasDismissed ? (
-              <div className="space-y-2">
-                <p className="text-muted-foreground text-sm">
-                  You dismissed the install prompt. Click below to enable it again.
+              {hasGoogleRefreshToken && (
+                <p className="text-muted-foreground mt-2 text-xs">
+                  Reconnecting will refresh your authorization. Use this if sync
+                  stops working.
                 </p>
-                <Button size="sm" variant="outline" onClick={resetDismissed}>
-                  Re-enable install prompt
-                </Button>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                Install option is not available in this browser, or the app is already installed.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Push Notifications */}
+          <NotificationSettings />
+
+          {/* Install App */}
+          {!isStandalone && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CardTitle>Install App</CardTitle>
+                  <Smartphone className="text-muted-foreground size-5" />
+                </div>
+                <CardDescription>
+                  Add TapO(1) to your home screen for a faster, offline-capable
+                  experience.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {isIos ? (
+                  <p className="text-muted-foreground text-sm">
+                    On iPhone/iPad: tap the <strong>Share</strong> button in
+                    Safari, then <strong>Add to Home Screen</strong>.
+                  </p>
+                ) : canInstall ? (
+                  <Button size="sm" onClick={install}>
+                    <Download className="mr-2 size-4" />
+                    Install App
+                  </Button>
+                ) : wasDismissed ? (
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground text-sm">
+                      You dismissed the install prompt. Click below to enable it
+                      again.
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={resetDismissed}
+                    >
+                      Re-enable install prompt
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    Install option is not available in this browser, or the app
+                    is already installed.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 }
