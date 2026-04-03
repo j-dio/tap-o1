@@ -12,8 +12,6 @@ import {
   createCustomTask,
   updateCustomTask,
   deleteCustomTask,
-  dismissAllDone,
-  bulkSetStatus,
 } from "@/lib/actions/tasks";
 import type {
   CreateCustomTaskInput,
@@ -83,6 +81,53 @@ async function upsertTaskOverride(payload: TaskOverridePayload) {
       ignoreDuplicates: false,
     },
   );
+
+  if (error) throw error;
+}
+
+/**
+ * Bulk-set `custom_status` via the browser Supabase client (same RLS/session as
+ * {@link upsertTaskOverride}). Avoids Next.js server-action ID mismatches from
+ * dev HMR / stale tabs while preserving priority and notes on existing rows.
+ */
+async function bulkSetOverrideStatusClient(
+  taskIds: string[],
+  status: TaskStatus,
+) {
+  if (taskIds.length === 0) return;
+  const supabase = createClient();
+  const userId = await getCurrentUserId();
+
+  const { data: existingRows, error: fetchError } = await supabase
+    .from("task_overrides")
+    .select("task_id, priority, notes")
+    .eq("user_id", userId)
+    .in("task_id", taskIds);
+
+  if (fetchError) throw fetchError;
+
+  const byTask = new Map(
+    (existingRows ?? []).map((r) => [
+      r.task_id as string,
+      r as { priority: unknown; notes: unknown },
+    ]),
+  );
+
+  const rows = taskIds.map((taskId) => {
+    const ex = byTask.get(taskId);
+    return {
+      user_id: userId,
+      task_id: taskId,
+      custom_status: status,
+      priority: (ex?.priority as TaskPriority | null | undefined) ?? null,
+      notes: (ex?.notes as string | null | undefined) ?? null,
+    };
+  });
+
+  const { error } = await supabase.from("task_overrides").upsert(rows, {
+    onConflict: "user_id,task_id",
+    ignoreDuplicates: false,
+  });
 
   if (error) throw error;
 }
@@ -312,9 +357,7 @@ export function useTaskActions() {
     { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
   >({
     mutationFn: async (taskIds) => {
-      const result = await dismissAllDone(taskIds);
-      if (!result.success)
-        throw new Error(result.error ?? "Failed to dismiss tasks");
+      await bulkSetOverrideStatusClient(taskIds, "dismissed");
     },
     onMutate: async (taskIds) => {
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
@@ -361,9 +404,7 @@ export function useTaskActions() {
     { previousQueries: [QueryKey, TaskWithCourse[] | undefined][] }
   >({
     mutationFn: async (taskIds) => {
-      const result = await bulkSetStatus(taskIds, "done");
-      if (!result.success)
-        throw new Error(result.error ?? "Failed to archive tasks");
+      await bulkSetOverrideStatusClient(taskIds, "done");
     },
     onMutate: async (taskIds) => {
       await queryClient.cancelQueries({ queryKey: ["tasks"] });
