@@ -5,6 +5,25 @@ import type { TaskWithCourse, ActionBoardBuckets } from "@/types/task";
 
 const DONE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** Days ahead for the To Do column — keep in sync with `useActionBoard` and `useUpNext`. */
+export const ACTION_BOARD_TODO_WINDOW_DAYS = 14;
+
+/**
+ * True if the task would appear in the To Do or In Progress column (not Done,
+ * not dismissed, and pending tasks respect the same due-date window as the board).
+ */
+export function isTaskOnActionBoardActiveColumns(
+  task: TaskWithCourse,
+  now: number,
+  todoWindowDays: number,
+): boolean {
+  if (task.status === "dismissed" || task.status === "done") return false;
+  if (task.status === "in_progress") return true;
+  const dueMs = task.dueDate ? new Date(task.dueDate).getTime() : null;
+  const todoWindowMs = todoWindowDays * 24 * 60 * 60 * 1000;
+  return dueMs === null || dueMs <= now + todoWindowMs;
+}
+
 /**
  * Pure bucketing logic extracted from the hook so it can be unit-tested
  * without a React renderer.
@@ -111,7 +130,7 @@ export function useActionBoard(
       computeActionBoardBuckets(
         tasks,
         snapNow,
-        14, // todoWindowDays — show tasks due within 2 weeks
+        ACTION_BOARD_TODO_WINDOW_DAYS,
         todoDisplayLimit,
         doneDisplayLimit,
         inProgressDisplayLimit,

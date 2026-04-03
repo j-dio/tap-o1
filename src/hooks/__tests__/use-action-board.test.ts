@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { computeActionBoardBuckets } from "../use-action-board";
+import {
+  computeActionBoardBuckets,
+  isTaskOnActionBoardActiveColumns,
+} from "../use-action-board";
 import type { TaskWithCourse } from "@/types/task";
 
 // Fixed reference time: 2026-03-05 12:00:00 UTC
@@ -343,5 +346,59 @@ describe("computeActionBoardBuckets", () => {
     const result = computeActionBoardBuckets(tasks, NOW, 7, 7, 7, 10);
     expect(result.inProgress).toHaveLength(8);
     expect(result.inProgressHasMore).toBe(false);
+  });
+});
+
+describe("isTaskOnActionBoardActiveColumns", () => {
+  it("returns false for done and dismissed", () => {
+    expect(
+      isTaskOnActionBoardActiveColumns(makeTask({ status: "done" }), NOW, 14),
+    ).toBe(false);
+    expect(
+      isTaskOnActionBoardActiveColumns(
+        makeTask({ status: "dismissed" }),
+        NOW,
+        14,
+      ),
+    ).toBe(false);
+  });
+
+  it("returns true for in_progress regardless of far due date", () => {
+    expect(
+      isTaskOnActionBoardActiveColumns(
+        makeTask({
+          status: "in_progress",
+          dueDate: new Date(NOW + 40 * DAY).toISOString(),
+        }),
+        NOW,
+        14,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false for pending beyond todo window", () => {
+    expect(
+      isTaskOnActionBoardActiveColumns(
+        makeTask({
+          status: "pending",
+          dueDate: new Date(NOW + 20 * DAY).toISOString(),
+        }),
+        NOW,
+        14,
+      ),
+    ).toBe(false);
+  });
+
+  it("returns true for pending within todo window", () => {
+    expect(
+      isTaskOnActionBoardActiveColumns(
+        makeTask({
+          status: "pending",
+          dueDate: new Date(NOW + 10 * DAY).toISOString(),
+        }),
+        NOW,
+        14,
+      ),
+    ).toBe(true);
   });
 });
