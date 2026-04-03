@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle, Clock, GripVertical } from "lucide-react";
+import { Archive, Circle, Clock, GripVertical } from "lucide-react";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { TaskWithCourse } from "@/types/task";
 import { getTaskUrgency, cn } from "@/lib/utils";
@@ -48,10 +48,13 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHan
   const { setStatus } = useTaskActions();
   const urgency = getTaskUrgency(task.dueDate);
 
-  const handleQuickDone = (e: React.MouseEvent) => {
+  const handleQuickDoneOrDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newStatus = task.status === "done" ? "pending" : "done";
-    setStatus.mutate({ taskId: task.id, status: newStatus });
+    if (task.status === "done") {
+      setStatus.mutate({ taskId: task.id, status: "dismissed" });
+      return;
+    }
+    setStatus.mutate({ taskId: task.id, status: "done" });
   };
 
   const handleQuickInProgress = (e: React.MouseEvent) => {
@@ -101,19 +104,21 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHan
           </button>
           <button
             type="button"
-            onClick={handleQuickDone}
+            onClick={handleQuickDoneOrDismiss}
             className={cn(
               "flex size-6 items-center justify-center rounded-md transition-all duration-150",
               task.status === "done"
-                ? "bg-success/15 text-success"
+                ? "text-muted-foreground hover:bg-muted hover:text-foreground"
                 : "text-muted-foreground hover:bg-success/12 hover:text-success",
             )}
             aria-label={
-              task.status === "done" ? "Mark as not done" : "Mark as done"
+              task.status === "done"
+                ? "Dismiss completed task"
+                : "Mark as done"
             }
           >
             {task.status === "done" ? (
-              <CheckCircle2 className="size-3.5" />
+              <Archive className="size-3.5" />
             ) : (
               <Circle className="size-3.5" />
             )}
