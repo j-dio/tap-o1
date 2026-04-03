@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   ArrowRight,
   ArrowLeft,
@@ -15,6 +15,27 @@ import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/app-logo";
 
 const TOUR_COMPLETED_KEY = "onboarding-tour-completed";
+const TOUR_STORE_EVENT = "onboarding-tour-store";
+
+function subscribeToTourStore(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const run = () => onStoreChange();
+  window.addEventListener(TOUR_STORE_EVENT, run);
+  window.addEventListener("storage", run);
+  return () => {
+    window.removeEventListener(TOUR_STORE_EVENT, run);
+    window.removeEventListener("storage", run);
+  };
+}
+
+function getTourShouldShowSnapshot(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(TOUR_COMPLETED_KEY) === null;
+}
+
+function getServerTourShouldShowSnapshot(): boolean {
+  return false;
+}
 
 interface TourStep {
   title: string;
@@ -62,21 +83,17 @@ const tourSteps: TourStep[] = [
 
 export function OnboardingTour() {
   const [step, setStep] = useState(0);
-  const [visible, setVisible] = useState(false);
-
-  // Defer localStorage read to an effect so server and client initial render
-  // both produce the same output (null), avoiding a hydration mismatch.
-  useEffect(() => {
-    if (localStorage.getItem(TOUR_COMPLETED_KEY) === null) {
-      setVisible(true);
-    }
-  }, []);
+  const visible = useSyncExternalStore(
+    subscribeToTourStore,
+    getTourShouldShowSnapshot,
+    getServerTourShouldShowSnapshot,
+  );
 
   if (!visible) return null;
 
   function dismiss() {
     localStorage.setItem(TOUR_COMPLETED_KEY, "true");
-    setVisible(false);
+    window.dispatchEvent(new Event(TOUR_STORE_EVENT));
   }
 
   function next() {
