@@ -34,8 +34,18 @@ export default async function OnboardingPage() {
     "there";
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
-      <OnboardingForm displayName={displayName} />
+    <div className="bg-background relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-70"
+        aria-hidden="true"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.97_0.008_264/.9),transparent_55%)]" />
+        <div className="bg-primary/10 absolute -right-20 -bottom-20 size-72 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10 w-full">
+        <OnboardingForm displayName={displayName} />
+      </div>
     </div>
   );
 }
