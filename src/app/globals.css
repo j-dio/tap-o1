@@ -397,6 +397,23 @@
   }
 }
 
+/* ── Sonner toast: enter animation ────────────────────────────────────────*/
+
+[data-sonner-toast] {
+  animation: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* ── Sonner toast: skeuomorphic overrides ──────────────────────────────────
    Outside @layer so rules are un-layered. Sonner injects CSS via <style>
    tag at runtime, so !important is used on hardcoded properties only.     */
