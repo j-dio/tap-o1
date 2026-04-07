@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
+import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import type { TaskWithCourse } from "@/types/task";
@@ -36,7 +36,10 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({
+    id: task.id,
+    animateLayoutChanges: defaultAnimateLayoutChanges,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
