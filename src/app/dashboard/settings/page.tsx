@@ -330,7 +330,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+              <div className="rounded-lg border bg-muted/30 dark:bg-muted/50 p-4 space-y-3">
                 <Input
                   placeholder="https://uvec.upcebu.edu.ph/calendar/export_execute.php?..."
                   value={uvecUrl}

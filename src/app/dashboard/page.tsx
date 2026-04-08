@@ -162,16 +162,16 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col gap-6" {...bind}>
-      <div className="lg:hidden" aria-live="polite">
-        <p className="text-muted-foreground text-center text-xs">
-          {isSyncing
-            ? "Syncing..."
-            : pullDistance > 0
-              ? isReady
+      <div className="lg:hidden" aria-live="polite" aria-atomic="true">
+        {(isSyncing || pullDistance > 0) && (
+          <p className="text-muted-foreground text-center text-xs">
+            {isSyncing
+              ? "Syncing..."
+              : isReady
                 ? "Release to sync"
-                : "Pull to refresh"
-              : ""}
-        </p>
+                : "Pull to refresh"}
+          </p>
+        )}
       </div>
 
       {/* First-sync banner — only visible to new users with stale UVEC tasks */}
