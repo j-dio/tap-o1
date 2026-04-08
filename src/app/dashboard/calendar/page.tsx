@@ -171,7 +171,7 @@ function CalendarContent() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
           <p className="text-muted-foreground text-sm">
             View tasks on their due dates.
           </p>

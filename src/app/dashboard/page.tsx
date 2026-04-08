@@ -186,7 +186,7 @@ function DashboardContent() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-[-0.03em]">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           {focusMode && (
             <p className="text-muted-foreground mt-0.5 text-[13px]">
               Tasks due within 24 hours.

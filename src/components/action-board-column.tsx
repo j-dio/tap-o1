@@ -121,7 +121,7 @@ export function ActionBoardColumn({
         <div className={cn("flex size-6 shrink-0 items-center justify-center rounded-md", columnAccentBg[id])}>
           <Icon className="size-3.5" />
         </div>
-        <span className="text-[13px] font-semibold tracking-[-0.01em]">{title}</span>
+        <span className="text-sm font-bold tracking-tight">{title}</span>
         {id === "done" && onDismissAll && (
           <Button
             variant="ghost"

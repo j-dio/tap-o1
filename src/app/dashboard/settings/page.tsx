@@ -302,7 +302,7 @@ export default function SettingsPage() {
       ) : (
         <div className="mx-auto max-w-2xl space-y-10 p-4 md:p-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
             <p className="text-muted-foreground text-sm">
               Manage your data sources and sync configuration.
             </p>
