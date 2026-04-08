@@ -39,7 +39,7 @@ export default async function OnboardingPage() {
         className="pointer-events-none absolute inset-0 opacity-70"
         aria-hidden="true"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.97_0.008_264/.9),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.97_0.008_264/.9),transparent_55%)] dark:bg-[radial-gradient(circle_at_top,oklch(0.2_0_0/.3),transparent_55%)]" />
         <div className="bg-primary/10 absolute -right-20 -bottom-20 size-72 rounded-full blur-3xl" />
       </div>
 
