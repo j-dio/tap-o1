@@ -42,7 +42,6 @@ import { TaskFilters as FilterBar } from "@/components/task-filters";
 import { TaskList } from "@/components/task-list";
 import { UpNextWidget } from "@/components/up-next-widget";
 import { FocusModeToggle } from "@/components/focus-mode-toggle";
-import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
 import { CustomTaskModal } from "@/components/custom-task-modal";
@@ -207,9 +206,6 @@ function DashboardContent() {
             enabled={focusMode}
             onToggle={() => setFocusMode(!focusMode)}
           />
-          <div className="hidden lg:block">
-            <SyncButton />
-          </div>
         </div>
       </div>
 
@@ -278,8 +274,8 @@ function DashboardContent() {
         <EmptyState
           icon={ClipboardList}
           title="No tasks yet"
-          description="Connect UVEC or Google Classroom, then sync to pull in your tasks."
-          action={{ label: "Sync now", onClick: () => sync() }}
+          description="Connect UVEC or Google Classroom in Settings to start pulling in your tasks."
+          action={{ label: "Go to Settings", href: "/dashboard/settings" }}
         />
       )}
 

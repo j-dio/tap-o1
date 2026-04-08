@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useTasks } from "@/hooks/use-tasks";
 import { generateIcsContent } from "@/lib/ics-export";
 
-export function ExportButton() {
+interface ExportButtonProps {
+  showLabel?: boolean;
+}
+
+export function ExportButton({ showLabel }: ExportButtonProps) {
   const { data: tasks = [] } = useTasks({});
 
   function handleExport() {
@@ -55,12 +59,14 @@ export function ExportButton() {
   return (
     <Button
       variant="ghost"
-      size="icon-sm"
+      size={showLabel ? "sm" : "icon-sm"}
       onClick={handleExport}
       aria-label="Export to calendar"
       title="Export to calendar"
+      className={showLabel ? "gap-1.5" : undefined}
     >
-      <CalendarArrowDown className="size-4" />
+      <CalendarArrowDown className="size-4 shrink-0" />
+      {showLabel && <span>Export</span>}
     </Button>
   );
 }
