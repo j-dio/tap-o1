@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 interface SyncButtonProps {
   className?: string;
+  showLabel?: boolean;
 }
 
 function formatCooldown(ms: number): string {
@@ -25,7 +26,7 @@ function formatCooldown(ms: number): string {
   return `${mins}m`;
 }
 
-export function SyncButton({ className }: SyncButtonProps) {
+export function SyncButton({ className, showLabel }: SyncButtonProps) {
   const { mutate: sync, isPending, error, data } = useSync();
   const [cooldown, setCooldown] = useState(false);
   const [remaining, setRemaining] = useState(0);
@@ -70,21 +71,24 @@ export function SyncButton({ className }: SyncButtonProps) {
     <div className="flex items-center gap-2">
       <Button
         variant="ghost"
-        size="icon-sm"
+        size={showLabel ? "sm" : "icon-sm"}
         onClick={() => sync()}
         disabled={disabled}
-        className={className}
+        className={cn(showLabel && "gap-1.5", className)}
         aria-label={title}
         title={title}
       >
         <RefreshCw
           className={cn(
-            "size-4",
+            "size-4 shrink-0",
             isPending && "animate-spin",
             (error || reconnect) && "text-destructive",
-            hasWarnings && !reconnect && "text-yellow-500",
+            hasWarnings && !reconnect && "text-warning",
           )}
         />
+        {showLabel && (
+          <span>{isPending ? "Syncing…" : "Sync"}</span>
+        )}
       </Button>
       {error && (
         <span className="text-destructive max-w-[20rem] text-xs line-clamp-2">

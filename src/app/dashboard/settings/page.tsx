@@ -7,23 +7,14 @@ import { uvecIcalUrlSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   CheckCircle2,
   XCircle,
   Loader2,
   ExternalLink,
   ChevronDown,
   Download,
-  Smartphone,
   Bug,
   Lightbulb,
-  Mail,
 } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { usePwaInstall } from "@/components/add-to-homescreen-prompt";
@@ -44,11 +35,6 @@ type SettingsProfileHydrationResult =
       hasGoogleRefreshToken: boolean;
     };
 
-/**
- * Isolated mount-only fetch so React Fast Refresh never compares this effect’s
- * deps array to a different-length array on the parent page (which triggers
- * “useEffect changed size between renders” during HMR).
- */
 function SettingsProfileHydration({
   onHydrated,
 }: {
@@ -93,6 +79,17 @@ function SettingsProfileHydration({
   return null;
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-5 flex items-center gap-3">
+      <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+        {children}
+      </span>
+      <div className="flex-1 border-t" />
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const {
     canInstall,
@@ -116,7 +113,6 @@ export default function SettingsPage() {
     ok: boolean;
     text: string;
   } | null>(null);
-  /** Hides the URL-driven reconnect error after the user edits the UVEC field. */
   const [reconnectBannerDismissed, setReconnectBannerDismissed] =
     useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -164,7 +160,6 @@ export default function SettingsPage() {
 
     const trimmed = uvecUrl.trim();
 
-    // Allow clearing the URL
     if (trimmed) {
       const validation = uvecIcalUrlSchema.safeParse(trimmed);
       if (!validation.success) {
@@ -196,7 +191,6 @@ export default function SettingsPage() {
     setTesting(true);
     setTestResult(null);
 
-    // Force-refresh the session to get a valid JWT
     const { data: refreshData, error: refreshError } =
       await supabase.auth.refreshSession();
     const session = refreshData?.session;
@@ -256,7 +250,6 @@ export default function SettingsPage() {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Network error";
-      // Provide actionable guidance for network errors
       if (message.includes("NetworkError") || message.includes("fetch")) {
         setTestResult({
           ok: false,
@@ -307,31 +300,37 @@ export default function SettingsPage() {
           <Loader2 className="text-muted-foreground size-6 animate-spin" />
         </div>
       ) : (
-        <div className="mx-auto max-w-2xl space-y-6 p-4 md:p-6">
+        <div className="mx-auto max-w-2xl space-y-10 p-4 md:p-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
             <p className="text-muted-foreground text-sm">
               Manage your data sources and sync configuration.
             </p>
           </div>
 
-          {/* UVEC Connection */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>UVEC (Moodle Calendar)</CardTitle>
-                {savedUrl ? (
-                  <CheckCircle2 className="size-5 text-green-500" />
-                ) : (
-                  <XCircle className="text-muted-foreground size-5" />
-                )}
+          {/* ── Data Sources ───────────────────────────────────────── */}
+          <section className="space-y-6">
+            <SectionLabel>Data Sources</SectionLabel>
+
+            {/* UVEC */}
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold">UVEC (Moodle Calendar)</p>
+                    {savedUrl ? (
+                      <CheckCircle2 className="size-4 text-success" />
+                    ) : (
+                      <XCircle className="text-muted-foreground size-4" />
+                    )}
+                  </div>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Paste your UVEC iCal export URL to sync Moodle calendar events.
+                  </p>
+                </div>
               </div>
-              <CardDescription>
-                Paste your UVEC iCal export URL to sync Moodle calendar events.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+
+              <div className="rounded-lg border bg-muted/30 dark:bg-muted/50 p-4 space-y-3">
                 <Input
                   placeholder="https://uvec.upcebu.edu.ph/calendar/export_execute.php?..."
                   value={uvecUrl}
@@ -344,7 +343,7 @@ export default function SettingsPage() {
                 />
                 <div className="flex gap-2">
                   <Button onClick={handleSaveUvec} disabled={saving} size="sm">
-                    {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                    {saving && <Loader2 className="size-4 animate-spin" />}
                     Save URL
                   </Button>
                   <Button
@@ -353,9 +352,7 @@ export default function SettingsPage() {
                     disabled={testing || !uvecUrl.trim()}
                     size="sm"
                   >
-                    {testing && (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    )}
+                    {testing && <Loader2 className="size-4 animate-spin" />}
                     Test Connection
                   </Button>
                 </div>
@@ -363,7 +360,7 @@ export default function SettingsPage() {
 
               {displaySaveMessage && (
                 <p
-                  className={`text-sm ${displaySaveMessage.ok ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
+                  className={`text-sm ${displaySaveMessage.ok ? "text-success" : "text-destructive"}`}
                 >
                   {displaySaveMessage.text}
                 </p>
@@ -373,7 +370,7 @@ export default function SettingsPage() {
                 <div
                   className={`flex items-start gap-2 rounded-md p-3 text-sm ${
                     testResult.ok
-                      ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                      ? "bg-success/10 text-success"
                       : "bg-destructive/10 text-destructive"
                   }`}
                 >
@@ -386,7 +383,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* How-to collapsible */}
               <button
                 type="button"
                 onClick={() => setShowHelp((h) => !h)}
@@ -414,105 +410,82 @@ export default function SettingsPage() {
                     Select <strong>All events</strong> and{" "}
                     <strong>This month</strong> (or your preferred range)
                   </li>
+                  <li>Click <strong>Export</strong></li>
                   <li>
-                    Click <strong>Export</strong>
-                  </li>
-                  <li>
-                    Copy the URL from the download link (right-click → Copy
-                    Link)
+                    Copy the URL from the download link (right-click → Copy Link)
                   </li>
                   <li>Paste the full URL above</li>
                 </ol>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Google Classroom Connection */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Google Classroom</CardTitle>
-                {hasGoogleRefreshToken ? (
-                  <CheckCircle2 className="size-5 text-green-500" />
-                ) : (
-                  <XCircle className="text-muted-foreground size-5" />
+            <div className="border-t" />
+
+            {/* Google Classroom */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold">Google Classroom</p>
+                  {hasGoogleRefreshToken ? (
+                    <CheckCircle2 className="size-4 text-success" />
+                  ) : (
+                    <XCircle className="text-muted-foreground size-4" />
+                  )}
+                </div>
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {hasGoogleRefreshToken
+                    ? "Connected. Tasks sync automatically."
+                    : "Not connected. Authorize to sync assignments."}
+                </p>
+                {hasGoogleRefreshToken && (
+                  <p className="text-muted-foreground mt-1 text-[11px]">
+                    Reconnect if sync stops working.
+                  </p>
                 )}
               </div>
-              <CardDescription>
-                {hasGoogleRefreshToken
-                  ? "Google Classroom is connected. Tasks will sync automatically."
-                  : "Google Classroom is not connected. Click below to authorize."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
               <Button
                 variant={hasGoogleRefreshToken ? "outline" : "default"}
                 onClick={handleReconnectGoogle}
                 size="sm"
+                className="shrink-0"
               >
-                <ExternalLink className="mr-2 size-4" />
-                {hasGoogleRefreshToken
-                  ? "Reconnect Google"
-                  : "Connect Google Classroom"}
+                <ExternalLink className="size-4" />
+                {hasGoogleRefreshToken ? "Reconnect" : "Connect"}
               </Button>
-              {hasGoogleRefreshToken && (
-                <p className="text-muted-foreground mt-2 text-xs">
-                  Reconnecting will refresh your authorization. Use this if sync
-                  stops working.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          {/* Push Notifications */}
-          <NotificationSettings />
+          {/* ── Notifications ──────────────────────────────────────── */}
+          <section className="space-y-4">
+            <SectionLabel>Notifications</SectionLabel>
 
-          {/* Contact Developer */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CardTitle>Contact Developer</CardTitle>
-                <Mail className="text-muted-foreground size-5" />
-              </div>
-              <CardDescription>
-                Report bugs or suggest features. Messages go to {SUPPORT_EMAIL}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm">
-                  <a href={BUG_REPORT_MAILTO}>
-                    <Bug className="mr-2 size-4" />
-                    Report a bug
-                  </a>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <a href={FEATURE_REQUEST_MAILTO}>
-                    <Lightbulb className="mr-2 size-4" />
-                    Suggest a feature
-                  </a>
-                </Button>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold">Push Notifications</p>
               </div>
               <p className="text-muted-foreground text-xs">
-                You can also email directly: {SUPPORT_EMAIL}
+                Get notified when tasks are due soon. Reminders are sent for
+                tasks due within 24 hours.
               </p>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Install App */}
+            <NotificationSettings />
+          </section>
+
+          {/* ── App ────────────────────────────────────────────────── */}
           {!isStandalone && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <CardTitle>Install App</CardTitle>
-                  <Smartphone className="text-muted-foreground size-5" />
+            <section className="space-y-4">
+              <SectionLabel>App</SectionLabel>
+
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-semibold">Install App</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Add TapO(1) to your home screen for faster launch and
+                    app-like navigation.
+                  </p>
                 </div>
-                <CardDescription>
-                  Add TapO(1) to your home screen for faster launch and app-like
-                  navigation.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
+
                 {isIos ? (
                   <p className="text-muted-foreground text-sm">
                     On iPhone/iPad: tap the <strong>Share</strong> button in
@@ -520,7 +493,7 @@ export default function SettingsPage() {
                   </p>
                 ) : canInstall ? (
                   <Button size="sm" onClick={install}>
-                    <Download className="mr-2 size-4" />
+                    <Download className="size-4" />
                     Install App
                   </Button>
                 ) : wasDismissed ? (
@@ -529,11 +502,7 @@ export default function SettingsPage() {
                       You dismissed the install prompt. Click below to enable it
                       again.
                     </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={resetDismissed}
-                    >
+                    <Button size="sm" variant="outline" onClick={resetDismissed}>
                       Re-enable install prompt
                     </Button>
                   </div>
@@ -543,9 +512,30 @@ export default function SettingsPage() {
                     is already installed.
                   </p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           )}
+
+          {/* ── Support footer ─────────────────────────────────────── */}
+          <div className="border-t pt-6 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-muted-foreground text-xs">{SUPPORT_EMAIL}</p>
+            <div className="flex items-center gap-4">
+              <a
+                href={BUG_REPORT_MAILTO}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs transition-colors"
+              >
+                <Bug className="size-3.5" />
+                Report a bug
+              </a>
+              <a
+                href={FEATURE_REQUEST_MAILTO}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs transition-colors"
+              >
+                <Lightbulb className="size-3.5" />
+                Suggest a feature
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </>

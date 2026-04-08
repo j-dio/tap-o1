@@ -42,7 +42,6 @@ import { TaskFilters as FilterBar } from "@/components/task-filters";
 import { TaskList } from "@/components/task-list";
 import { UpNextWidget } from "@/components/up-next-widget";
 import { FocusModeToggle } from "@/components/focus-mode-toggle";
-import { SyncButton } from "@/components/sync-button";
 import { EmptyState } from "@/components/empty-state";
 import { ViewToggle } from "@/components/view-toggle";
 import { CustomTaskModal } from "@/components/custom-task-modal";
@@ -163,16 +162,16 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col gap-6" {...bind}>
-      <div className="lg:hidden" aria-live="polite">
-        <p className="text-muted-foreground text-center text-xs">
-          {isSyncing
-            ? "Syncing..."
-            : pullDistance > 0
-              ? isReady
+      <div className="lg:hidden" aria-live="polite" aria-atomic="true">
+        {(isSyncing || pullDistance > 0) && (
+          <p className="text-muted-foreground text-center text-xs">
+            {isSyncing
+              ? "Syncing..."
+              : isReady
                 ? "Release to sync"
-                : "Pull to refresh"
-              : ""}
-        </p>
+                : "Pull to refresh"}
+          </p>
+        )}
       </div>
 
       {/* First-sync banner — only visible to new users with stale UVEC tasks */}
@@ -187,12 +186,12 @@ function DashboardContent() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-[-0.03em]">Dashboard</h1>
-          <p className="text-muted-foreground mt-0.5 text-[13px]">
-            {focusMode
-              ? "Tasks due within 24 hours."
-              : "Manage your tasks by workflow status."}
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          {focusMode && (
+            <p className="text-muted-foreground mt-0.5 text-[13px]">
+              Tasks due within 24 hours.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <Button
@@ -207,16 +206,14 @@ function DashboardContent() {
             enabled={focusMode}
             onToggle={() => setFocusMode(!focusMode)}
           />
-          <div className="hidden lg:block">
-            <SyncButton />
-          </div>
         </div>
       </div>
 
-      <ViewToggle />
-
-      {/* Filters */}
-      <FilterBar courses={courses ?? []} />
+      {/* Toolbar: view toggle (mobile) + filters in one row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ViewToggle />
+        <FilterBar courses={courses ?? []} />
+      </div>
 
       {/* Content */}
       {tasksLoading ? (
@@ -277,8 +274,8 @@ function DashboardContent() {
         <EmptyState
           icon={ClipboardList}
           title="No tasks yet"
-          description="Connect UVEC or Google Classroom, then sync to pull in your tasks."
-          action={{ label: "Sync now", onClick: () => sync() }}
+          description="Connect UVEC or Google Classroom in Settings to start pulling in your tasks."
+          action={{ label: "Go to Settings", href: "/dashboard/settings" }}
         />
       )}
 

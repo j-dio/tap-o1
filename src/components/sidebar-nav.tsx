@@ -150,8 +150,8 @@ export function SidebarNav({ displayName, email, hasUvec }: SidebarNavProps) {
           </DropdownMenu>
 
           <div className="flex items-center gap-0.5 px-1">
-            <ThemeToggle />
-            <ExportButton />
+            <ThemeToggle showLabel />
+            <ExportButton showLabel />
             <SyncButton />
           </div>
         </div>

@@ -171,15 +171,17 @@ function CalendarContent() {
       {/* Page header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
           <p className="text-muted-foreground text-sm">
             View tasks on their due dates.
           </p>
         </div>
       </div>
 
-      <ViewToggle />
-      <FilterBar courses={courses ?? []} />
+      <div className="flex flex-wrap items-center gap-2">
+        <ViewToggle />
+        <FilterBar courses={courses ?? []} />
+      </div>
 
       {isLoading ? (
         <div className="space-y-4">
@@ -336,8 +338,8 @@ function CalendarContent() {
             </div>
           </div>
 
-          {/* Side panel — tasks for selected date */}
-          <div className="w-full shrink-0 lg:w-80">
+          {/* Side panel — tasks for selected date; hidden on mobile until a date is picked */}
+          <div className={cn("w-full shrink-0 lg:w-80", !selectedDate && "hidden lg:block")}>
             {selectedDate ? (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">

@@ -13,8 +13,7 @@ export function ViewToggle() {
   const pathname = usePathname();
 
   return (
-    <div className="lg:hidden">
-      <div className="bg-muted/40 inline-flex h-9 rounded-lg border p-1">
+    <div className="bg-muted/40 inline-flex h-9 rounded-lg border p-1 lg:hidden">
         {views.map((view) => {
           const isActive =
             view.href === "/dashboard"
@@ -37,7 +36,6 @@ export function ViewToggle() {
             </Link>
           );
         })}
-      </div>
     </div>
   );
 }

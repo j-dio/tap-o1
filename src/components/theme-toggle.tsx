@@ -39,7 +39,11 @@ function applyTheme(theme: Theme) {
   themeListeners.forEach((l) => l());
 }
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  showLabel?: boolean;
+}
+
+export function ThemeToggle({ showLabel }: ThemeToggleProps) {
   // useSyncExternalStore gives React the server/client split it needs:
   // SSR uses getServerTheme ("light"), client uses getThemeSnapshot (real value).
   // React reconciles the difference without a hydration error.
@@ -56,15 +60,18 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon-sm"
+      size={showLabel ? "sm" : "icon-sm"}
       onClick={toggle}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      className={showLabel ? "gap-1.5" : undefined}
     >
       {theme === "dark" ? (
-        <Sun className="size-4" />
+        <Sun className="size-4 shrink-0" />
       ) : (
-        <Moon className="size-4" />
+        <Moon className="size-4 shrink-0" />
       )}
+      {showLabel && <span>Theme</span>}
     </Button>
   );
 }
