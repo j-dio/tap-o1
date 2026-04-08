@@ -69,7 +69,7 @@ export function TaskCard({ task, isDragging, compact, onModalOpenChange, dragHan
         className={cn(
           "group skeu-card relative rounded-[14px] border-l-[3px] overflow-hidden",
           urgencyBorder[urgency],
-          isDragging && "scale-105 rotate-2 opacity-50 shadow-lg!",
+          isDragging && "opacity-15",
           (task.status === "done" || task.status === "dismissed") && "opacity-60",
         )}
       >

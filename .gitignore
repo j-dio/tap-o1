@@ -63,3 +63,6 @@ CLAUDE.md
 .planning*
 planning*
 .continue/
+docs/
+.cursor/
+.github/

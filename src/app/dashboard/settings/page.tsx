@@ -21,9 +21,20 @@ import {
   ChevronDown,
   Download,
   Smartphone,
+  Bug,
+  Lightbulb,
+  Mail,
 } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { usePwaInstall } from "@/components/add-to-homescreen-prompt";
+
+const SUPPORT_EMAIL = "tapo1support@gmail.com";
+const BUG_REPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("TapO(1) Bug Report")}&body=${encodeURIComponent(
+  "Hi TapO(1) developer,\n\nI found a bug:\n- What happened:\n- What I expected:\n- Device/browser:\n- Steps to reproduce:\n\nThank you!",
+)}`;
+const FEATURE_REQUEST_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("TapO(1) Feature Suggestion")}&body=${encodeURIComponent(
+  "Hi TapO(1) developer,\n\nI would like to suggest this feature:\n- Feature idea:\n- Why it helps:\n- Optional example workflow:\n\nThank you!",
+)}`;
 
 type SettingsProfileHydrationResult =
   | { kind: "no_session" }
@@ -456,6 +467,38 @@ export default function SettingsPage() {
           {/* Push Notifications */}
           <NotificationSettings />
 
+          {/* Contact Developer */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardTitle>Contact Developer</CardTitle>
+                <Mail className="text-muted-foreground size-5" />
+              </div>
+              <CardDescription>
+                Report bugs or suggest features. Messages go to {SUPPORT_EMAIL}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <a href={BUG_REPORT_MAILTO}>
+                    <Bug className="mr-2 size-4" />
+                    Report a bug
+                  </a>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <a href={FEATURE_REQUEST_MAILTO}>
+                    <Lightbulb className="mr-2 size-4" />
+                    Suggest a feature
+                  </a>
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                You can also email directly: {SUPPORT_EMAIL}
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Install App */}
           {!isStandalone && (
             <Card>
@@ -465,8 +508,8 @@ export default function SettingsPage() {
                   <Smartphone className="text-muted-foreground size-5" />
                 </div>
                 <CardDescription>
-                  Add TapO(1) to your home screen for a faster, offline-capable
-                  experience.
+                  Add TapO(1) to your home screen for faster launch and app-like
+                  navigation.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">

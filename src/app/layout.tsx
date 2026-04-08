@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { OfflineBanner } from "@/components/offline-banner";
 import { AddToHomescreenPrompt } from "@/components/add-to-homescreen-prompt";
-import { Toaster } from "sonner";
+import { ThemedToaster } from "@/components/providers/themed-toaster";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -89,7 +89,7 @@ export default function RootLayout({
           <OfflineBanner />
           {children}
           <AddToHomescreenPrompt />
-          <Toaster position="bottom-right" closeButton visibleToasts={3} />
+          <ThemedToaster />
         </QueryProvider>
       </body>
     </html>
