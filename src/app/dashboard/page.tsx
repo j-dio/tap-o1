@@ -188,11 +188,11 @@ function DashboardContent() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-[-0.03em]">Dashboard</h1>
-          <p className="text-muted-foreground mt-0.5 text-[13px]">
-            {focusMode
-              ? "Tasks due within 24 hours."
-              : "Manage your tasks by workflow status."}
-          </p>
+          {focusMode && (
+            <p className="text-muted-foreground mt-0.5 text-[13px]">
+              Tasks due within 24 hours.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <Button
@@ -213,10 +213,11 @@ function DashboardContent() {
         </div>
       </div>
 
-      <ViewToggle />
-
-      {/* Filters */}
-      <FilterBar courses={courses ?? []} />
+      {/* Toolbar: view toggle (mobile) + filters in one row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ViewToggle />
+        <FilterBar courses={courses ?? []} />
+      </div>
 
       {/* Content */}
       {tasksLoading ? (
