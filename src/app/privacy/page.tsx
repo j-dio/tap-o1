@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           {/* Introduction */}
           <section className="space-y-3">
             <p className="text-muted-foreground leading-relaxed">
-              TapO(1) (&quot;we&quot;, &quot;our&quot;, or &quot;the app&quot;)
+              TapO(1)
               is an academic task aggregator built for UP Cebu students. This
               Privacy Policy explains what data we collect, how we use it, and
               how we protect it when you use TapO(1).

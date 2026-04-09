@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uvecIcalUrlSchema } from "@/lib/validations/auth";
@@ -15,6 +16,8 @@ import {
   Download,
   Bug,
   Lightbulb,
+  Shield,
+  ChevronRight,
 } from "lucide-react";
 import { NotificationSettings } from "@/components/notification-settings";
 import { usePwaInstall } from "@/components/add-to-homescreen-prompt";
@@ -515,6 +518,29 @@ export default function SettingsPage() {
               </div>
             </section>
           )}
+
+          {/* ── Privacy ────────────────────────────────────────────── */}
+          <section className="space-y-3">
+            <SectionLabel>Legal</SectionLabel>
+            <Link
+              href="/privacy"
+              className="group border-border bg-muted/30 hover:bg-muted/50 dark:bg-muted/50 dark:hover:bg-muted/70 flex items-center gap-3 rounded-lg border p-4 transition-colors"
+            >
+              <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+                <Shield className="size-5" aria-hidden />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm font-semibold">Privacy Policy</p>
+                <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+                  What we collect, how we use it, and your rights.
+                </p>
+              </div>
+              <ChevronRight
+                className="text-muted-foreground group-hover:text-foreground size-5 shrink-0 transition-colors"
+                aria-hidden
+              />
+            </Link>
+          </section>
 
           {/* ── Support footer ─────────────────────────────────────── */}
           <div className="border-t pt-6 flex flex-wrap items-center justify-between gap-4">
